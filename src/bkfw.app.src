@@ -1,0 +1,12 @@
+{application, bkfw,
+ [
+  {description, "BKtel firmware"},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { bkfw_app, []}},
+  {env, []}
+ ]}.
