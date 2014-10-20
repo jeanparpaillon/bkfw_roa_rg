@@ -1,0 +1,160 @@
+EDFA-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Gauge32, Integer32, DisplayString
+    NOTIFICATION-TYPE                        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION, DisplayString
+    DateAndTime				     FROM SNMPv2-TC;
+
+edfaMIB MODULE-IDENTITY
+    LAST-UPDATED "201410170000Z"
+    ORGANIZATION "BKtel"
+    CONTACT-INFO
+            "   BKtel
+	    	website: www.bktel-photonics.com
+		email: photonics@bktel.com"
+    DESCRIPTION
+            "The MIB module to describe commands for BKtel EDFA."
+
+    REVISION      "201410170000Z"
+    DESCRIPTION
+		"Initial revision."
+    ::= { enterprises 11412 }
+
+edfaMIBObjects	OBJECT IDENTIFIER ::= { edfaMIB 1 }
+edfas OBJECT IDENTIFIER ::= { edfaMIB 2 }
+
+--
+-- Textual Conventions
+--
+
+--
+
+edfaNumber OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	mandatory
+    DESCRIPTION
+	"The number of EDFA present on the system."
+    ::= { edfas 1 }
+
+-- the EDFA table
+
+edfaTable OBJECT-TYPE
+    SYNTAX	SEQUENCE OF EdfaEntry
+    MAX-ACCESS	not-accessible
+    STATUS	mandatory
+    DESCRIPTION
+	"A list of EDFA entries. The number of entries is 
+	given by the value of mcuNumber."
+    ::= { edfas 2 }
+
+edfaEntry OBJECT-TYPE
+    SYNTAX	EdfaEntry
+    MAX-ACCESS	not-accessible
+    STATUS	mandatory
+    DESCRIPTION
+	"An entry containing management information applicable to a 
+	particular EDFA."
+    INDEX	{ edfaIndex }
+    ::= { edfaTable 1 }
+
+EdfaEntry ::=
+	SEQUENCE {
+		edfaIndex		EdfaIndex,
+		edfaAmpConsign		Gauge32,
+		edfaGainConsign		Integer32,
+		edfaOutputPowerConsign	Gauge32,
+		edfaOperatingMode	INTEGER,
+		edfaCurLaserTemp	Integer32,
+		edfaCurAmp		Gauge32,
+		edfaCurInternalTemp	Integer32,
+		edfaVendor		DisplayString,
+		edfaModuleType		DisplayString,
+		edfaHWVer		DisplayString,
+		edfaHWRev		DisplayString,
+		edfaSWVer		DisplayString,
+		edfaFWVer		DisplayString,
+		edfaPartNum		DisplayString,
+		edfaSerialNum		DisplayString,
+		edfaProductDate		DateAndTime
+	}
+
+edfaIndex OBJECT-TYPE
+    SYNTAX    	INTEGER
+    MAX-ACCESS	not-accessible
+    STATUS	mandatory
+    DESCRIPTION
+	"A unique value, greater than zero, for each EDFA."
+    ::= { edfaEntry 1 }
+
+edfaAmpConsign OBJECT-TYPE
+    SYNTAX	Gauge32
+    MAX-ACCESS	read-write
+    STATUS	mandatory
+    DESCRIPTION
+	"The value of the lasers current consign used in current control mode, in mA."
+    ::= { edfaEntry 2 }
+
+edfaGainConsign OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-write
+    STATUS	mandatory
+    DESCRIPTION
+	"The value of the lasers gain consign used in gain control mode, in dBm."
+    ::= { edfaEntry 3 }
+
+edfaOutputPowerConsign OBJECT-TYPE
+    SYNTAX	Gauge32
+    MAX-ACCESS	read-write
+    STATUS	mandatory
+    DESCRIPTION
+	"The value of the lasers output power consign used in output power control mode, in dBm."
+    ::= { edfaEntry 4 }
+
+edfaOperatingMode OBJECT-TYPE
+    SYNTAX	INTEGER {
+                    pc(1),
+		    gc(2),
+		    cc(3),
+		    off(4)
+		    }
+    MAX-ACCESS	read-write
+    STATUS	mandatory
+    DESCRIPTION
+	"The current operational mode of the laser."
+    ::= { edfaEntry 5 }
+
+edfaCurLaserTemp	OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	mandatory
+    DESCRIPTION
+	"The current laser temperature."
+    ::= { edfaEntry 6 }
+
+edfaCurAmp	OBJECT-TYPE
+    SYNTAX	Gauge32
+    MAX-ACCESS	read-only
+    STATUS	mandatory
+    DESCRIPTION
+	"The current laser electrical current."
+    ::= { edfaEntry 7 }
+
+edfaCurInternalTemp	OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	mandatory
+    DESCRIPTION
+	"The current internal temperature."
+    ::= { edfaEntry 7 }
+
+edfaVendor	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	mandatory
+    DESCRIPTION
+	"Module vendor."
+    ::= { edfaEntry 8 }
+
+END
