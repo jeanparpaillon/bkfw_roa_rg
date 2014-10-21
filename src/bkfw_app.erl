@@ -10,7 +10,20 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
+    application:start(snmp),
+    load_mibs([["BKTEL-SMI", "EDFA-MIB"]]),
     bkfw_sup:start_link().
 
 stop(_State) ->
     ok.
+
+
+%%%
+%%% Priv
+%%%
+load_mibs(Mibs) ->
+    Paths = lists:map(fun (Path) ->
+			      Dir = code:priv_dir(bkfw) ++ "/mibs/",
+			      Dir ++ Path
+		      end, Mibs),
+    snmpa:load_mibs(snmp_master_agent, Paths).
