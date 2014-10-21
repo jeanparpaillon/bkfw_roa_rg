@@ -1,0 +1,3 @@
+% -*- erlang -*-
+{edfaNumber, {bkfw_edfa_funcs, edfaNumber, []}}.
+{edfaTable, {bkfw_edfa_funcs, edfaTable, []}}.
