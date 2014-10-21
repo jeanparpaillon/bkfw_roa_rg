@@ -1,0 +1,22 @@
+BKTEL-SMI DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-IDENTITY, enterprises
+	FROM SNMPv2-SMI;
+
+bktel MODULE-IDENTITY
+    LAST-UPDATED "201410170000Z"
+    ORGANIZATION "BKtel Photonics"
+    CONTACT-INFO
+            "   BKtel
+	    	website: www.bktel-photonics.com
+		email: photonics@bktel.com"
+    DESCRIPTION
+            "The MIB module to describe commands for BKtel EDFA."
+
+    REVISION      "201410170000Z"
+    DESCRIPTION
+		"Initial revision."
+    ::= { enterprises 11412 }
+
+END

@@ -1,12 +1,16 @@
 EDFA-MIB DEFINITIONS ::= BEGIN
 
 IMPORTS
-    MODULE-IDENTITY, OBJECT-TYPE, Gauge32, Integer32, DisplayString
-    NOTIFICATION-TYPE                        FROM SNMPv2-SMI
-    TEXTUAL-CONVENTION, DisplayString
-    DateAndTime				     FROM SNMPv2-TC;
+    MODULE-IDENTITY, OBJECT-TYPE, Gauge32, Integer32, NOTIFICATION-TYPE
+	FROM SNMPv2-SMI
 
-edfaMIB MODULE-IDENTITY
+    TEXTUAL-CONVENTION, DisplayString, DateAndTime, RowStatus
+    	FROM SNMPv2-TC
+
+    bktel
+	FROM BKTEL-SMI;
+
+edfaModule MODULE-IDENTITY
     LAST-UPDATED "201410170000Z"
     ORGANIZATION "BKtel"
     CONTACT-INFO
@@ -19,21 +23,20 @@ edfaMIB MODULE-IDENTITY
     REVISION      "201410170000Z"
     DESCRIPTION
 		"Initial revision."
-    ::= { enterprises 11412 }
+    ::= { bktel 1 }
 
-edfaMIBObjects	OBJECT IDENTIFIER ::= { edfaMIB 1 }
-edfas OBJECT IDENTIFIER ::= { edfaMIB 2 }
+edfaMIB	OBJECT IDENTIFIER ::= { edfaModule 1 }
+edfaMIBObjects OBJECT IDENTIFIER ::= { edfaMIB 1 }
+edfas OBJECT IDENTIFIER ::= { edfaMIBObjects 1 }
 
---
--- Textual Conventions
---
+-- Datatypes
 
---
+-- Managed Objects
 
 edfaNumber OBJECT-TYPE
-    SYNTAX	Integer32
-    MAX-ACCESS	read-only
-    STATUS	mandatory
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
     DESCRIPTION
 	"The number of EDFA present on the system."
     ::= { edfas 1 }
@@ -43,7 +46,7 @@ edfaNumber OBJECT-TYPE
 edfaTable OBJECT-TYPE
     SYNTAX	SEQUENCE OF EdfaEntry
     MAX-ACCESS	not-accessible
-    STATUS	mandatory
+    STATUS	current
     DESCRIPTION
 	"A list of EDFA entries. The number of entries is 
 	given by the value of mcuNumber."
@@ -52,7 +55,7 @@ edfaTable OBJECT-TYPE
 edfaEntry OBJECT-TYPE
     SYNTAX	EdfaEntry
     MAX-ACCESS	not-accessible
-    STATUS	mandatory
+    STATUS	current
     DESCRIPTION
 	"An entry containing management information applicable to a 
 	particular EDFA."
@@ -61,7 +64,7 @@ edfaEntry OBJECT-TYPE
 
 EdfaEntry ::=
 	SEQUENCE {
-		edfaIndex		EdfaIndex,
+		edfaIndex		INTEGER,
 		edfaAmpConsign		Gauge32,
 		edfaGainConsign		Integer32,
 		edfaOutputPowerConsign	Gauge32,
@@ -77,13 +80,14 @@ EdfaEntry ::=
 		edfaFWVer		DisplayString,
 		edfaPartNum		DisplayString,
 		edfaSerialNum		DisplayString,
-		edfaProductDate		DateAndTime
+		edfaProductDate		DateAndTime,
+		edfaRowStatus		RowStatus
 	}
 
 edfaIndex OBJECT-TYPE
     SYNTAX    	INTEGER
     MAX-ACCESS	not-accessible
-    STATUS	mandatory
+    STATUS	current
     DESCRIPTION
 	"A unique value, greater than zero, for each EDFA."
     ::= { edfaEntry 1 }
@@ -91,7 +95,7 @@ edfaIndex OBJECT-TYPE
 edfaAmpConsign OBJECT-TYPE
     SYNTAX	Gauge32
     MAX-ACCESS	read-write
-    STATUS	mandatory
+    STATUS	current
     DESCRIPTION
 	"The value of the lasers current consign used in current control mode, in mA."
     ::= { edfaEntry 2 }
@@ -99,7 +103,7 @@ edfaAmpConsign OBJECT-TYPE
 edfaGainConsign OBJECT-TYPE
     SYNTAX	Integer32
     MAX-ACCESS	read-write
-    STATUS	mandatory
+    STATUS	current
     DESCRIPTION
 	"The value of the lasers gain consign used in gain control mode, in dBm."
     ::= { edfaEntry 3 }
@@ -107,7 +111,7 @@ edfaGainConsign OBJECT-TYPE
 edfaOutputPowerConsign OBJECT-TYPE
     SYNTAX	Gauge32
     MAX-ACCESS	read-write
-    STATUS	mandatory
+    STATUS	current
     DESCRIPTION
 	"The value of the lasers output power consign used in output power control mode, in dBm."
     ::= { edfaEntry 4 }
@@ -120,7 +124,7 @@ edfaOperatingMode OBJECT-TYPE
 		    off(4)
 		    }
     MAX-ACCESS	read-write
-    STATUS	mandatory
+    STATUS	current
     DESCRIPTION
 	"The current operational mode of the laser."
     ::= { edfaEntry 5 }
@@ -128,7 +132,7 @@ edfaOperatingMode OBJECT-TYPE
 edfaCurLaserTemp	OBJECT-TYPE
     SYNTAX	Integer32
     MAX-ACCESS	read-only
-    STATUS	mandatory
+    STATUS	current
     DESCRIPTION
 	"The current laser temperature."
     ::= { edfaEntry 6 }
@@ -136,7 +140,7 @@ edfaCurLaserTemp	OBJECT-TYPE
 edfaCurAmp	OBJECT-TYPE
     SYNTAX	Gauge32
     MAX-ACCESS	read-only
-    STATUS	mandatory
+    STATUS	current
     DESCRIPTION
 	"The current laser electrical current."
     ::= { edfaEntry 7 }
@@ -144,17 +148,100 @@ edfaCurAmp	OBJECT-TYPE
 edfaCurInternalTemp	OBJECT-TYPE
     SYNTAX	Integer32
     MAX-ACCESS	read-only
-    STATUS	mandatory
+    STATUS	current
     DESCRIPTION
 	"The current internal temperature."
-    ::= { edfaEntry 7 }
+    ::= { edfaEntry 8 }
 
 edfaVendor	OBJECT-TYPE
     SYNTAX	DisplayString
     MAX-ACCESS	read-only
-    STATUS	mandatory
+    STATUS	current
     DESCRIPTION
 	"Module vendor."
-    ::= { edfaEntry 8 }
+    ::= { edfaEntry 9 }
+
+edfaModuleType	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Module type."
+    ::= { edfaEntry 10 }
+
+edfaHWVer	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Module hardware version."
+    ::= { edfaEntry 11 }
+
+edfaHWRev	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Module hardware revision."
+    ::= { edfaEntry 12 }
+
+edfaSWVer	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Module software version."
+    ::= { edfaEntry 13 }
+
+edfaFWVer	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Module firmware version."
+    ::= { edfaEntry 14 }
+
+edfaPartNum	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Module part number."
+    ::= { edfaEntry 15 }
+
+edfaSerialNum	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Module serial number."
+    ::= { edfaEntry 16 }
+
+edfaProductDate	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Module production date."
+    ::= { edfaEntry 17 }
+
+edfaRowStatus	OBJECT-TYPE
+    SYNTAX	RowStatus
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"This OID uses six main statuses:
+        active(1)         is in use and available in stuffTable
+        notinService(2)   it is present but not yet created
+        notReady(3)       it is present but missing info
+        createAndGo(4)    create stuff in stuffTable.  Row will be
+                          added to this table if necessary.
+        createAndWait(5)  add stuff row to this table
+        destroy(6)        will remove the stuff row
+
+        This OID is used to add/remove rows for stuff creation.  
+        It can also be used to determine if a stuff has been 
+        created successfully."
+    ::= { edfaEntry 18 }
 
 END
