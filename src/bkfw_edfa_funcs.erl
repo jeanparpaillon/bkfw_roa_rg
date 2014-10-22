@@ -1,11 +1,15 @@
 -module(bkfw_edfa_funcs).
 -author('jean.parpaillon@lizenn.com').
 
+-include("bkfw.hrl").
 
 %% API
--export([start/0, 
+-export([
+	 start/0, 
 	 edfaNumber/1,
-	 edfaTable/3]).
+	 edfaTable/1,
+	 edfaTable/3
+	]).
 
 %% For internal use
 -export([init/0]).
@@ -40,8 +44,6 @@
 	       ]).
 -define(ENTRY_LEN, 18).
 
--record(status, {num    = 2}).
-
 start() ->
     ok.
 
@@ -50,13 +52,32 @@ start() ->
 %% Returns: (get) {value, Name}
 %%          (set) noError
 %%----------------------------------------------------------------
+edfaNumber(new) ->
+    ?info("Loading edfaNumber~n", []),
+    ok;
+edfaNumber(delete) ->
+    ?info("Unloading edfaNumber~n", []),
+    ok;
 edfaNumber(get) ->
-    {value, 5}.
+    ?info("get edfaNumber~n", []),
+    {value, 5};
+edfaNumber(_Op) ->
+    ?info("~p edfaNumber~n", [_Op]),
+    noError.
+
 
 %%----------------------------------------------------------------
 %% Instrumentation function for table edfaTable.
 %%----------------------------------------------------------------
+edfaTable(new) ->
+    ?info("Loading edfaTable~n", []),
+    ok;
+edfaTable(delete) ->
+    ?info("Unloading edfaTable~n", []),
+    ok.
+
 edfaTable(get, RowIndex, Cols) ->
+    ?info("get edfaTable~n", []),
     case get_row(RowIndex) of
 	{ok, Row} ->
 	    get_cols(Cols, Row);
@@ -65,6 +86,7 @@ edfaTable(get, RowIndex, Cols) ->
     end;
 
 edfaTable(get_next, RowIndex, Cols) ->
+    ?info("get_next edfaTable~n", []),
     case get_next_row(RowIndex) of
 	{ok, Row} ->
 	    get_next_cols(Cols, Row);
@@ -85,13 +107,12 @@ edfaTable(get_next, RowIndex, Cols) ->
 %%%
 init() ->
     register(?SRV, self()),
-    loop(#status{}).
+    loop().
 
-loop(Status) ->
+loop() ->
     receive
-	{From, get_edfa_number} ->
-	    From ! {?SRV, Status#status.num},
-	    loop(Status)
+	_ ->
+	    loop()
     end.
 
 get_row(RowIndex) ->
