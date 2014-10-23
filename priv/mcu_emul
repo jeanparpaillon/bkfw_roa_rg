@@ -55,7 +55,7 @@ loop(From, To, N, Acc) ->
 	{From, {data, {noeol, Bin}}} ->
 	    loop(From, To, N, << Acc/binary, Bin/binary >>);
 	{From, {data, {eol, Bin}}} ->
-	    handle_msg(parse_msg(<< Acc/binary, Bin/binary >>), To, N),
+	    handle_msg(bkfw_parser:parse_query(<< Acc/binary, Bin/binary >>), To, N),
 	    loop(From, To, N, <<>>);
 	_Else ->
 	    ?error("received: ~p~n", [_Else]),
@@ -64,126 +64,17 @@ loop(From, To, N, Acc) ->
 
 handle_msg({error, Err}, To, N) ->
     ?error("parse error: ~p~n", [Err]);
-handle_msg(eol, To, N) ->
+handle_msg(eof, To, N) ->
     ok;
 handle_msg({ok, Addr, Cmd, Args}, To, N) ->
     ?info("@~p ~p(~p)~n", [Addr, Cmd, Args]).
-
-parse_msg(<<>>) ->
-    eol;
-parse_msg(Bin) ->
-    parse_address(p_number(p_ws(Bin))).
-
-
-parse_address({error, Err}) ->
-    {error, Err};
-parse_address({{number, N}, Rest}) ->
-    parse_cmd(p_string(p_ws(Rest)), N).
-
-parse_cmd({{string, Cmd}, Rest}, Addr) ->
-    {ok, Addr, Cmd, []}.
-
-p_number(Bin) -> p_number(Bin, 0).
-
-p_string(Bin) -> p_string(Bin, <<>>).
-
-p_ws(<< $\s, R/bits >>) -> p_ws(R);
-p_ws(<< $\t, R/bits >>) -> p_ws(R);
-p_ws(R) -> R.
-
-p_number(<< $0, R/bits >>, Acc) -> p_number(R, Acc * 10);
-p_number(<< $1, R/bits >>, Acc) -> p_number(R, Acc * 10 + 1);
-p_number(<< $2, R/bits >>, Acc) -> p_number(R, Acc * 10 + 2);
-p_number(<< $3, R/bits >>, Acc) -> p_number(R, Acc * 10 + 3);
-p_number(<< $4, R/bits >>, Acc) -> p_number(R, Acc * 10 + 4);
-p_number(<< $5, R/bits >>, Acc) -> p_number(R, Acc * 10 + 5);
-p_number(<< $6, R/bits >>, Acc) -> p_number(R, Acc * 10 + 6);
-p_number(<< $7, R/bits >>, Acc) -> p_number(R, Acc * 10 + 7);
-p_number(<< $8, R/bits >>, Acc) -> p_number(R, Acc * 10 + 8);
-p_number(<< $9, R/bits >>, Acc) -> p_number(R, Acc * 10 + 9);
-p_number(<< $\s, R/bits >>, Acc) -> {{number, Acc}, R};
-p_number(<< $\t, R/bits >>, Acc) -> {{number, Acc}, R};
-p_number(<< C, R/bits >>, Acc) -> {error, io_lib:format("Expect a digit, got ~p", [C])};
-p_number(<<>>, Acc) -> {{number, Acc}, <<>>}.
-
-p_string(<< $\s, R/bits >>, Acc) -> {{string, Acc}, R};
-p_string(<< $\t, R/bits >>, Acc) -> {{string, Acc}, R};
-p_string(<< C, R/bits >>, Acc) ->
-    case C of
-	$a -> p_string(R, << Acc/binary, $a >>);
-	$b -> p_string(R, << Acc/binary, $b >>);
-	$c -> p_string(R, << Acc/binary, $c >>);
-	$d -> p_string(R, << Acc/binary, $d >>);
-	$e -> p_string(R, << Acc/binary, $e >>);
-	$f -> p_string(R, << Acc/binary, $f >>);
-	$g -> p_string(R, << Acc/binary, $g >>);
-	$h -> p_string(R, << Acc/binary, $h >>);
-	$i -> p_string(R, << Acc/binary, $i >>);
-	$j -> p_string(R, << Acc/binary, $j >>);
-	$k -> p_string(R, << Acc/binary, $k >>);
-	$l -> p_string(R, << Acc/binary, $l >>);
-	$m -> p_string(R, << Acc/binary, $m >>);
-	$n -> p_string(R, << Acc/binary, $n >>);
-	$o -> p_string(R, << Acc/binary, $o >>);
-	$p -> p_string(R, << Acc/binary, $p >>);
-	$q -> p_string(R, << Acc/binary, $q >>);
-	$r -> p_string(R, << Acc/binary, $r >>);
-	$s -> p_string(R, << Acc/binary, $s >>);
-	$t -> p_string(R, << Acc/binary, $t >>);
-	$u -> p_string(R, << Acc/binary, $u >>);
-	$v -> p_string(R, << Acc/binary, $v >>);
-	$w -> p_string(R, << Acc/binary, $w >>);
-	$x -> p_string(R, << Acc/binary, $x >>);
-	$y -> p_string(R, << Acc/binary, $y >>);
-	$z -> p_string(R, << Acc/binary, $z >>);
-	$A -> p_string(R, << Acc/binary, $a >>);
-	$B -> p_string(R, << Acc/binary, $b >>);
-	$C -> p_string(R, << Acc/binary, $c >>);
-	$D -> p_string(R, << Acc/binary, $d >>);
-	$E -> p_string(R, << Acc/binary, $e >>);
-	$F -> p_string(R, << Acc/binary, $f >>);
-	$G -> p_string(R, << Acc/binary, $g >>);
-	$H -> p_string(R, << Acc/binary, $h >>);
-	$I -> p_string(R, << Acc/binary, $i >>);
-	$J -> p_string(R, << Acc/binary, $j >>);
-	$K -> p_string(R, << Acc/binary, $k >>);
-	$L -> p_string(R, << Acc/binary, $l >>);
-	$M -> p_string(R, << Acc/binary, $m >>);
-	$N -> p_string(R, << Acc/binary, $n >>);
-	$O -> p_string(R, << Acc/binary, $o >>);
-	$P -> p_string(R, << Acc/binary, $p >>);
-	$Q -> p_string(R, << Acc/binary, $q >>);
-	$R -> p_string(R, << Acc/binary, $r >>);
-	$S -> p_string(R, << Acc/binary, $s >>);
-	$T -> p_string(R, << Acc/binary, $t >>);
-	$U -> p_string(R, << Acc/binary, $u >>);
-	$V -> p_string(R, << Acc/binary, $v >>);
-	$W -> p_string(R, << Acc/binary, $w >>);
-	$X -> p_string(R, << Acc/binary, $x >>);
-	$Y -> p_string(R, << Acc/binary, $y >>);
-	$Z -> p_string(R, << Acc/binary, $z >>);
-	$0 -> p_string(R, << Acc/binary, $0 >>);
-	$1 -> p_string(R, << Acc/binary, $1 >>);
-	$2 -> p_string(R, << Acc/binary, $2 >>);
-	$3 -> p_string(R, << Acc/binary, $3 >>);
-	$4 -> p_string(R, << Acc/binary, $4 >>);
-	$5 -> p_string(R, << Acc/binary, $5 >>);
-	$6 -> p_string(R, << Acc/binary, $6 >>);
-	$7 -> p_string(R, << Acc/binary, $7 >>);
-	$8 -> p_string(R, << Acc/binary, $8 >>);
-	$9 -> p_string(R, << Acc/binary, $9 >>);
-	$. -> p_string(R, << Acc/binary, $. >>);
-	C -> {error, io_lib:format("Invalid char: ~p", [C])}
-    end;
-p_string(<<>>, Acc) -> {{string, Acc}, <<>>}.
-
 
 set_paths() ->
     Root = get_root(),
     Deps = lists:map(fun(D) -> 
 			     Root ++ "/deps/" ++ D ++ "/ebin"
 		     end, ?deps),
-    code:add_pathsa(Deps).
+    code:add_pathsa([ Root ++ "/ebin" | Deps ]).
 
 get_root() ->
     AbsName = filename:join(get_cwd(), escript:script_name()),
