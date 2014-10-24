@@ -81,4 +81,10 @@ kw_to_atom(<<"LC">>)        -> lc;
 kw_to_atom(<<"RIT">>)       -> rit;
 kw_to_atom(<<"IT">>)        -> it;
 kw_to_atom(<<"RI">>)        -> ri;
+kw_to_atom(<<"RPM">>)       -> rpm;
+kw_to_atom(<<"RV">>)        -> rv;
+kw_to_atom(<<"RLI">>)       -> rli;
+kw_to_atom(<<"SLI">>)       -> sli;
+kw_to_atom(<<"RLO">>)       -> rlo;
+kw_to_atom(<<"SLO">>)       -> slo;
 kw_to_atom(_S) -> {error, io_lib:format("Invalid keyword: ~p", [_S])}.

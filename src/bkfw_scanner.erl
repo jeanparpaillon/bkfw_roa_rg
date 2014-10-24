@@ -32,6 +32,7 @@ token(<< C, _R/bits >>) -> {error, io_lib:format("Invalid char: ~p", [C])}.
 %%%
 %%% priv
 %%%
+s_hex_i(<<>>) -> {error, eof};
 s_hex_i(<< $0, R/bits >>) -> s_hex(R, 0);
 s_hex_i(<< $1, R/bits >>) -> s_hex(R, 1);
 s_hex_i(<< $2, R/bits >>) -> s_hex(R, 2);
@@ -97,7 +98,7 @@ s_num_i(<< $9, R/bits >>) -> s_num(R, 9);
 s_num_i(<< $., R/bits >>) -> s_frac_i(R, 0);
 s_num_i(<< C, _R/bits >>) -> {error, io_lib:format("Invalid num: ~p", [C])}.
 
-s_num(<<>>, Acc) -> {ok, {integer, Acc}};
+s_num(<<>>, Acc) -> {ok, {integer, Acc}, <<>>};
 s_num(<< $\s, R/bits >>, Acc) -> {ok, {integer, Acc}, R};
 s_num(<< $\t, R/bits >>, Acc) -> {ok, {integer, Acc}, R};
 s_num(<< $0, R/bits >>, Acc) -> s_num(R, Acc * 10);
