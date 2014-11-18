@@ -23,5 +23,7 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    {ok, { {one_for_one, 5, 10}, []} }.
-
+    Srv = ?CHILD(bkfw_srv, worker),
+    McuSup = ?CHILD(bkfw_mcus_sup, supervisor),
+    McuNumMon = ?CHILD(bkfw_num_mon, worker),
+    {ok, { {one_for_one, 5, 10}, [Srv, McuSup, McuNumMon]} }.

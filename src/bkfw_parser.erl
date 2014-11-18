@@ -1,11 +1,14 @@
 -module(bkfw_parser).
 -author('jean.parpaillon@lizenn.com').
 
--export([parse_query/1]).
+-export([parse/1]).
 
-parse_query(<<>>) ->
+-type msg() :: {Addr :: integer(), Cmd :: atom(), Args :: list()}.
+
+-spec parse(Data :: binary()) -> {ok, msg()} | eof | {error, term()}.
+parse(<<>>) ->
     eof;
-parse_query(Bin) ->
+parse(Bin) ->
     parse_address(bkfw_scanner:token(Bin)).
 
 %%%
@@ -30,7 +33,7 @@ parse_cmd({ok, {string, Cmd}, <<>>}, Addr) ->
 	{error, Err} -> 
 	    {error, Err};
 	AtomCmd ->
-	    {ok, Addr, AtomCmd, []}
+	    {ok, {Addr, AtomCmd, []}}
     end;
 parse_cmd({ok, {string, Cmd}, Rest}, Addr) ->
     case kw_to_atom(Cmd) of
@@ -46,7 +49,7 @@ parse_cmd({ok, {Tok, _}, _Rest}, _A) ->
 parse_args({error, Err}, _, _, _) ->
     {error, Err};
 parse_args(eof, A, C, Args) ->
-    {ok, A, C, lists:reverse(Args)};
+    {ok, {A, C, lists:reverse(Args)}};
 parse_args({ok, {_Type, Arg}, Rest}, A, C, Args) ->
     parse_args(bkfw_scanner:token(Rest), A, C, [ Arg | Args ]).
 
@@ -87,4 +90,6 @@ kw_to_atom(<<"RLI">>)       -> rli;
 kw_to_atom(<<"SLI">>)       -> sli;
 kw_to_atom(<<"RLO">>)       -> rlo;
 kw_to_atom(<<"SLO">>)       -> slo;
+kw_to_atom(<<"RN">>)        -> rn;
+kw_to_atom(<<"N">>)         -> n;
 kw_to_atom(_S) -> {error, io_lib:format("Invalid keyword: ~p", [_S])}.
