@@ -20,7 +20,7 @@
 %%% API
 %%%
 start_link() ->
-    Period = application:get_env(bkfw, num_mon_period, ?PERIOD),
+    Period = application:get_env(bkfw, slots_period, ?PERIOD),
     Pid = spawn_link(?MODULE, init, [Period]),
     {ok, Pid}.
 
@@ -30,20 +30,13 @@ start_link() ->
 init(Time) ->
     ?info("Starting MCU slots monitoring~n", []),
     Slots = list_to_tuple(lists:duplicate(?SLOTS, false)),
+    timer:sleep(1000),
     loop(Time, Slots).
 
 loop(Time, Slots) -> 
-    timer:sleep(Time),
     Slots2 = case bkfw_srv:command(1, rn, []) of
-		 {ok, {1, n, [M]}} ->
-		     try binary_to_integer(M, 16) of
-			 Mask -> 
-			     handle_slots(Slots, Mask, 0)
-		     catch 
-			 error:badarg ->
-			     ?error("Invalid mask: ~p~n", [M]),
-			     Slots
-		     end;
+		 {ok, {1, n, [Mask]}} when is_integer(Mask) ->
+		     handle_slots(Slots, Mask, 0);
 		 {ok, _Ret} ->
 		     ?error("Unrecognized answer: ~p~n", [_Ret]),
 		     Slots;
@@ -51,6 +44,7 @@ loop(Time, Slots) ->
 		     ?error("Error monitoring MCUs: ~p~n", [Err]),
 		     Slots
 	     end,
+    timer:sleep(Time),
     loop(Time, Slots2).
 
 % loop over all bits of mask and compare with old slots,
@@ -74,7 +68,6 @@ handle_slots(Slots, Mask, Idx) when
 handle_slots(Slots, Mask, Idx) when
       Mask band (1 bsl Idx) /= 0, element(Idx+1, Slots) == false ->
     % slot is occupied, slot was not occupied
-    ?info("Start MCU monitor (slot: ~p)~n", [Idx+1]),
     {ok, Pid} = bkfw_mcus_sup:start_mcu(Idx+1),
     Slots2 = setelement(Idx+1, Slots, Pid),
     handle_slots(Slots2, Mask, Idx+1);

@@ -7,7 +7,11 @@
 
 -export([token/1]).
 
--type token() :: {integer, integer()} | {float, float()} | {string, string()}.
+-type terminal() :: adi | alarms | bref | cc | 'edfa_temp' | 'edfa_psu' | gc | it | lc | li | lo | lt |
+		    mode | mute | n | off | pc | pin | pout | 'pump_bias' | 'pump_temp' | ra | 
+		    rcc | rgc | ri | rit | rlc | rli | rlo | rlt | rmode | rn | rpc | rpm |
+		    rv | scc | sgc | sli | slo | smode | spc | v.
+-type token() :: {integer, integer()} | {float, float()} | {string, string()} | {atom, terminal()}.
 -type token_ret() :: {ok, token(), binary()} | eof | {error, term()}.
 
 -spec token(binary()) -> token_ret().
@@ -15,8 +19,10 @@ token(<<>>) -> eof;
 token(<< $\s, R/bits >>) -> token(R);
 token(<< $\t, R/bits >>) -> token(R);
 token(<< $0, $x, R/bits >>) -> s_hex_i(R);
+token(<< $A, $L, $A, $R, $M, $S, $:, R/bits >>)         -> {ok, {atom, alarms}, R};
 token(<< Alpha, R/bits >>) when Alpha >= 65, Alpha =< 90 -> s_string(R, << Alpha >>);   % Upper-case alpha
 token(<< Alpha, R/bits >>) when Alpha >= 97, Alpha =< 122 -> s_string(R, << Alpha >>);  % Lower-case alpha
+token(<< $_, R/bits >>) -> s_string(R, << $_ >>);
 token(<< $0, R/bits >>) -> s_num_i(R);
 token(<< $1, R/bits >>) -> s_num(R, 1);
 token(<< $2, R/bits >>) -> s_num(R, 2);
@@ -72,15 +78,25 @@ s_hex(<< $e, R/bits >>, Acc) -> s_hex(R, Acc * 16 + 14);
 s_hex(<< $f, R/bits >>, Acc) -> s_hex(R, Acc * 16 + 15);
 s_hex(<< C, _R/bits >>, _Acc) -> {error, io_lib:format("Invalid hex: ~p", [C])}.
 
-s_string(<<>>, Acc) -> {ok, {string, Acc}, <<>>};
-s_string(<< $\s, R/bits >>, Acc) -> {ok, {string, Acc}, R};
-s_string(<< $\t, R/bits >>, Acc) -> {ok, {string, Acc}, R};
+s_string(<<>>, Acc) -> s_str_or_atom(Acc, <<>>);
+s_string(<< $\s, R/bits >>, Acc) -> s_str_or_atom(Acc, R);
+s_string(<< $\t, R/bits >>, Acc) -> s_str_or_atom(Acc, R);
 s_string(<< C, R/bits >>, Acc) when C >= 65, C =< 90 ->
     s_string(R, << Acc/binary, C >>);
 s_string(<< C, R/bits >>, Acc) when C >= 97, C =< 122 ->
     s_string(R, << Acc/binary, C >>);
+s_string(<< $_, R/bits >>, Acc) -> 
+    s_string(R, << Acc/binary, $_ >>);
 s_string(<< C, _R/bits >>, _Acc) -> 
     {error, io_lib:format("Invalid char in string: ~p", [C])}.
+
+s_str_or_atom(Str, Rest) ->
+    case kw_to_atom(Str) of
+	{error, not_an_atom} ->
+	    {ok, {string, Str}, Rest};
+	Atom ->
+	    {ok, {atom, Atom}, Rest}
+    end.
 
 s_num_i(<<>>) -> {ok, {integer, 0}, <<>>};
 s_num_i(<< $\s, R/bits >>) -> {ok, {integer, 0}, R};
@@ -141,6 +157,49 @@ s_frac(<< $7, R/bits >>, Int, Frac, E) -> s_frac(R, Int, Frac * 10 + 7, E + 1);
 s_frac(<< $8, R/bits >>, Int, Frac, E) -> s_frac(R, Int, Frac * 10 + 8, E + 1);
 s_frac(<< $9, R/bits >>, Int, Frac, E) -> s_frac(R, Int, Frac * 10 + 9, E + 1);
 s_frac(<< C, _R/bits >>, _, _, _) -> {error, io_lib:format("Invalid num: ~p", [C])}.
+
+kw_to_atom(<<"ADI">>)       -> adi;
+kw_to_atom(<<"BREF">>)      -> bref;
+kw_to_atom(<<"CC">>)        -> cc;
+kw_to_atom(<<"EDFA_TEMP">>) -> edfa_temp;
+kw_to_atom(<<"EDFA_PSU">>)  -> edfa_psu;
+kw_to_atom(<<"GC">>)        -> gc;
+kw_to_atom(<<"IT">>)        -> it;
+kw_to_atom(<<"LC">>)        -> lc;
+kw_to_atom(<<"LI">>)        -> li;
+kw_to_atom(<<"LO">>)        -> lo;
+kw_to_atom(<<"LT">>)        -> lt;
+kw_to_atom(<<"MODE">>)      -> mode;
+kw_to_atom(<<"MUTE">>)      -> mute;
+kw_to_atom(<<"N">>)         -> n;
+kw_to_atom(<<"OFF">>)       -> off;
+kw_to_atom(<<"PC">>)        -> pc;
+kw_to_atom(<<"PIN">>)       -> pin;
+kw_to_atom(<<"POUT">>)      -> pout;
+kw_to_atom(<<"PUMP_BIAS">>) -> pump_bias;
+kw_to_atom(<<"PUMP_TEMP">>) -> pump_temp;
+kw_to_atom(<<"RA">>)        -> ra;
+kw_to_atom(<<"RCC">>)       -> rcc;
+kw_to_atom(<<"RGC">>)       -> rgc;
+kw_to_atom(<<"RI">>)        -> ri;
+kw_to_atom(<<"RIT">>)       -> rit;
+kw_to_atom(<<"RLC">>)       -> rlc;
+kw_to_atom(<<"RLI">>)       -> rli;
+kw_to_atom(<<"RLO">>)       -> rlo;
+kw_to_atom(<<"RLT">>)       -> rlt;
+kw_to_atom(<<"RMODE">>)     -> rmode;
+kw_to_atom(<<"RN">>)        -> rn;
+kw_to_atom(<<"RPC">>)       -> rpc;
+kw_to_atom(<<"RPM">>)       -> rpm;
+kw_to_atom(<<"RV">>)        -> rv;
+kw_to_atom(<<"SCC">>)       -> scc;
+kw_to_atom(<<"SGC">>)       -> sgc;
+kw_to_atom(<<"SLI">>)       -> sli;
+kw_to_atom(<<"SLO">>)       -> slo;
+kw_to_atom(<<"SMODE">>)     -> smode;
+kw_to_atom(<<"SPC">>)       -> spc;
+kw_to_atom(<<"V">>)         -> v;
+kw_to_atom(_S) -> {error, not_an_atom}.
 
 -ifdef(TEST).
 

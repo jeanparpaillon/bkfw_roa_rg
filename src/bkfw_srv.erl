@@ -29,12 +29,16 @@
 start_link() ->
     gen_fsm:start_link({local, ?FSM}, ?MODULE, [], []).
 
--spec command(Idx :: integer(), Cmd :: atom(), Args :: iolist()) -> {ok, term()} | {error, term()}.
+-spec command(Idx :: integer(), Cmd :: atom(), Args :: list()) -> {ok, term()} | {error, term()}.
 command(Idx, Cmd, Args) when is_integer(Idx), is_atom(Cmd) ->
     Ref = make_ref(),
     CmdName = string:to_upper(atom_to_list(Cmd)),
     Timeout = application:get_env(bkfw, timeout, ?TIMEOUT),
-    try gen_fsm:send_event(?FSM, {cmd, {Ref, self()}, Idx, [CmdName, Args]}) of
+    ArgsStr = case Args of
+		  [] -> "";
+		  _ -> [" ", Args]
+	      end,
+    try gen_fsm:send_event(?FSM, {cmd, {Ref, self()}, Idx, [CmdName, ArgsStr]}) of
 	ok ->
 	    receive
 		{error, Err} -> {error, Err};
@@ -151,7 +155,7 @@ handle_info({msg, Msg}, wait_answer, #state{com=Com, pending=Q}=S) ->
     end;
 
 handle_info({error, Err}, StateName, State) ->
-    ?debug("Bad message: ~p~n", [Err]),
+    ?debug("Bad message: ~s~n", [Err]),
     {next_state, StateName, State};
 
 handle_info(Info, StateName, State) ->

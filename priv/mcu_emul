@@ -125,7 +125,7 @@ handle_msg({ok, {Addr, rlo, []}}, _Slots, To) ->
 handle_msg({ok, {Addr, slo, [Loss]}}, _Slots, To) when is_float(Loss) ->
     reply(To, Addr, io_lib:format("SLO ~.2f", [Loss]));
 handle_msg({ok, {Addr, rn, []}}, Slots, To) ->
-    reply(To, Addr, ["N ", Slots]);
+    reply(To, Addr, ["N 0x", Slots]);
 handle_msg({ok, {Addr, Cmd, Args}}, _Slots, To) ->
     ?error("Invalid command: ~p(~p)~n", [Cmd, Args]),
     reply(To, Addr, "INVALID CMD").
