@@ -6,15 +6,18 @@
 -define(info(Msg), io:format("INFO: " ++ Msg)).
 -define(info(Msg, Data), io:format("INFO: " ++ Msg, Data)).
 
+-define(debug(Msg), io:format("DEBUG: " ++ Msg)).
+-define(debug(Msg, Data), io:format("DEBUG: " ++ Msg, Data)).
+
 -define(error(Msg), io:format("ERROR: " ++ Msg)).
 -define(error(Msg, Data), io:format("ERROR: " ++ Msg, Data)).
 
 -define(deps, ["getopt", "cereal"]).
 
 -define(argspec, [
-		  {help,    $h,        "help",    undefined,           "Show help"},
-		  {num,     $n,        "num",     {integer, 1},        "MCU number"},
-		  {pty,     undefined, undefined, string,              "Path to pty"}
+		  {help,    $h,        "help",    undefined,            "Show help"},
+		  {slots,   $s,        "slots",   {string, "00000001"}, "MCU slots (8 chars hex)"},
+		  {pty,     undefined, undefined, string,               "Path to pty"}
 		 ]).
 
 main(Args) ->
@@ -46,85 +49,93 @@ start(Opts) ->
 	    {ok, Fd} = cereal:open_tty(Pty),
 	    ok = cereal:set_raw_tty_mode(Fd),
 	    Port = open_port({fd, Fd, Fd}, [binary, stream, {line, 80}]),
-	    loop(Port, proplists:get_value(num, Opts), <<>>)
+	    Slots = list_to_binary(proplists:get_value(slots, Opts)),
+	    ?info("Slots: ~.2b~n", [binary_to_integer(Slots, 16)]),
+	    loop(Port, Slots, <<>>)
     end.
 
 
-loop(Port, N, Acc) ->
+loop(Port, Slots, Acc) ->
     receive
 	{Port, {data, {noeol, Bin}}} ->
-	    loop(Port, N, << Acc/binary, Bin/binary >>);
+	    loop(Port, Slots, << Acc/binary, Bin/binary >>);
 	{Port, {data, {eol, Bin}}} ->
-	    handle_msg(bkfw_parser:parse_query(<< Acc/binary, Bin/binary >>), Port),
-	    loop(Port, N, <<>>);
+	    Msg = << Acc/binary, Bin/binary >>,
+	    ?debug("received: ~p~n", [Msg]),
+	    handle_msg(bkfw_parser:parse(Msg), Slots, Port),
+	    loop(Port, Slots, <<>>);
 	_Else ->
 	    ?error("received: ~p~n", [_Else]),
-	    loop(Port, N, Acc)
+	    loop(Port, Slots, Acc)
     end.
 
-
-handle_msg({error, Err}, _To) ->
+handle_msg({error, Err}, _Slots, _To) ->
     ?error("parse error: ~s~n", [Err]);
-handle_msg(eof, _To) ->
+handle_msg(eof, _Slots, _To) ->
     ok;
-handle_msg({ok, _Addr, rcc, [Pos]}, To) when is_integer(Pos) ->
-    reply(To, io_lib:format("CC ~p ~.2f mA", [Pos, 1230.32]));
-handle_msg({ok, _Addr, scc, [Pos, Cur]}, To) when is_integer(Pos), is_float(Cur) ->
-    reply(To, io_lib:format("SCC ~p ~.2f", [Pos, Cur]));
-handle_msg({ok, _Addr, rgc, []}, To) ->
-    reply(To, "GC 42.11 dB");
-handle_msg({ok, _Addr, sgc, [Gain]}, To) when is_float(Gain) ->
-    reply(To, io_lib:format("SGC ~.2f", [Gain]));
-handle_msg({ok, _Addr, rpc, []}, To) ->
-    reply(To, "PC 12.57 dBm");
-handle_msg({ok, _Addr, spc, [Pow]}, To) ->
-    reply(To, io_lib:format("SPC ~.2f", [Pow]));
-handle_msg({ok, _Addr, rmode, []}, To) ->
-    reply(To, "MODE CC");
-handle_msg({ok, _Addr, smode, [Mode]}, To) when Mode == "PC";
-						Mode == "GC";
-						Mode == "CC";
-						Mode == "OFF" ->
-    reply(To, ["SMODE ", Mode]);
-handle_msg({ok, _Addr, ra, []}, To) ->
-    reply(To, "ALARMS: PUMP_TEMP BREF");
-handle_msg({ok, _Addr, rlt, [Pos]}, To) when is_integer(Pos) ->
-    reply(To, io_lib:format("LT ~p ~.2f C", [Pos, 89.99]));
-handle_msg({ok, _Addr, rlc, [Pos]}, To) when is_integer(Pos) ->
-    reply(To, io_lib:format("LC ~p ~.2f mA", [Pos, 234.32]));
-handle_msg({ok, _Addr, rit, []}, To) ->
-    reply(To, "IT 43.12 C");
-handle_msg({ok, _Addr, ri, []}, To) ->
-    reply(To, ["Vendor= Bktel Photonics\n",
-	       "Module= blop\n",
-	       "HW Ver= 0\n",
-	       "HW Rev= A\n",
-	       "SW Ver= 0.01\n",
-	       "FW Ver= 0.01\n",
-	       "Part Num= 123456\n",
-	       "Ser. Num= 20141101001\n",
-	       "Prod. Date= 20141101\n"]);
-handle_msg({ok, _Addr, rpm, []}, To) ->
-    reply(To, ["PD1 12.34 dBm\n",
-	       "PD2 23.45 dBm\n",
-	       "PD3 45.56 dBm\n"]);
-handle_msg({ok, _Addr, rv, []}, To) ->
-    reply(To, "V 24.0 V");
-handle_msg({ok, _Addr, rli, []}, To) ->
-    reply(To, "LI 89.01 dBm");
-handle_msg({ok, _Addr, sli, [Pow]}, To) when is_float(Pow) ->
-    reply(To, io_lib:format("SLI ~.2f", [Pow]));
-handle_msg({ok, _Addr, rlo, []}, To) ->
-    reply(To, "LO 12.78 dBm");
-handle_msg({ok, _Addr, slo, [Loss]}, To) when is_float(Loss) ->
-    reply(To, io_lib:format("SLO ~.2f", [Loss]));
-handle_msg({ok, _Addr, Cmd, Args}, To) ->
+handle_msg({ok, {Addr, rcc, [Pos]}}, _Slots, To) when is_integer(Pos) ->
+    reply(To, Addr, io_lib:format("CC ~p ~.2f mA", [Pos, 1230.32]));
+handle_msg({ok, {Addr, scc, [Pos, Cur]}}, _Slots, To) when is_integer(Pos), is_float(Cur) ->
+    reply(To, Addr, io_lib:format("SCC ~p ~.2f", [Pos, Cur]));
+handle_msg({ok, {Addr, rgc, []}}, _Slots, To) ->
+    reply(To, Addr, "GC 42.11 dB");
+handle_msg({ok, {Addr, sgc, [Gain]}}, _Slots, To) when is_float(Gain) ->
+    reply(To, Addr, io_lib:format("SGC ~.2f", [Gain]));
+handle_msg({ok, {Addr, rpc, []}}, _Slots, To) ->
+    reply(To, Addr, "PC 12.57 dBm");
+handle_msg({ok, {Addr, spc, [Pow]}}, _Slots, To) ->
+    reply(To, Addr, io_lib:format("SPC ~.2f", [Pow]));
+handle_msg({ok, {Addr, rmode, []}}, _Slots, To) ->
+    reply(To, Addr, "MODE CC");
+handle_msg({ok, {Addr, smode, [Mode]}}, _Slots, To) when Mode == "PC";
+							 Mode == "GC";
+							 Mode == "CC";
+							 Mode == "OFF" ->
+    reply(To, Addr, ["SMODE ", Mode]);
+handle_msg({ok, {Addr, ra, []}}, _Slots, To) ->
+    reply(To, Addr, "ALARMS: PUMP_TEMP BREF");
+handle_msg({ok, {Addr, rlt, [Pos]}}, _Slots, To) when is_integer(Pos) ->
+    reply(To, Addr, io_lib:format("LT ~p ~.2f C", [Pos, 89.99]));
+handle_msg({ok, {Addr, rlc, [Pos]}}, _Slots, To) when is_integer(Pos) ->
+    reply(To, Addr, io_lib:format("LC ~p ~.2f mA", [Pos, 234.32]));
+handle_msg({ok, {Addr, rit, []}}, _Slots, To) ->
+    reply(To, Addr, "IT 43.12 C");
+handle_msg({ok, {Addr, ri, []}}, _Slots, To) ->
+    reply(To, Addr, ["Vendor= Bktel Photonics\n",
+		     "Module= blop\n",
+		     "HW Ver= 0\n",
+		     "HW Rev= A\n",
+		     "SW Ver= 0.01\n",
+		     "FW Ver= 0.01\n",
+		     "Part Num= 123456\n",
+		     "Ser. Num= 20141101001\n",
+		     "Prod. Date= 20141101\n"]);
+handle_msg({ok, {Addr, rpm, []}}, _Slots, To) ->
+    reply(To, Addr, ["PD1 12.34 dBm\n",
+		     "PD2 23.45 dBm\n",
+		     "PD3 45.56 dBm\n"]);
+handle_msg({ok, {Addr, rv, []}}, _Slots, To) ->
+    reply(To, Addr, "V 24.0 V");
+handle_msg({ok, {Addr, rli, []}}, _Slots, To) ->
+    reply(To, Addr, "LI 89.01 dBm");
+handle_msg({ok, {Addr, sli, [Pow]}}, _Slots, To) when is_float(Pow) ->
+    reply(To, Addr, io_lib:format("SLI ~.2f", [Pow]));
+handle_msg({ok, {Addr, rlo, []}}, _Slots, To) ->
+    reply(To, Addr, "LO 12.78 dBm");
+handle_msg({ok, {Addr, slo, [Loss]}}, _Slots, To) when is_float(Loss) ->
+    reply(To, Addr, io_lib:format("SLO ~.2f", [Loss]));
+handle_msg({ok, {Addr, rn, []}}, Slots, To) ->
+    reply(To, Addr, io_lib:format("N ~p", [Slots]));
+handle_msg({ok, {Addr, Cmd, Args}}, _Slots, To) ->
     ?error("Invalid command: ~p(~p)~n", [Cmd, Args]),
-    reply(To, "INVALID CMD").
+    reply(To, Addr, "INVALID CMD").
 
 
-reply(To, Ans) ->
-    To ! {self(), {command, iolist_to_binary([Ans, "\n"])}}.
+reply(To, Addr, Ans) ->
+    HexAddr = ["0x", io_lib:format("~2.16.0b", [Addr])],
+    Msg = iolist_to_binary([HexAddr, " ", Ans, "\n"]),
+    ?debug("replying: ~p~n", [Msg]),
+    To ! {self(), {command, Msg}}.
 
 
 set_paths() ->
