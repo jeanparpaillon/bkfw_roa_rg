@@ -24,3 +24,21 @@
 
 -type msg_line() :: [Args :: [token()]].
 -type msg() :: {Addr :: integer(), Cmd :: atom(), Lines :: [msg_line()]}.
+
+% SNMP table record
+-record(edfaTable, {ampConsign,
+		    gainConsign,
+		    outputPowerConsign,
+		    operatingMode,
+		    curLaserTemp,
+		    curAmp,
+		    curInternalTemp,
+		    vendor,
+		    moduleType,
+		    hwVer,
+		    hwRev,
+		    swVer,
+		    fwVer,
+		    partNum,
+		    serialNum,
+		    productDate}).

@@ -80,8 +80,7 @@ EdfaEntry ::=
 		edfaFWVer		DisplayString,
 		edfaPartNum		DisplayString,
 		edfaSerialNum		DisplayString,
-		edfaProductDate		DateAndTime,
-		edfaRowStatus		RowStatus
+		edfaProductDate		DateAndTime
 	}
 
 edfaIndex OBJECT-TYPE
@@ -224,24 +223,5 @@ edfaProductDate	OBJECT-TYPE
     DESCRIPTION
 	"Module production date."
     ::= { edfaEntry 17 }
-
-edfaRowStatus	OBJECT-TYPE
-    SYNTAX	RowStatus
-    MAX-ACCESS	read-only
-    STATUS	current
-    DESCRIPTION
-	"This OID uses six main statuses:
-        active(1)         is in use and available in stuffTable
-        notinService(2)   it is present but not yet created
-        notReady(3)       it is present but missing info
-        createAndGo(4)    create stuff in stuffTable.  Row will be
-                          added to this table if necessary.
-        createAndWait(5)  add stuff row to this table
-        destroy(6)        will remove the stuff row
-
-        This OID is used to add/remove rows for stuff creation.  
-        It can also be used to determine if a stuff has been 
-        created successfully."
-    ::= { edfaEntry 18 }
 
 END
