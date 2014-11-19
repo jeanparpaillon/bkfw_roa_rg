@@ -20,6 +20,9 @@
 		  {pty,     undefined, undefined, string,               "Path to pty"}
 		 ]).
 
+-define(WAIT, true).
+%-define(WAIT, timer:sleep(100)).
+
 main(Args) ->
     set_paths(),
     case getopt:parse(?argspec, Args) of
@@ -132,6 +135,7 @@ handle_msg({ok, {Addr, Cmd, Args}}, _Slots, To) ->
 
 
 reply(To, Addr, Ans) ->
+    ?WAIT,
     HexAddr = ["0x", io_lib:format("~2.16.0b", [Addr])],
     Msg = iolist_to_binary([HexAddr, " ", Ans, "\r\n"]),
     ?debug("replying: ~p~n", [Msg]),
