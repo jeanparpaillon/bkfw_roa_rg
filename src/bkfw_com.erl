@@ -26,6 +26,7 @@ start_link() ->
     gen_server:start_link(?MODULE, self(), []).
 
 stop(Com) ->
+    ?debug("Stopping COM~n", []),
     gen_server:call(Com, stop).
 
 -spec send(Com :: pid(), To :: integer(), Msg :: iolist()) -> {ok, Reply :: term()} | {error, Err :: term()}.

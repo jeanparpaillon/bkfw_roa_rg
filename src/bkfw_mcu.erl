@@ -5,7 +5,7 @@
 
 -export([start_link/1]).
 
--export([loop/2,
+-export([init/2,
 	 read_cc/1,
 	 read_gc/1,
 	 read_pc/1,
@@ -38,12 +38,15 @@
 start_link(Idx) ->
     ?info("Start MCU monitor (slot: ~p)~n", [Idx+1]),
     Period = application:get_env(bkfw, mcu_period, ?PERIOD),
-    Pid = spawn_link(?MODULE, loop, [Idx, Period]),
+    Pid = spawn_link(?MODULE, init, [Idx, Period]),
     {ok, Pid}.
 
 %%%
 %%% Internals
 %%%
+init(Idx, Period) ->
+    loop(Idx, Period).
+
 loop(Idx, Period) ->
     lists:foreach(fun(F) -> F(Idx+1) end, ?FUNS),
     timer:sleep(Period),
