@@ -13,7 +13,6 @@ Requirements:
 * `mcu_period` (integer, default: 1000): refreshing time (ms) for MCU status
 * `timeout` (integer, default: 1000): ms before timeout when communicating to COM port
 * `max_queue` (integer, default: 100): maximum size of queue for pending message (avoid out-of-memory)
-* `positions` (integer, default: 1): # of laser positions (1,2,3)
 
 # Test with MCU emulation
 
