@@ -1,25 +1,31 @@
 -module(bkfw_scanner).
 -author('jean.parpaillon@lizenn.com').
 
+-include("bkfw.hrl").
+
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
 -export([token/1]).
 
--type terminal() :: adi | alarms | bref | cc | 'edfa_temp' | 'edfa_psu' | gc | it | lc | li | lo | lt |
-		    mode | mute | n | off | pc | pin | pout | 'pump_bias' | 'pump_temp' | ra | 
-		    rcc | rgc | ri | rit | rlc | rli | rlo | rlt | rmode | rn | rpc | rpm |
-		    rv | scc | sgc | sli | slo | smode | spc | v.
--type token() :: {integer, integer()} | {float, float()} | {string, string()} | {atom, terminal()}.
 -type token_ret() :: {ok, token(), binary()} | eof | {error, term()}.
 
 -spec token(binary()) -> token_ret().
 token(<<>>) -> eof;
 token(<< $\s, R/bits >>) -> token(R);
 token(<< $\t, R/bits >>) -> token(R);
-token(<< $0, $x, R/bits >>) -> s_hex_i(R);
-token(<< $A, $L, $A, $R, $M, $S, $:, R/bits >>)         -> {ok, {atom, alarms}, R};
+token(<< $=, R/bits >>) -> s_value(R, <<>>);
+token(<< "0x", R/bits >>)                    -> s_hex_i(R);
+token(<< "FW Ver= ", R/bits >>)              -> {ok, fw_ver, << $=, R/bits >>};
+token(<< "HW Rev= ", R/bits >>)              -> {ok, hw_rev, << $=, R/bits >>};
+token(<< "HW Ver= ", R/bits >>)              -> {ok, hw_ver, << $=, R/bits >>};
+token(<< "Module= ", R/bits >>)              -> {ok, module, << $=, R/bits >>};
+token(<< "Part Num= ", R/bits >>)            -> {ok, part_num, << $=, R/bits >>};
+token(<< "Prod. Date= ", R/bits >>)          -> {ok, prod_date, << $=, R/bits >>};
+token(<< "Ser. Num= ", R/bits >>)            -> {ok, ser_num, << $=, R/bits >>};
+token(<< "SW Ver= ", R/bits >>)              -> {ok, sw_ver, << $=, R/bits >>};
+token(<< "Vendor= ", R/bits >>)              -> {ok, vendor, << $=, R/bits >>};
 token(<< Alpha, R/bits >>) when Alpha >= 65, Alpha =< 90 -> s_string(R, << Alpha >>);   % Upper-case alpha
 token(<< Alpha, R/bits >>) when Alpha >= 97, Alpha =< 122 -> s_string(R, << Alpha >>);  % Lower-case alpha
 token(<< $_, R/bits >>) -> s_string(R, << $_ >>);
@@ -57,9 +63,9 @@ s_hex_i(<< $e, R/bits >>) -> s_hex(R, 14);
 s_hex_i(<< $f, R/bits >>) -> s_hex(R, 15);
 s_hex_i(<< C, _R/bits >>) -> {error, io_lib:format("Invalid hex: ~p", [C])}.
 
-s_hex(<<>>, Acc) -> {ok, {integer, Acc}, <<>>};
-s_hex(<< $\s, R/bits >>, Acc) -> {ok, {integer, Acc}, R};
-s_hex(<< $\t, R/bits >>, Acc) -> {ok, {integer, Acc}, R};
+s_hex(<<>>, Acc) -> {ok, Acc, <<>>};
+s_hex(<< $\s, R/bits >>, Acc) -> {ok, Acc, R};
+s_hex(<< $\t, R/bits >>, Acc) -> {ok, Acc, R};
 s_hex(<< $0, R/bits >>, Acc) -> s_hex(R, Acc * 16);
 s_hex(<< $1, R/bits >>, Acc) -> s_hex(R, Acc * 16 + 1);
 s_hex(<< $2, R/bits >>, Acc) -> s_hex(R, Acc * 16 + 2);
@@ -78,29 +84,32 @@ s_hex(<< $e, R/bits >>, Acc) -> s_hex(R, Acc * 16 + 14);
 s_hex(<< $f, R/bits >>, Acc) -> s_hex(R, Acc * 16 + 15);
 s_hex(<< C, _R/bits >>, _Acc) -> {error, io_lib:format("Invalid hex: ~p", [C])}.
 
+s_value(<<>>, Acc) -> {ok, Acc, <<>>};
+s_value(<< C, R/bits >>, Acc) ->  s_value(R, << Acc/binary, C >>).
+
 s_string(<<>>, Acc) -> s_str_or_atom(Acc, <<>>);
 s_string(<< $\s, R/bits >>, Acc) -> s_str_or_atom(Acc, R);
 s_string(<< $\t, R/bits >>, Acc) -> s_str_or_atom(Acc, R);
-s_string(<< C, R/bits >>, Acc) when C >= 65, C =< 90 ->
+s_string(<< C, R/bits >>, Acc) when C >= 65, C =< 90 ->        % upper-case letters
     s_string(R, << Acc/binary, C >>);
-s_string(<< C, R/bits >>, Acc) when C >= 97, C =< 122 ->
+s_string(<< C, R/bits >>, Acc) when C >= 97, C =< 122 ->       % lower-case letters
     s_string(R, << Acc/binary, C >>);
-s_string(<< $_, R/bits >>, Acc) -> 
-    s_string(R, << Acc/binary, $_ >>);
+s_string(<< C, R/bits >>, Acc) when C >= 48, C =< 57 ->        % digit
+    s_string(R, << Acc/binary, C >>);
+s_string(<< $_, R/bits >>, Acc) -> s_string(R, << Acc/binary, $_ >>);
+s_string(<< $:, R/bits >>, Acc) -> s_string(R, << Acc/binary, $: >>);
 s_string(<< C, _R/bits >>, _Acc) -> 
     {error, io_lib:format("Invalid char in string: ~p", [C])}.
 
 s_str_or_atom(Str, Rest) ->
     case kw_to_atom(Str) of
-	{error, not_an_atom} ->
-	    {ok, {string, Str}, Rest};
-	Atom ->
-	    {ok, {atom, Atom}, Rest}
+	A when is_atom(A) -> {ok, A, Rest};
+	B -> {ok, B, Rest}
     end.
 
-s_num_i(<<>>) -> {ok, {integer, 0}, <<>>};
-s_num_i(<< $\s, R/bits >>) -> {ok, {integer, 0}, R};
-s_num_i(<< $\t, R/bits >>) -> {ok, {integer, 0}, R};
+s_num_i(<<>>) -> {ok, 0, <<>>};
+s_num_i(<< $\s, R/bits >>) -> {ok, 0, R};
+s_num_i(<< $\t, R/bits >>) -> {ok, 0, R};
 s_num_i(<< $0, R/bits >>) -> s_num_i(R);
 s_num_i(<< $1, R/bits >>) -> s_num(R, 1);
 s_num_i(<< $2, R/bits >>) -> s_num(R, 2);
@@ -114,9 +123,9 @@ s_num_i(<< $9, R/bits >>) -> s_num(R, 9);
 s_num_i(<< $., R/bits >>) -> s_frac_i(R, 0);
 s_num_i(<< C, _R/bits >>) -> {error, io_lib:format("Invalid num: ~p", [C])}.
 
-s_num(<<>>, Acc) -> {ok, {integer, Acc}, <<>>};
-s_num(<< $\s, R/bits >>, Acc) -> {ok, {integer, Acc}, R};
-s_num(<< $\t, R/bits >>, Acc) -> {ok, {integer, Acc}, R};
+s_num(<<>>, Acc) -> {ok, Acc, <<>>};
+s_num(<< $\s, R/bits >>, Acc) -> {ok, Acc, R};
+s_num(<< $\t, R/bits >>, Acc) -> {ok, Acc, R};
 s_num(<< $0, R/bits >>, Acc) -> s_num(R, Acc * 10);
 s_num(<< $1, R/bits >>, Acc) -> s_num(R, Acc * 10 + 1);
 s_num(<< $2, R/bits >>, Acc) -> s_num(R, Acc * 10 + 2);
@@ -143,9 +152,9 @@ s_frac_i(<< $8, R/bits >>, Int) -> s_frac(R, Int, 8, 1);
 s_frac_i(<< $9, R/bits >>, Int) -> s_frac(R, Int, 9, 1);
 s_frac_i(<< C, _R/bits >>, _) -> {error, io_lib:format("Invalid num: ~p", [C])}.
 
-s_frac(<<>>, Int, Frac, E) -> {ok, {float, Int + Frac / math:pow(10, E)}, <<>>};
-s_frac(<< $\s, R/bits >>, Int, Frac, E) -> {ok, {float, Int + Frac / math:pow(10, E)}, R};
-s_frac(<< $\t, R/bits >>, Int, Frac, E) -> {ok, {float, Int + Frac / math:pow(10, E)}, R};
+s_frac(<<>>, Int, Frac, E) -> {ok, Int + Frac / math:pow(10, E), <<>>};
+s_frac(<< $\s, R/bits >>, Int, Frac, E) -> {ok, Int + Frac / math:pow(10, E), R};
+s_frac(<< $\t, R/bits >>, Int, Frac, E) -> {ok, Int + Frac / math:pow(10, E), R};
 s_frac(<< $0, R/bits >>, Int, Frac, E) -> s_frac(R, Int, Frac * 10, E + 1);
 s_frac(<< $1, R/bits >>, Int, Frac, E) -> s_frac(R, Int, Frac * 10 + 1, E + 1);
 s_frac(<< $2, R/bits >>, Int, Frac, E) -> s_frac(R, Int, Frac * 10 + 2, E + 1);
@@ -159,6 +168,7 @@ s_frac(<< $9, R/bits >>, Int, Frac, E) -> s_frac(R, Int, Frac * 10 + 9, E + 1);
 s_frac(<< C, _R/bits >>, _, _, _) -> {error, io_lib:format("Invalid num: ~p", [C])}.
 
 kw_to_atom(<<"ADI">>)       -> adi;
+kw_to_atom(<<"ALARMS:">>)   -> alarms;
 kw_to_atom(<<"BREF">>)      -> bref;
 kw_to_atom(<<"CC">>)        -> cc;
 kw_to_atom(<<"EDFA_TEMP">>) -> edfa_temp;
@@ -170,6 +180,7 @@ kw_to_atom(<<"LI">>)        -> li;
 kw_to_atom(<<"LO">>)        -> lo;
 kw_to_atom(<<"LT">>)        -> lt;
 kw_to_atom(<<"MODE">>)      -> mode;
+kw_to_atom(<<"MODULE=">>)   -> module;
 kw_to_atom(<<"MUTE">>)      -> mute;
 kw_to_atom(<<"N">>)         -> n;
 kw_to_atom(<<"OFF">>)       -> off;
@@ -198,14 +209,15 @@ kw_to_atom(<<"SLI">>)       -> sli;
 kw_to_atom(<<"SLO">>)       -> slo;
 kw_to_atom(<<"SMODE">>)     -> smode;
 kw_to_atom(<<"SPC">>)       -> spc;
+kw_to_atom(<<"VENDOR=">>)   -> vendor;
 kw_to_atom(<<"V">>)         -> v;
-kw_to_atom(_S) -> {error, not_an_atom}.
+kw_to_atom(S)               -> S.
 
 -ifdef(TEST).
 
 float_test() ->
-    ?assertEqual({ok, {float, 0.001}, <<>>}, token(<<"0.001">>)),
-    ?assertEqual({ok, {float, 0.1234}, <<>>}, token(<<"0.1234">>)),
-    ?assertEqual({ok, {float, 3.0}, <<>>}, token(<<"3.0">>)).    
+    ?assertEqual({ok, 0.001, <<>>}, token(<<"0.001">>)),
+    ?assertEqual({ok, 0.1234, <<>>}, token(<<"0.1234">>)),
+    ?assertEqual({ok, 3.0, <<>>}, token(<<"3.0">>)).    
 
 -endif.

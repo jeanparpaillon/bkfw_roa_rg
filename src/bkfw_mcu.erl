@@ -5,7 +5,7 @@
 
 -export([start_link/1]).
 
--export([init/2,
+-export([init/1,
 	 read_cc/1,
 	 read_gc/1,
 	 read_pc/1,
@@ -29,30 +29,34 @@
 	       fun read_lt/1,
 	       fun read_lc/1,
 	       fun read_it/1,
-	       fun read_i/1,
 	       fun read_pm/1,
+	       fun read_i/1,
 	       fun read_v/1,
 	       fun read_li/1,
 	       fun read_lo/1]).
 
+-record(state, {idx              :: integer(),
+		period           :: integer(),
+		positions   = 1  :: integer()}).
+
 start_link(Idx) ->
     ?info("Start MCU monitor (slot: ~p)~n", [Idx+1]),
-    Period = application:get_env(bkfw, mcu_period, ?PERIOD),
-    Pid = spawn_link(?MODULE, init, [Idx, Period]),
+    Pid = spawn_link(?MODULE, init, [Idx]),
     {ok, Pid}.
 
 %%%
 %%% Internals
 %%%
-init(Idx, Period) ->
-    loop(Idx, Period).
+init(Idx) ->
+    Period = application:get_env(bkfw, mcu_period, ?PERIOD),
+    loop(#state{idx=Idx+1, period=Period}).
 
-loop(Idx, Period) ->
-    lists:foreach(fun(F) -> F(Idx+1) end, ?FUNS),
+loop(#state{period=Period}=S) ->
+    S2 = lists:foldl(fun (F, Acc) -> F(Acc) end, S, ?FUNS),
     timer:sleep(Period),
-    loop(Idx, Period).
+    loop(S2).
 
-read_cc(Idx) ->
+read_cc(#state{idx=Idx, positions=P}=S) ->
     F = fun(X) ->
 		case bkfw_srv:command(Idx, rcc, [integer_to_binary(X)]) of
 		    {ok, {Idx, cc, [X, BinA, <<"mA">>]}} ->
@@ -63,9 +67,10 @@ read_cc(Idx) ->
 			?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err])
 		end
 	end,
-    lists:foreach(F, [1,2,3]).
+    lists:foreach(F, lists:seq(1,P)),
+    S.
 
-read_gc(Idx) ->
+read_gc(#state{idx=Idx}=S) ->
     case bkfw_srv:command(Idx, rgc, []) of
 	{ok, {Idx, gc, [BinY, <<"dB">>]}} ->
 	    ?debug("[~p] gain consign: ~p dB~n", [Idx, BinY]);
@@ -73,9 +78,10 @@ read_gc(Idx) ->
 	    ?error("[~p] RGC invalid answer: ~p~n", [Idx, _Ret]);
 	{error, Err} ->
 	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err])
-    end.
+    end,
+    S.
 
-read_pc(Idx) ->
+read_pc(#state{idx=Idx}=S) ->
     case bkfw_srv:command(Idx, rpc, []) of
 	{ok, {Idx, pc, [BinY, <<"dBm">>]}} ->
 	    ?debug("[~p] output power setting: ~p dBm~n", [Idx, BinY]);
@@ -83,9 +89,10 @@ read_pc(Idx) ->
 	    ?error("[~p] RPC invalid answer: ~p~n", [Idx, _Ret]);
 	{error, Err} ->
 	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err])
-    end.
+    end,
+    S.
 
-read_mode(Idx) ->
+read_mode(#state{idx=Idx}=S) ->
     case bkfw_srv:command(Idx, rmode, []) of
 	{ok, {Idx, mode, [Mode]}} ->
 	    ?debug("[~p] : operating mode: ~p~n", [Idx, Mode]);
@@ -93,9 +100,10 @@ read_mode(Idx) ->
 	    ?error("[~p] RMODE invalid answer: ~p~n", [Idx, _Ret]);
 	{error, Err} ->
 	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err])
-    end.
+    end,
+    S.
 
-read_a(Idx) ->
+read_a(#state{idx=Idx}=S) ->
     case bkfw_srv:command(Idx, ra, []) of
 	{ok, {Idx, alarms, Alarms}} ->
 	    ?debug("[~p] Alarms: ~p~n", [Idx, Alarms]);
@@ -103,9 +111,10 @@ read_a(Idx) ->
 	    ?error("[~p] RA invalid answer: ~p~n", [Idx, _Ret]);
 	{error, Err} ->
 	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err])
-    end.
+    end,
+    S.
 
-read_lt(Idx) ->
+read_lt(#state{idx=Idx, positions=P}=S) ->
     F = fun(X) ->
 		case bkfw_srv:command(Idx, rlt, [integer_to_binary(X)]) of
 		    {ok, {Idx, lt, [BinX, BinT, <<"C">>]}} ->
@@ -116,9 +125,10 @@ read_lt(Idx) ->
 			?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err])
 		end
 	end,
-    lists:foreach(F, [1,2,3]).
+    lists:foreach(F, lists:seq(1,P)),
+    S.
 
-read_lc(Idx) ->
+read_lc(#state{idx=Idx, positions=P}=S) ->
     F = fun(X) ->
 		case bkfw_srv:command(Idx, rlc, [integer_to_binary(X)]) of
 		    {ok, {Idx, lc, [BinX, BinA, <<"mA">>]}} ->
@@ -129,9 +139,10 @@ read_lc(Idx) ->
 			?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err])
 		end
 	end,
-    lists:foreach(F, [1,2,3]).
+    lists:foreach(F, lists:seq(1,P)),
+    S.
 
-read_it(Idx) ->
+read_it(#state{idx=Idx}=S) ->
     case bkfw_srv:command(Idx, rit, []) of
 	{ok, {Idx, it, [BinT, <<"C">>]}} ->
 	    ?debug("[~p] internal temperature: ~p C~n", [Idx, BinT]);
@@ -139,15 +150,32 @@ read_it(Idx) ->
 	    ?error("[~p] RGC invalid answer: ~p~n", [Idx, _Ret]);
 	{error, Err} ->
 	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err])
-    end.
+    end,
+    S.
 
-read_i(_Idx) ->
-    ok.
+read_i(#state{idx=Idx}=S) ->
+    case bkfw_srv:command(Idx, ri, []) of
+	{ok, {Idx, i, Infos}} ->
+	    ?debug("[~p] informations: ~p~n", [Idx, Infos]);
+	{ok, _Ret} ->
+	    ?error("[~p] RI invalid answer: ~p~n", [Idx, _Ret]);
+	{error, Err} ->
+	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err])
+    end,
+    S.
 
-read_pm(_Idx) ->
-    ok.
+read_pm(#state{idx=Idx}=S) ->
+    case bkfw_srv:command(Idx, rpm, []) of
+	{ok, {Idx, pd, Lines}} ->
+	    ?debug("[~p] pd: ~p~n", [Idx, Lines]);
+	{ok, _Ret} ->
+	    ?error("[~p] RPM invalid answer: ~p~n", [Idx, _Ret]);
+	{error, Err} ->
+	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err])
+    end,
+    S.
 
-read_v(Idx) ->
+read_v(#state{idx=Idx}=S) ->
     case bkfw_srv:command(Idx, rv, []) of
 	{ok, {Idx, v, [BinV, v]}} ->
 	    ?debug("[~p] power supply voltage: ~p V~n", [Idx, BinV]);
@@ -155,9 +183,10 @@ read_v(Idx) ->
 	    ?error("[~p] RV invalid answer: ~p~n", [Idx, _Ret]);
 	{error, Err} ->
 	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err])
-    end.
+    end,
+    S.
 
-read_li(Idx) ->
+read_li(#state{idx=Idx}=S) ->
     case bkfw_srv:command(Idx, rli, []) of
 	{ok, {Idx, li, [BinY, <<"dBm">>]}} ->
 	    ?debug("[~p] loss of input power treshold: ~p dBm~n", [Idx, BinY]);
@@ -165,9 +194,10 @@ read_li(Idx) ->
 	    ?error("[~p] RLI invalid answer: ~p~n", [Idx, _Ret]);
 	{error, Err} ->
 	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err])
-    end.
+    end,
+    S.
 
-read_lo(Idx) ->
+read_lo(#state{idx=Idx}=S) ->
     case bkfw_srv:command(Idx, rlo, []) of
 	{ok, {Idx, lo, [BinY, <<"dBm">>]}} ->
 	    ?debug("[~p] loss of output power treshold: ~p dBm~n", [Idx, BinY]);
@@ -175,4 +205,5 @@ read_lo(Idx) ->
 	    ?error("[~p] RLO invalid answer: ~p~n", [Idx, _Ret]);
 	{error, Err} ->
 	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err])
-    end.
+    end,
+    S.

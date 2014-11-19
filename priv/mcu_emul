@@ -104,19 +104,18 @@ handle_msg({ok, {Addr, rlc, [Pos]}}, _Slots, To) when is_integer(Pos) ->
 handle_msg({ok, {Addr, rit, []}}, _Slots, To) ->
     reply(To, Addr, "IT 43.12 C");
 handle_msg({ok, {Addr, ri, []}}, _Slots, To) ->
-    reply(To, Addr, ["Vendor= Bktel Photonics\n",
-		     "Module= blop\n",
-		     "HW Ver= 0\n",
-		     "HW Rev= A\n",
-		     "SW Ver= 0.01\n",
-		     "FW Ver= 0.01\n",
-		     "Part Num= 123456\n",
-		     "Ser. Num= 20141101001\n",
-		     "Prod. Date= 20141101\n"]);
+    reply(To, Addr, ["Vendor= Bktel Photonics\r\n",
+		     "Module= blop\r\n",
+		     "HW Ver= 0\r\n",
+		     "HW Rev= A\r\n",
+		     "SW Ver= 0.01\r\n",
+		     "FW Ver= 0.01\r\n",
+		     "Part Num= 123456\r\n",
+		     "Ser. Num= 20141101001\r\n",
+		     "Prod. Date= 20141101\r\n"]);
 handle_msg({ok, {Addr, rpm, []}}, _Slots, To) ->
-    reply(To, Addr, ["PD1 12.34 dBm\n",
-		     "PD2 23.45 dBm\n",
-		     "PD3 45.56 dBm\n"]);
+    reply(To, Addr, ["PD1 12.34 dBm\r\n",
+		     "PD2 23.45 dBm\r\n"]);
 handle_msg({ok, {Addr, rv, []}}, _Slots, To) ->
     reply(To, Addr, "V 24.0 V");
 handle_msg({ok, {Addr, rli, []}}, _Slots, To) ->

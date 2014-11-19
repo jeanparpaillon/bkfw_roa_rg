@@ -148,7 +148,6 @@ handle_info({msg, Msg}, wait_cmd, State) ->
     {next_state, wait_cmd, State};
 
 handle_info({msg, {Idx, _, _}=Msg}, StateName, #state{ans=Ans}=S) ->
-    ?debug("Got answer: ~p~n", [Msg]),
     case ets:lookup(Ans, Idx) of
 	[] ->
 	    ?debug("Unexpected answer: ~p~n", [Msg]),

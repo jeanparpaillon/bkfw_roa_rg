@@ -17,7 +17,8 @@
 -record(state, {owner                 :: pid(),
 		com                   :: term(),
 		port    = undefined   :: port(),
-		data    = <<>>        :: binary()}).
+		data    = <<>>        :: binary(),
+		msg     = undefined   :: msg()}).
 
 %%%
 %%% API
@@ -118,16 +119,17 @@ handle_cast(_Msg, State) ->
 handle_info({Port, {data, {noeol, Bin}}}, #state{port=Port, data=Acc}=S) ->
     {noreply, S#state{data= << Acc/binary, Bin/binary >>}};
 
-handle_info({Port, {data, {eol, Bin}}}, #state{owner=Owner, port=Port, data=Acc}=S) ->
-    case bkfw_parser:parse(<< Acc/binary, Bin/binary >>) of
-	{ok, Msg} ->
-	    Owner ! {msg, Msg};
-	eol -> 
-	    ok;
+handle_info({Port, {data, {eol, Bin}}}, #state{msg=Msg, owner=Owner, port=Port, data=Acc}=S) ->
+    case bkfw_parser:parse(<< Acc/binary, Bin/binary >>, Msg) of
+	{ok, Msg2} ->
+	    Owner ! {msg, Msg2},
+	    {noreply, S#state{msg=undefined, data= <<>>}};
+	{more, Msg2} ->
+	    {noreply, S#state{msg=Msg2, data= <<>>}};
 	{error, Err} ->
-	    Owner ! {error, Err}
-    end,
-    {noreply, S#state{data= <<>>}};
+	    Owner ! {error, Err},
+	    {noreply, S#state{data= <<>>}}
+    end;
 
 handle_info(_Info, State) ->
     {noreply, State}.
