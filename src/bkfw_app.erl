@@ -4,6 +4,7 @@
 
 -include("bkfw.hrl").
 -include("EDFA-MIB.hrl").
+%-include_lib("snmp/include/snmp_types.hrl").
 
 %% Application callbacks
 -export([start/2, stop/1]).
@@ -26,11 +27,10 @@ stop(_State) ->
 %%% Priv
 %%%
 init_db() ->
-    application:start(mnesia),
-    {atomic, ok} = mnesia:create_table(edfaTable, 
-				       [{snmp, [{key, integer}]},
-					{attributes, record_info(fields, edfaTable)}]).
-
+     application:start(mnesia),
+     {atomic, ok} = mnesia:create_table(edfaTable, 
+					[{snmp, [{key, integer}]},
+					 {attributes, record_info(fields, edfaTable)}]).
 
 load_mibs(Mibs) ->
     Paths = lists:map(fun (Path) ->

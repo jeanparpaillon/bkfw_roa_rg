@@ -32,7 +32,7 @@ stop(Com) ->
 
 -spec send(Com :: pid(), To :: integer(), Msg :: iolist()) -> {ok, Reply :: term()} | {error, Err :: term()}.
 send(Com, To, Msg) when is_integer(To) ->
-    ?debug("Sending: ~p ~p~n", [To, Msg]),
+    %?debug("Sending: ~p ~p~n", [To, Msg]),
     gen_server:call(Com, {To, Msg}).
 
 %%%

@@ -5,28 +5,9 @@
 
 %% API
 -export([
-	 edfaNumber/1,
 	 edfaTable/2,
 	 edfaTable/4
 	]).
-
-%%----------------------------------------------------------------
-%% Instrumentation function for variable myName.
-%% Returns: (get) {value, Name}
-%%          (set) noError
-%%----------------------------------------------------------------
-edfaNumber(new) ->
-    ?info("Loading edfaNumber~n", []),
-    ok;
-edfaNumber(delete) ->
-    ?info("Unloading edfaNumber~n", []),
-    ok;
-edfaNumber(get) ->
-    ?info("get edfaNumber~n", []),
-    {value, 5};
-edfaNumber(_Op) ->
-    ?info("~p edfaNumber~n", [_Op]),
-    noError.
 
 %%----------------------------------------------------------------
 %% Instrumentation function for table edfaTable.

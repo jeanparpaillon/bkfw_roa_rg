@@ -72,6 +72,12 @@ EdfaEntry ::=
 		edfaCurLaserTemp	Integer32,
 		edfaCurAmp		Gauge32,
 		edfaCurInternalTemp	Integer32,
+		edfaPowerPd1            Integer32,
+		edfaPowerPd2            Integer32,
+		edfaPowerPd3            Integer32,
+		edfaPowerSupply         Integer32,
+		edfaInputLossTh	    	Integer32,
+		edfaOutputLossTh        Integer32,
 		edfaVendor		DisplayString,
 		edfaModuleType		DisplayString,
 		edfaHWVer		DisplayString,
@@ -152,13 +158,61 @@ edfaCurInternalTemp	OBJECT-TYPE
 	"The current internal temperature."
     ::= { edfaEntry 8 }
 
+edfaPowerPd1	OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The power level on the monitoring photodiode(1)."
+    ::= { edfaEntry 9 }
+
+edfaPowerPd2	OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The power level on the monitoring photodiode(2)."
+    ::= { edfaEntry 10 }
+
+edfaPowerPd3	OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The power level on the monitoring photodiode(3)."
+    ::= { edfaEntry 11 }
+
+edfaPowerSupply	OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The power supply voltage."
+    ::= { edfaEntry 12 }
+
+edfaInputLossTh	OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The loss of input power threshold."
+    ::= { edfaEntry 13 }
+
+edfaOutputLossTh OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The loss of output power threshold."
+    ::= { edfaEntry 14 }
+
 edfaVendor	OBJECT-TYPE
     SYNTAX	DisplayString
     MAX-ACCESS	read-only
     STATUS	current
     DESCRIPTION
 	"Module vendor."
-    ::= { edfaEntry 9 }
+    ::= { edfaEntry 15 }
 
 edfaModuleType	OBJECT-TYPE
     SYNTAX	DisplayString
@@ -166,7 +220,7 @@ edfaModuleType	OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"Module type."
-    ::= { edfaEntry 10 }
+    ::= { edfaEntry 16 }
 
 edfaHWVer	OBJECT-TYPE
     SYNTAX	DisplayString
@@ -174,7 +228,7 @@ edfaHWVer	OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"Module hardware version."
-    ::= { edfaEntry 11 }
+    ::= { edfaEntry 17 }
 
 edfaHWRev	OBJECT-TYPE
     SYNTAX	DisplayString
@@ -182,7 +236,7 @@ edfaHWRev	OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"Module hardware revision."
-    ::= { edfaEntry 12 }
+    ::= { edfaEntry 18 }
 
 edfaSWVer	OBJECT-TYPE
     SYNTAX	DisplayString
@@ -190,7 +244,7 @@ edfaSWVer	OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"Module software version."
-    ::= { edfaEntry 13 }
+    ::= { edfaEntry 19 }
 
 edfaFWVer	OBJECT-TYPE
     SYNTAX	DisplayString
@@ -198,7 +252,7 @@ edfaFWVer	OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"Module firmware version."
-    ::= { edfaEntry 14 }
+    ::= { edfaEntry 20 }
 
 edfaPartNum	OBJECT-TYPE
     SYNTAX	DisplayString
@@ -206,7 +260,7 @@ edfaPartNum	OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"Module part number."
-    ::= { edfaEntry 15 }
+    ::= { edfaEntry 21 }
 
 edfaSerialNum	OBJECT-TYPE
     SYNTAX	DisplayString
@@ -214,7 +268,7 @@ edfaSerialNum	OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"Module serial number."
-    ::= { edfaEntry 16 }
+    ::= { edfaEntry 22 }
 
 edfaProductDate	OBJECT-TYPE
     SYNTAX	DisplayString
@@ -222,6 +276,6 @@ edfaProductDate	OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"Module production date."
-    ::= { edfaEntry 17 }
+    ::= { edfaEntry 23 }
 
 END

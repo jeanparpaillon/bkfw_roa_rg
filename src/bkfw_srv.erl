@@ -47,7 +47,9 @@ command(Idx, Cmd, Args) when is_integer(Idx), is_atom(Cmd) ->
 	    receive
 		{error, Err} -> {error, Err};
 		{Ref, Ret} -> {ok, Ret};
-		Ret -> {error, {unexpected, Ret}}
+		Ret -> 
+		    gen_fsm:send_all_state_event(?FSM, flush),
+		    {error, {unexpected, Ret}}
 	    after 
 		Timeout ->
 		    gen_fsm:send_all_state_event(?FSM, {flush, Idx}),
@@ -103,6 +105,8 @@ init([]) ->
 %%                   {stop, Reason, NewState}
 %% @end
 %%--------------------------------------------------------------------
+handle_event(flush, _, State) ->
+    {next_state, wait_cmd, State#state{ans=ets:new(), req=queue:new()}};
 handle_event({flush, Idx}, _, #state{ans=Tid}=State) ->
     true = ets:insert(Tid, {Idx, queue:new()}),
     {next_state, wait_cmd, State};

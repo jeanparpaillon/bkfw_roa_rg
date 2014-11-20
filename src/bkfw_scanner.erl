@@ -17,14 +17,14 @@ token(<< $\s, R/bits >>) -> token(R);
 token(<< $\t, R/bits >>) -> token(R);
 token(<< $=, R/bits >>) -> s_value(R, <<>>);
 token(<< "0x", R/bits >>)                    -> s_hex_i(R);
-token(<< "FW Ver= ", R/bits >>)              -> {ok, fw_ver, << $=, R/bits >>};
-token(<< "HW Rev= ", R/bits >>)              -> {ok, hw_rev, << $=, R/bits >>};
-token(<< "HW Ver= ", R/bits >>)              -> {ok, hw_ver, << $=, R/bits >>};
-token(<< "Module= ", R/bits >>)              -> {ok, module, << $=, R/bits >>};
-token(<< "Part Num= ", R/bits >>)            -> {ok, part_num, << $=, R/bits >>};
-token(<< "Prod. Date= ", R/bits >>)          -> {ok, prod_date, << $=, R/bits >>};
-token(<< "Ser. Num= ", R/bits >>)            -> {ok, ser_num, << $=, R/bits >>};
-token(<< "SW Ver= ", R/bits >>)              -> {ok, sw_ver, << $=, R/bits >>};
+token(<< "FW Ver= ", R/bits >>)              -> {ok, fwVer, << $=, R/bits >>};
+token(<< "HW Rev= ", R/bits >>)              -> {ok, hwRev, << $=, R/bits >>};
+token(<< "HW Ver= ", R/bits >>)              -> {ok, hwVer, << $=, R/bits >>};
+token(<< "Module= ", R/bits >>)              -> {ok, moduleType, << $=, R/bits >>};
+token(<< "Part Num= ", R/bits >>)            -> {ok, partNum, << $=, R/bits >>};
+token(<< "Prod. Date= ", R/bits >>)          -> {ok, productDate, << $=, R/bits >>};
+token(<< "Ser. Num= ", R/bits >>)            -> {ok, serialNum, << $=, R/bits >>};
+token(<< "SW Ver= ", R/bits >>)              -> {ok, swVer, << $=, R/bits >>};
 token(<< "Vendor= ", R/bits >>)              -> {ok, vendor, << $=, R/bits >>};
 token(<< Alpha, R/bits >>) when Alpha >= 65, Alpha =< 90 -> s_string(R, << Alpha >>);   % Upper-case alpha
 token(<< Alpha, R/bits >>) when Alpha >= 97, Alpha =< 122 -> s_string(R, << Alpha >>);  % Lower-case alpha
