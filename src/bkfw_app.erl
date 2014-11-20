@@ -15,6 +15,10 @@
 
 start(_StartType, _StartArgs) ->
     init_db(),
+    application:start(ranch),
+    application:start(crypto),
+    application:start(cowlib),
+    application:start(cowboy),
     application:start(snmp),
     load_mibs(["BKTEL-SMI", "EDFA-MIB"]),
     bkfw_sup:start_link().
