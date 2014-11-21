@@ -1,0 +1,8 @@
+{
+  "name": "bkfw",
+  "version": "0.1",
+  "dependencies": {
+    "angular": "~1.3.3",
+    "angular-ui-router": "~0.2.13"
+  }
+}
