@@ -20,7 +20,8 @@ start(_StartType, _StartArgs) ->
     application:start(cowlib),
     application:start(cowboy),
     application:start(snmp),
-    load_mibs(["BKTEL-SMI", "EDFA-MIB"]),
+    load_mibs(snmp, ["SNMP-NOTIFICATION-MIB", "SNMP-TARGET-MIB"]),
+    load_mibs(bkfw, ["BKTEL-SMI", "EDFA-MIB"]),
     bkfw_sup:start_link().
 
 stop(_State) ->
@@ -36,10 +37,10 @@ init_db() ->
 					[{snmp, [{key, integer}]},
 					 {attributes, record_info(fields, edfaTable)}]).
 
-load_mibs(Mibs) ->
+load_mibs(App, Mibs) ->
     Paths = lists:map(fun (Path) ->
 			      ?info("Loading MIB: ~p~n", [Path]),
-			      Dir = code:priv_dir(bkfw) ++ "/mibs/",
+			      Dir = code:priv_dir(App) ++ "/mibs/",
 			      Dir ++ Path
 		      end, Mibs),
     snmpa:load_mibs(snmp_master_agent, Paths).

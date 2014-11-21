@@ -25,7 +25,6 @@
 	       fun read_gc/1,
 	       fun read_pc/1,
 	       fun read_mode/1,
-	       fun read_a/1,
 	       fun read_lt/1,
 	       fun read_lc/1,
 	       fun read_it/1,
@@ -33,7 +32,9 @@
 	       fun read_i/1,
 	       fun read_v/1,
 	       fun read_li/1,
-	       fun read_lo/1]).
+	       fun read_lo/1,
+	       fun read_a/1
+	      ]).
 
 -record(state, {idx                        :: integer(),
 		period                     :: integer(),
@@ -114,13 +115,14 @@ read_mode(#state{idx=Idx, entry=E}=S) ->
 read_a(#state{idx=Idx}=S) ->
     case bkfw_srv:command(Idx, ra, []) of
 	{ok, {Idx, alarms, Alarms}} ->
-	    ?debug("[~p] Alarms: ~p~n", [Idx-1, Alarms]);
+	    handle_alarms(Alarms, S);
 	{ok, _Ret} ->
-	    ?error("[~p] RA invalid answer: ~p~n", [Idx, _Ret]);
+	    ?error("[~p] RA invalid answer: ~p~n", [Idx, _Ret]),
+	    S;
 	{error, Err} ->
-	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err])
-    end,
-    S.
+	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err]),
+	    S
+    end.
 
 read_lt(#state{idx=Idx, positions=P}=S) ->
     F = fun(X, #state{entry=E}=Acc) ->
@@ -261,3 +263,51 @@ get_info(Key, Infos, Default) ->
     catch error:badarg ->
 	    Default
     end.
+
+
+handle_alarms([], S) -> S;
+
+handle_alarms([pin  | Tail], #state{entry=E}=S) -> 
+    Varbinds = [{edfaInputLossTh, [E#edfaTable.index], E#edfaTable.inputLossThreshold}],
+    snmpa:send_notification2(snmp_master_agent, edfaInputPowerTrap, [{varbinds, Varbinds}]),
+    handle_alarms(Tail, S);
+
+handle_alarms([pout  | Tail], #state{entry=E}=S) -> 
+    Varbinds = [{edfaOutputLossTh, [E#edfaTable.index], E#edfaTable.outputLossThreshold}],
+    snmpa:send_notification2(snmp_master_agent, edfaOutputPowerTrap, [{varbinds, Varbinds}]),
+    handle_alarms(Tail, S);
+
+handle_alarms(['pump_temp'  | Tail], #state{entry=E}=S) -> 
+    Varbinds = [{edfaCurLaserTemp, [E#edfaTable.index], E#edfaTable.curLaserTemp}],
+    snmpa:send_notification2(snmp_master_agent, edfaPumpTempTrap, [{varbinds, Varbinds}]),
+    handle_alarms(Tail, S);
+
+handle_alarms(['pump_bias'  | Tail], #state{entry=E}=S) -> 
+    Varbinds = [{edfaCurAmp, [E#edfaTable.index], E#edfaTable.curAmp}],
+    snmpa:send_notification2(snmp_master_agent, edfaPumpBiasTrap, [{varbinds, Varbinds}]),
+    handle_alarms(Tail, S);
+
+handle_alarms(['edfa_temp'  | Tail], #state{entry=E}=S) -> 
+    Varbinds = [{edfaCurInternalTemp, [E#edfaTable.index], E#edfaTable.curInternalTemp}],
+    snmpa:send_notification2(snmp_master_agent, edfaInternalTempTrap, [{varbinds, Varbinds}]),
+    handle_alarms(Tail, S);
+
+handle_alarms(['edfa_psu'  | Tail], #state{entry=E}=S) -> 
+    Varbinds = [{edfaPowerSupply, [E#edfaTable.index], E#edfaTable.powerSupply}],
+    snmpa:send_notification2(snmp_master_agent, edfaPowerSupplyTrap, [{varbinds, Varbinds}]),
+    handle_alarms(Tail, S);
+
+handle_alarms([bref  | Tail], #state{entry=E}=S) -> 
+    Varbinds = [{edfaIndex, E#edfaTable.index}],
+    snmpa:send_notification2(snmp_master_agent, edfaBrefTrap, [{varbinds, Varbinds}]),
+    handle_alarms(Tail, S);
+
+handle_alarms([adi  | Tail], #state{entry=E}=S) -> 
+    Varbinds = [{edfaIndex, E#edfaTable.index}],
+    snmpa:send_notification2(snmp_master_agent, edfaAdiTrap, [{varbinds, Varbinds}]),
+    handle_alarms(Tail, S);
+
+handle_alarms([mute  | Tail], #state{entry=E}=S) -> 
+    Varbinds = [{edfaIndex, E#edfaTable.index}],
+    snmpa:send_notification2(snmp_master_agent, edfaMuteTrap, [{varbinds, Varbinds}]),
+    handle_alarms(Tail, S).

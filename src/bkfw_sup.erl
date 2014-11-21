@@ -34,11 +34,12 @@ init([]) ->
 http_config() ->
     Opts = application:get_env(bkfw, http, []),
     Dir = filename:join(code:priv_dir(bkfw), "www"),
-    Handler = {"/[...]", cowboy_static,
-	       {dir, Dir, [{mimetypes, cow_mimetypes, all}]}},
+    Handlers = [
+		{"/[...]", cowboy_static, {dir, Dir, [{mimetypes, cow_mimetypes, all}]}}
+	       ],
     Args = [http, 1, 
 	    [{port, proplists:get_value(port, Opts, ?PORT)}],
-	    [{env, [{dispatch, cowboy_router:compile([{'_', [Handler]}])}]},
+	    [{env, [{dispatch, cowboy_router:compile([{'_', Handlers}])}]},
 	     {middlewares, [bkfw_index, cowboy_router, cowboy_handler]}]
 	   ],
     {http, {cowboy, start_http, Args}, permanent, 5000, worker, [cowboy]}.
