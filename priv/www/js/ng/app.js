@@ -1,6 +1,7 @@
 /*global angular */
 angular
     .module('bkfwApp', [
+	'bkfwApp.controllers',
 	'ui.router'
     ])
     .config(function($stateProvider, $urlRouterProvider) {
@@ -9,7 +10,8 @@ angular
 	$stateProvider
 	    .state('home', {
 		url: '/home',
-		templateUrl: 'partial-home.html'
+		templateUrl: 'partial-home.html',
+		controller: 'homeCtrl'
 	    })
 	    .state('login', {
 		url: '/login',
