@@ -5,6 +5,7 @@
 angular.module('bkfwApp', [
 	'bkfwApp.services',
 	'bkfwApp.controllers',
+	'bkfwApp.directives',
 	'ngResource',
 	'ui.router'
 ])
@@ -23,6 +24,15 @@ angular.module('bkfwApp', [
   .state('login', {
 		url: '/login',
 		templateUrl: 'partials/login.html'
+	})
+
+  .state('logout', {
+		url: '/logout',
+	  controller: ['$state', 'session', function($state, session) {
+      if (session.disconnect()) {
+        $state.go('dashboard');
+      }
+    }]
 	});
 
 });

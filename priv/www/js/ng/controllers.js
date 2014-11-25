@@ -48,14 +48,37 @@ angular.module('bkfwApp.controllers', [])
 
   this.user = "admin";
   this.password = null;
+  this.error = "";
+  this.connecting = false;
 
   this.connect = function() {
     if (this.user && this.password) {
       // do auth
-      session.user = this.user;
-      session.connected = true;
-      $state.go('dashboard');
+      session.connect(this.user, this.password)
+      .then(
+        function() {
+          $state.go('dashboard');
+        },
+        angular.bind(this, function(error) {
+          this.error = error;
+        }),
+        angular.bind(this, function(status) {
+          if (status == session.status.CONNECTING)
+            this.connecting = true;
+          else
+            this.connecting = false;
+        })
+      );
+    }
+    else {
+      this.error = "Missing user or password";
     }
   };
+
+}])
+
+.controller('navCtrl', ['session', function(session) {
+
+  this.session = session;
 
 }]);

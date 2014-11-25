@@ -11,6 +11,7 @@
     <script type="text/javascript" src="bower_components/angular-ui-router/release/angular-ui-router.min.js"></script>
     <script type="text/javascript" src="js/ng/app.js"></script>
     <script type="text/javascript" src="js/ng/services.js"></script>
+    <script type="text/javascript" src="js/ng/directives.js"></script>
     <script type="text/javascript" src="js/ng/controllers.js"></script>
 
 
@@ -29,7 +30,7 @@
 
   </head>
   <body>
-    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation" ng-controller="navCtrl as nav">
       <div class="container-fluid">
         <div class="navbar-header">
           <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
@@ -39,12 +40,14 @@
             <span class="icon-bar"></span>
           </button>
           <a class="navbar-brand" ui-sref="dashboard">
-	    <img src="img/logo_250.png" alt="BKtel logo" />
-	  </a>
+            <img src="img/logo_250.png" alt="BKtel logo" />
+          </a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav navbar-right">
-            <li><a ui-sref="login">Login</a></li>
+            <li ng-hide="nav.session.connected"><a ui-sref="login">Login</a></li>
+            <li ng-show="nav.session.connected"><span class="navbar-text">{{ nav.session.user }}</span></li>
+            <li ng-show="nav.session.connected"><a ui-sref="logout">Logout</a></li>
           </ul>
         </div>
       </div>
