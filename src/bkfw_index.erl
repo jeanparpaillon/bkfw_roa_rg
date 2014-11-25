@@ -15,11 +15,9 @@ execute(Req, Env) ->
     end.
 
 check_url(Req, Env) ->
-    {Path, Req1} = cowboy_req:path(Req),
-    case binary:at(Path, byte_size(Path)-1) of
-	$/ ->
-	    Idx = << Path/binary, "index.html" >>,
-	    {ok, cowboy_req:set([{path, Idx}], Req1), Env};
-	_ ->
-	    {ok, Req1, Env}
+    case cowboy_req:path(Req) of
+	{<<"/">>, Req2} ->
+	    {ok, cowboy_req:set([{path, <<"/index.html">>}], Req2), Env};
+	{_, Req2} ->
+	    {ok, Req2, Env}
     end.

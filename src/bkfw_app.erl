@@ -21,7 +21,7 @@ start(_StartType, _StartArgs) ->
     application:start(cowboy),
     application:start(snmp),
     load_mibs(snmp, ["SNMP-NOTIFICATION-MIB", "SNMP-TARGET-MIB"]),
-    load_mibs(bkfw, ["BKTEL-SMI", "EDFA-MIB"]),
+    load_mibs(bkfw, ["BKTEL-PHOTONICS-SMI", "EDFA-MIB"]),
     bkfw_sup:start_link().
 
 stop(_State) ->
@@ -33,9 +33,9 @@ stop(_State) ->
 %%%
 init_db() ->
      application:start(mnesia),
-     {atomic, ok} = mnesia:create_table(edfaTable, 
+     {atomic, ok} = mnesia:create_table(edfaMcuTable, 
 					[{snmp, [{key, integer}]},
-					 {attributes, record_info(fields, edfaTable)}]).
+					 {attributes, record_info(fields, edfaMcuTable)}]).
 
 load_mibs(App, Mibs) ->
     Paths = lists:map(fun (Path) ->
@@ -43,4 +43,4 @@ load_mibs(App, Mibs) ->
 			      Dir = code:priv_dir(App) ++ "/mibs/",
 			      Dir ++ Path
 		      end, Mibs),
-    snmpa:load_mibs(snmp_master_agent, Paths).
+    ok = snmpa:load_mibs(snmp_master_agent, Paths).

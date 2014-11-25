@@ -26,15 +26,16 @@ start_link() ->
 
 init([]) ->
     Srv = ?CHILD(bkfw_srv, worker),
+    EdfaMon = ?CHILD(bkfw_edfa, worker),
     McuSup = ?CHILD(bkfw_mcus_sup, supervisor),
-    McuNumMon = ?CHILD(bkfw_num_mon, worker),
     Http = http_config(),
-    {ok, { {one_for_one, 5, 10}, [Srv, McuSup, McuNumMon, Http]} }.
+    {ok, { {one_for_one, 5, 10}, [Srv, EdfaMon, McuSup, Http]} }.
 
 http_config() ->
     Opts = application:get_env(bkfw, http, []),
     Dir = filename:join(code:priv_dir(bkfw), "www"),
     Handlers = [
+		{"/api/edfa/:index", bkfw_http_edfa, []},
 		{"/[...]", cowboy_static, {dir, Dir, [{mimetypes, cow_mimetypes, all}]}}
 	       ],
     Args = [http, 1, 
