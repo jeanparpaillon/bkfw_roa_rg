@@ -11,8 +11,6 @@
 %% Helper macro for declaring children of supervisor
 -define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
 
--define(PORT, 8080).
-
 %% ===================================================================
 %% API functions
 %% ===================================================================
@@ -28,19 +26,5 @@ init([]) ->
     Srv = ?CHILD(bkfw_srv, worker),
     EdfaMon = ?CHILD(bkfw_edfa, worker),
     McuSup = ?CHILD(bkfw_mcus_sup, supervisor),
-    Http = http_config(),
+    Http = bkfw_http:get_config(),
     {ok, { {one_for_one, 5, 10}, [Srv, EdfaMon, McuSup, Http]} }.
-
-http_config() ->
-    Opts = application:get_env(bkfw, http, []),
-    Dir = filename:join(code:priv_dir(bkfw), "www"),
-    Handlers = [
-		{"/api/edfa/:index", bkfw_http_edfa, []},
-		{"/[...]", cowboy_static, {dir, Dir, [{mimetypes, cow_mimetypes, all}]}}
-	       ],
-    Args = [http, 1, 
-	    [{port, proplists:get_value(port, Opts, ?PORT)}],
-	    [{env, [{dispatch, cowboy_router:compile([{'_', Handlers}])}]},
-	     {middlewares, [bkfw_index, cowboy_router, cowboy_handler]}]
-	   ],
-    {http, {cowboy, start_http, Args}, permanent, 5000, worker, [cowboy]}.

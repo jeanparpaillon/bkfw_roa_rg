@@ -68,10 +68,10 @@ table_func(set, RowIndex, Cols, NameDb) ->
 table_func(get, RowIndex, Cols, NameDb) ->
     case snmp_generic:table_func(get, RowIndex, Cols, NameDb) of
 	{value, V} when is_float(V) -> 
-	    ?debug("SNMP: [~p][~p] = ~p~n", [RowIndex, Cols, V]),
 	    {value, round(V)};
+	{value, V} when is_binary(V) ->
+	    {value, binary_to_list(V)};
 	Else -> 
-	    ?debug("SNMP: [~p][~p] = ~p~n", [RowIndex, Cols, Else]),
 	    Else
     end;
 
@@ -81,6 +81,8 @@ table_func(get_next, RowIndex, Cols, NameDb) ->
 	Next when is_list(Next) ->
 	    lists:map(fun ({NextOID, NextValue}) when is_float(NextValue) ->
 			      {NextOID, round(NextValue)};
+			  ({NextOID, NextValue}) when is_binary(NextValue) ->
+			      {NextOID, binary_to_list(NextValue)};
 			  (Else) ->
 			      Else
 		      end, Next);
@@ -303,7 +305,7 @@ parse_pd([ [3, P, <<"dBm">>] | Tail], {Pd1, Pd2, _}) -> parse_pd(Tail, {Pd1, Pd2
 parse_pd([ _ | Tail], Acc) -> parse_pd(Tail, Acc).
 
 get_info(Key, Infos, Default) ->
-    try binary_to_list(proplists:get_value(Key, Infos, Default)) of
+    try proplists:get_value(Key, Infos, Default) of
 	Str -> Str
     catch error:badarg ->
 	    Default
