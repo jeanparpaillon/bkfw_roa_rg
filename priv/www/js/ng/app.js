@@ -3,6 +3,7 @@
 'use strict';
 
 angular.module('bkfwApp', [
+	'bkfwApp.services',
 	'bkfwApp.controllers',
 	'ngResource',
 	'ui.router'
@@ -10,7 +11,7 @@ angular.module('bkfwApp', [
 
 .config(function($stateProvider, $urlRouterProvider) {
 
-	$urlRouterProvider.otherwise('/home');
+	$urlRouterProvider.otherwise('/dashboard');
 
 	$stateProvider
 

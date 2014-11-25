@@ -41,8 +41,21 @@ angular.module('bkfwApp.controllers', [])
 
 }])
 
-.controller('loginCtrl', function($scope) {
+.controller('loginCtrl', ['$state', 'session', function($state, session) {
 
-  $scope.title = "You're not logged in !";
+  if (session.connected)
+    $state.go('dashboard');
 
-});
+  this.user = "admin";
+  this.password = null;
+
+  this.connect = function() {
+    if (this.user && this.password) {
+      // do auth
+      session.user = this.user;
+      session.connected = true;
+      $state.go('dashboard');
+    }
+  };
+
+}]);

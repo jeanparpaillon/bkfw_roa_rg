@@ -104,3 +104,7 @@ body {
   display: inline-block;
   border-radius: 50%;
 }
+
+.form-signin-heading {
+  margin-top: 40px;
+}
