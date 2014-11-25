@@ -2,7 +2,11 @@
 angular
     .module('bkfwApp.controllers', [])
 
-    .controller('homeCtrl', function($scope) {
+    .controller('homeCtrl', ['$scope', '$resource', function($scope, $resource) {
+	//var Edfas = $resource('/api/edfa/:index', {index: '@index'});
+
+	//$scope.edfaList = Edfas.query();
+	
 	$scope.edfaList = [
 	    {
 		index: 3,
@@ -32,7 +36,7 @@ angular
 		powerSupply: 12.1
 	    }	    
 	];
-    })
+    }])
 
     .controller('loginCtrl', function($scope) {
 	$scope.title = "You're not logged in !";

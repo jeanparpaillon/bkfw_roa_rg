@@ -2,6 +2,7 @@
 angular
     .module('bkfwApp', [
 	'bkfwApp.controllers',
+	'ngResource',
 	'ui.router'
     ])
     .config(function($stateProvider, $urlRouterProvider) {
