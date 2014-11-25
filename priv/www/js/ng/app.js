@@ -1,21 +1,27 @@
 /*global angular */
-angular
-    .module('bkfwApp', [
+
+'use strict';
+
+angular.module('bkfwApp', [
 	'bkfwApp.controllers',
 	'ngResource',
 	'ui.router'
-    ])
-    .config(function($stateProvider, $urlRouterProvider) {
+])
+
+.config(function($stateProvider, $urlRouterProvider) {
+
 	$urlRouterProvider.otherwise('/home');
 
 	$stateProvider
-	    .state('home', {
-		url: '/home',
-		templateUrl: 'partial-home.html',
-		controller: 'homeCtrl'
-	    })
-	    .state('login', {
+
+  .state('dashboard', {
+	  url: '/dashboard',
+		templateUrl: 'partials/dashboard.html',
+	})
+
+  .state('login', {
 		url: '/login',
-		templateUrl: 'partial-login.html'
-	    });
-    });
+		templateUrl: 'partials/login.html'
+	});
+
+});
