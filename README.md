@@ -19,3 +19,4 @@ Requirements:
 1. Run `priv/start_pty.sh`
 2. Run `priv/mcu_emul -s hex_mask /path/to/pty1`
   where hex\_mask representing occupied slots
+3. Check in priv/default.config the second pty
