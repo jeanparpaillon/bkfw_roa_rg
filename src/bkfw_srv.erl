@@ -45,19 +45,20 @@ command(Idx, Cmd, Args) when is_integer(Idx), is_atom(Cmd) ->
     try gen_fsm:sync_send_event(?FSM, {cmd, Idx, [CmdName, ArgsStr]}) of
 	{ok, Ref} ->
 	    receive
-		{error, Err} -> {error, Err};
 		{Ref, Ret} -> {ok, Ret};
 		Ret -> 
-		    gen_fsm:send_all_state_event(?FSM, flush),
+		    gen_fsm:send_all_state_event(?FSM, {flush, Idx}),
 		    {error, {unexpected, Ret}}
 	    after 
 		Timeout ->
-		    gen_fsm:send_all_state_event(?FSM, {flush, Idx}),
+		    gen_fsm:send_all_state_event(?FSM, flush),
 		    {error, timeout}
 	    end;
 	{error, Err} ->
+	    ?debug("<2> error: ~p~n", [Err]),
 	    {error, Err}
     catch _:Err ->
+	    ?debug("<3> exception: ~p~n", [Err]),
 	    {error, Err}
     end.
 
@@ -106,7 +107,7 @@ init([]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_event(flush, _, State) ->
-    {next_state, wait_cmd, State#state{ans=ets:new(), req=queue:new()}};
+    {next_state, wait_cmd, State#state{ans=ets:new(ans, []), req=queue:new()}};
 handle_event({flush, Idx}, _, #state{ans=Tid}=State) ->
     true = ets:insert(Tid, {Idx, queue:new()}),
     {next_state, wait_cmd, State};
@@ -132,7 +133,9 @@ handle_event(_Event, StateName, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_sync_event(stop, _, _, State) ->
-    {stop, normal, State}.
+    {stop, normal, State};
+handle_sync_event(_Event, _From, StateName, State) ->
+    {reply, invalid, StateName, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -164,8 +167,8 @@ handle_info({msg, {Idx, _, _}=Msg}, StateName, #state{ans=Ans}=S) ->
 		    {NextState, S2} = send_pending(S),
 		    {next_state, NextState, S2};
 		{empty, _} ->
-		    ?debug("Nobody to send answer to...~n", []),
-		    {stop, unexpected, S}
+		    ?debug("Probably flushed...~n", []),
+		    {next_state, wait_cmd, S}
 	    end
     end;
 

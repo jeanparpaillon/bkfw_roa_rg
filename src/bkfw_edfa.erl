@@ -55,7 +55,12 @@ init(Time) ->
     timer:sleep(1000),
     _ = ets:new(?TID, [named_table]),
     ets:insert(?TID, {edfaNumber, 0}),
-    loop(Time, init_state()).
+    case init_state() of
+	{ok, #state{}=S} ->
+	    loop(Time, S);
+	{error, Err} ->
+	    {error, Err}
+    end.
 
 loop(Time, S) -> 
     ets:insert(?TID, {edfaNumber, 0}),
@@ -66,7 +71,7 @@ loop(Time, S) ->
 		     ?error("Unrecognized answer: ~p~n", [_Ret]),
 		     S;
 		 {error, Err} ->
-		     ?error("Error monitoring MCUs: ~p~n", [Err]),
+		     ?error("Error monitoring EDFA: ~p~n", [Err]),
 		     S
 	     end,
     timer:sleep(Time),
@@ -104,9 +109,7 @@ handle_slots(Mask, Idx, #state{slots=Slots}=S) when
     handle_slots(Mask, Idx+1, S).
 
 init_state() ->
-    S = init_infos(#state{slots=list_to_tuple(lists:duplicate(?SLOTS, false))}),
-    S1 = init_v(S),
-    init_it(S1).
+    init_infos(#state{slots=list_to_tuple(lists:duplicate(?SLOTS, false))}).
 
 init_infos(S) ->
     case bkfw_srv:command(0, ri, []) of
@@ -124,13 +127,13 @@ init_infos(S) ->
 			{edfaProductDate, get_info(productDate, Infos)}
 		       ]
 		      ),
-	    S;
+	    init_v(S);
 	{ok, _Ret} ->
 	    ?error("[0] RI invalid answer: ~p~n", [_Ret]),
-	    S;
+	    {error, invalid_infos};
 	{error, Err} ->
 	    ?error("[0] Error monitoring EDFA: ~p~n", [Err]),
-	    S
+	    {error, Err}
     end.
 
 get_info(Key, Infos) ->
@@ -140,24 +143,24 @@ init_v(S) ->
     case bkfw_srv:command(0, rv, []) of
 	{ok, {0, v, [V, v]}} when is_float(V); is_integer(V) ->
 	    ets:insert(?TID, {edfaPowerSupply, V}),
-	    S;
+	    init_it(S);
 	{ok, _Ret} ->
 	    ?error("[0] RV invalid answer: ~p~n", [_Ret]),
-	    S;
+	    {error, invalid_v};
 	{error, Err} ->
-	    ?error("[0] Error monitoring MCU: ~p~n", [Err]),
-	    S
+	    ?error("[0] Error monitoring EDFA: ~p~n", [Err]),
+	    {error, Err}
     end.
 
 init_it(S) ->
     case bkfw_srv:command(0, rit, []) of
 	{ok, {0, it, [T, <<"C">>]}} when is_float(T); is_integer(T) ->
 	    ets:insert(?TID, {edfaCurInternalTemp, T}),
-	    S;
+	    {ok, S};
 	{ok, _Ret} ->
 	    ?error("[0] RIT invalid answer: ~p~n", [_Ret]),
-	    S;
+	    {error, invalid_it};
 	{error, Err} ->
-	    ?error("[0] Error monitoring MCU: ~p~n", [Err]),
-	    S
+	    ?error("[0] Error monitoring EDFA: ~p~n", [Err]),
+	    {error, Err}
     end.
