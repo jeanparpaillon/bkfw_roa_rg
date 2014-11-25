@@ -71,11 +71,10 @@ rest_init(Req, _Sec) ->
     {ok, Req, #state{section=undefined}}.
 
 
+allowed_methods(Req, #state{section=edfa}=S) ->
+    {[<<"GET">>, <<"HEAD">>, <<"OPTIONS">>], Req, S};
 allowed_methods(Req, State) ->
-    {[<<"GET">>,
-      <<"HEAD">>,
-      <<"POST">>,
-      <<"OPTIONS">>], Req, State}.
+    {[<<"GET">>, <<"HEAD">>, <<"POST">>, <<"OPTIONS">>], Req, State}.
 
 content_types_accepted(Req, State) ->
     {[
@@ -113,6 +112,9 @@ to_json(Req, #state{section=mcu, index=undefined}=S) ->
 
 to_json(Req, #state{section=mcu, mcu=Mcu}=S) ->
     {jsx:encode(gen_json(mcu, Mcu), ?JSX_OPTS), Req, S};
+
+to_json(Req, #state{section=edfa}=S) ->
+    {jsx:encode(bkfw_edfa:get(), ?JSX_OPTS), Req, S};
 
 to_json(Req, #state{section=Sec}=S) ->
     {jsx:encode([{<<"section">>, Sec}], ?JSX_OPTS), Req, S}.

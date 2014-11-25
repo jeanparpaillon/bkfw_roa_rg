@@ -9,7 +9,8 @@
 %%%
 %%% API
 %%%
--export([start_link/0]).
+-export([start_link/0,
+	 get/0]).
 
 %% SNMP instrumentation
 -export([variable_func/2]).
@@ -33,6 +34,21 @@ start_link() ->
     Pid = spawn_link(?MODULE, init, [Period]),
     {ok, Pid}.
 
+get() ->
+    [
+     {curInternalTemp, get_ets_value(edfaCurInternalTemp, 0.0)},
+     {powerSupply,     get_ets_value(edfaPowerSupply, 0.0)},
+     {vendor,          get_ets_value(edfaVendor, <<>>)},
+     {moduleType,      get_ets_value(moduleType, <<>>)},
+     {hwVer,           get_ets_value(edfaHWVer, <<>>)},
+     {hwRev,           get_ets_value(edfaHWRev, <<>>)},
+     {swVer,           get_ets_value(edfaSWVer, <<>>)},
+     {fwVer,           get_ets_value(edfaFWVer, <<>>)},
+     {partNum,         get_ets_value(edfaPartNum, <<>>)},
+     {serialNum,       get_ets_value(edfaSerialNum, <<>>)},
+     {productDate,     get_ets_value(edfaProductDate, <<>>)}
+    ].
+
 %%% SNMP functions
 variable_func(new, _) ->
     {value, ok};
@@ -43,6 +59,7 @@ variable_func(delete, _) ->
 variable_func(get, Key) ->
     case ets:lookup(?TID, Key) of
 	[{Key, V}] when is_float(V) -> {value, round(V)};
+	[{Key, V}] when is_binary(V) -> {value, binary_to_list(V)};
 	[{Key, V}] -> {value, V};
 	[] -> {value, noSuchName}
     end.
@@ -137,7 +154,7 @@ init_infos(S) ->
     end.
 
 get_info(Key, Infos) ->
-    binary_to_list(proplists:get_value(Key, Infos, <<>>)).
+    proplists:get_value(Key, Infos, <<>>).
 
 init_v(S) ->
     case bkfw_srv:command(0, rv, []) of
@@ -163,4 +180,10 @@ init_it(S) ->
 	{error, Err} ->
 	    ?error("[0] Error monitoring EDFA: ~p~n", [Err]),
 	    {error, Err}
+    end.
+
+get_ets_value(Key, Default) ->
+    case ets:lookup(?TID, Key) of
+	[{Key, V}] -> V;
+	[] -> Default
     end.
