@@ -23,6 +23,17 @@ angular.module('bkfwApp.controllers', [])
 
 }])
 
+.controller('moduleCtrl', ['$timeout', '$stateParams', 'modules', function($timeout, $stateParams, modules) {
+
+  this.detail = {};
+
+  modules.detail($stateParams.moduleIndex)
+  .then(angular.bind(this, function(value) {
+    this.detail = value;
+  }));
+
+}])
+
 .controller('loginCtrl', ['$state', 'session', function($state, session) {
 
   if (session.connected)

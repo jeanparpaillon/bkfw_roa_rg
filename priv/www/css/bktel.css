@@ -103,3 +103,7 @@ body {
 .form-signin-heading {
   margin-top: 40px;
 }
+
+.dashboard-row {
+  cursor: pointer;
+}

@@ -95,6 +95,24 @@ angular.module('bkfwApp.services', [])
 
     detail: function(id) {
 
+      return $q(angular.bind(this, function(resolve, reject) {
+
+        var list = this.list()
+        .then(function(values) {
+          return values.filter(function(value) {
+            return value.index == id;
+          });
+        })
+        .then(function(values) {
+          if (values.length == 1) {
+            resolve(values[0]);
+          }
+          else {
+            reject("Module not detected");
+          }
+        });
+      }));
+
     }
 
   };

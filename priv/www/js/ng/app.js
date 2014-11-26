@@ -21,6 +21,11 @@ angular.module('bkfwApp', [
 		templateUrl: 'partials/dashboard.html',
 	})
 
+  .state('module', {
+    url: '/module/:moduleIndex',
+    templateUrl: 'partials/module.html',
+  })
+
   .state('login', {
 		url: '/login',
 		templateUrl: 'partials/login.html'
