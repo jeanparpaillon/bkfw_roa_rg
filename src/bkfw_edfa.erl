@@ -10,7 +10,7 @@
 %%% API
 %%%
 -export([start_link/0,
-	 get/0]).
+	 get_kv/0]).
 
 %% SNMP instrumentation
 -export([variable_func/2]).
@@ -34,7 +34,7 @@ start_link() ->
     Pid = spawn_link(?MODULE, init, [Period]),
     {ok, Pid}.
 
-get() ->
+get_kv() ->
     [
      {curInternalTemp, get_ets_value(edfaCurInternalTemp, 0.0)},
      {powerSupply,     get_ets_value(edfaPowerSupply, 0.0)},

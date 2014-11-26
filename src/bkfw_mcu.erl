@@ -3,7 +3,8 @@
 
 -include("bkfw.hrl").
 
--export([start_link/1]).
+-export([start_link/1,
+	 get_kv/1]).
 
 %%% SNMP functions
 -export([table_func/2,
@@ -51,6 +52,33 @@ start_link(Idx) ->
     ?info("Start MCU monitor (slot: ~p)~n", [Idx]),
     Pid = spawn_link(?MODULE, init, [Idx]),
     {ok, Pid}.
+
+get_kv(#edfaMcuTable{}=T) ->
+    [
+     {index,               T#edfaMcuTable.index},
+     {ampConsign,          T#edfaMcuTable.ampConsign},
+     {gainConsign,         T#edfaMcuTable.gainConsign},
+     {outputPowerConsign,  T#edfaMcuTable.outputPowerConsign},
+     {operatingMode,       T#edfaMcuTable.operatingMode},
+     {curLaserTemp,        T#edfaMcuTable.curLaserTemp},
+     {curAmp,              T#edfaMcuTable.curAmp},
+     {curInternalAmp,      T#edfaMcuTable.curInternalTemp},
+     {powerInput,          T#edfaMcuTable.powerPd1},
+     {powerOutput,         T#edfaMcuTable.powerPd2},
+     {powerSupply,         T#edfaMcuTable.powerSupply},
+     {inputLossThreshold,  T#edfaMcuTable.inputLossThreshold},
+     {outputLossThreshold, T#edfaMcuTable.outputLossThreshold},
+     {vendor,              T#edfaMcuTable.vendor},
+     {moduleType,          T#edfaMcuTable.moduleType},
+     {hwVer,               T#edfaMcuTable.hwVer},
+     {hwRev,               T#edfaMcuTable.hwRev},
+     {swVer,               T#edfaMcuTable.swVer},
+     {fwVer,               T#edfaMcuTable.fwVer},
+     {partNum,             T#edfaMcuTable.partNum},
+     {serialNum,           T#edfaMcuTable.serialNum},
+     {productDate,         T#edfaMcuTable.productDate}
+    ].
+
 
 %%% SNMP functions
 table_func(new, NameDb) ->

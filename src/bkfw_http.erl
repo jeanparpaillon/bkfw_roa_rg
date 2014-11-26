@@ -23,7 +23,8 @@
 -record(state, {
 	  section   = undefined :: mcu | edfa | sys,
 	  index     = undefined :: integer() | undefined | badarg,
-	  mcu       = undefined
+	  mcu       = undefined,
+	  sys       = undefined :: login | net | password | community | protocol | firmware
 	 }).
 
 %%%
@@ -96,7 +97,16 @@ resource_exists(Req, #state{section=mcu, index=I}=S) ->
 	    {false, Req, S};
 	[Mcu] ->
 	    {true, Req, S#state{mcu=Mcu}}
-    end    ;
+    end;
+resource_exists(Req, #state{section=sys}=S) ->
+    case cowboy_req:binding(name, Req) of
+	{<<"login">>, Req2} -> {true, Req2, S#state{sys=login}};
+	{<<"net">>, Req2} -> {true, Req2, S#state{sys=net}};
+	{<<"password">>, Req2} -> {true, Req2, S#state{sys=password}};
+	{<<"community">>, Req2} -> {true, Req2, S#state{sys=community}};
+	{<<"protocol">>, Req2} -> {true, Req2, S#state{sys=protocol}};
+	{<<"firmware">>, Req2} -> {true, Req2, S#state{sys=firmware}}
+    end;
 resource_exists(Req, #state{section=undefined}=S) ->
     {false, Req, S};
 resource_exists(Req, S) ->
@@ -107,44 +117,29 @@ allow_missing_post(Req, State) ->
 
 to_json(Req, #state{section=mcu, index=undefined}=S) ->
     Mcus = mnesia:dirty_match_object(#edfaMcuTable{_='_'}),
-    Ejson = lists:map(fun (M) -> gen_json(mcu, M) end, Mcus),
+    Ejson = lists:map(fun bkfw_mcu:get_kv/1, Mcus),
     {jsx:encode(Ejson, ?JSX_OPTS), Req, S};
 
 to_json(Req, #state{section=mcu, mcu=Mcu}=S) ->
-    {jsx:encode(gen_json(mcu, Mcu), ?JSX_OPTS), Req, S};
+    {jsx:encode(bkfw_mcu:get_kv(Mcu), ?JSX_OPTS), Req, S};
 
 to_json(Req, #state{section=edfa}=S) ->
     {jsx:encode(bkfw_edfa:get(), ?JSX_OPTS), Req, S};
 
-to_json(Req, #state{section=Sec}=S) ->
-    {jsx:encode([{<<"section">>, Sec}], ?JSX_OPTS), Req, S}.
+to_json(Req, #state{section=sys, sys=login}=S) ->
+    {<<>>, Req, S};
 
+to_json(Req, #state{section=sys, sys=net}=S) ->
+    {jsx:encode(bkfw_config:get_kv(net), ?JSX_OPTS), Req, S};
 
-%%%
-%%% Internals
-%%%
-gen_json(mcu, #edfaMcuTable{}=T) ->
-    [
-     {index,               T#edfaMcuTable.index},
-     {ampConsign,          T#edfaMcuTable.ampConsign},
-     {gainConsign,         T#edfaMcuTable.gainConsign},
-     {outputPowerConsign,  T#edfaMcuTable.outputPowerConsign},
-     {operatingMode,       T#edfaMcuTable.operatingMode},
-     {curLaserTemp,        T#edfaMcuTable.curLaserTemp},
-     {curAmp,              T#edfaMcuTable.curAmp},
-     {curInternalAmp,      T#edfaMcuTable.curInternalTemp},
-     {powerInput,          T#edfaMcuTable.powerPd1},
-     {powerOutput,         T#edfaMcuTable.powerPd2},
-     {powerSupply,         T#edfaMcuTable.powerSupply},
-     {inputLossThreshold,  T#edfaMcuTable.inputLossThreshold},
-     {outputLossThreshold, T#edfaMcuTable.outputLossThreshold},
-     {vendor,              T#edfaMcuTable.vendor},
-     {moduleType,          T#edfaMcuTable.moduleType},
-     {hwVer,               T#edfaMcuTable.hwVer},
-     {hwRev,               T#edfaMcuTable.hwRev},
-     {swVer,               T#edfaMcuTable.swVer},
-     {fwVer,               T#edfaMcuTable.fwVer},
-     {partNum,             T#edfaMcuTable.partNum},
-     {serialNum,           T#edfaMcuTable.serialNum},
-     {productDate,         T#edfaMcuTable.productDate}
-    ].
+to_json(Req, #state{section=sys, sys=password}=S) ->
+    {<<>>, Req, S};
+
+to_json(Req, #state{section=sys, sys=community}=S) ->
+    {jsx:encode(bkfw_config:get_kv(community), ?JSX_OPTS), Req, S};
+
+to_json(Req, #state{section=sys, sys=protocol}=S) ->
+    {jsx:encode(bkfw_config:get_kv(protocol), ?JSX_OPTS), Req, S};
+
+to_json(Req, #state{section=sys, sys=firmware}=S) ->
+    {jsx:encode(bkfw_config:get_kv(firmware), ?JSX_OPTS), Req, S}.

@@ -23,8 +23,9 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
+    Config = ?CHILD(bkfw_config, worker),
     Srv = ?CHILD(bkfw_srv, worker),
     EdfaMon = ?CHILD(bkfw_edfa, worker),
     McuSup = ?CHILD(bkfw_mcus_sup, supervisor),
     Http = bkfw_http:get_config(),
-    {ok, { {one_for_one, 5, 10}, [Srv, EdfaMon, McuSup, Http]} }.
+    {ok, { {one_for_one, 5, 10}, [Config, Srv, EdfaMon, McuSup, Http]} }.
