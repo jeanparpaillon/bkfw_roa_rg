@@ -6,6 +6,7 @@ angular.module('bkfwApp', [
 	'bkfwApp.services',
 	'bkfwApp.controllers',
 	'bkfwApp.directives',
+	'bkfwApp.utils',
 	'ngResource',
 	'ui.router'
 ])

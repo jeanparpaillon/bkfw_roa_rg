@@ -1,6 +1,87 @@
 <div ng-controller="moduleCtrl as module">
-  <h1 class="page-header">Module</h1>
+  <h1 class="page-header">Module #{{ module.detail.index }}</h1>
 
-  {{ module.detail }}
+  <div class="row">
+
+    <div class="col-md-5 col-md-offset-1">
+      <div class="block">
+        <h2>Monitoring</h2>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Param</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Mode</td>
+                <td>{{ module.detail.mode }}</td>
+              </tr>
+              <tr>
+                <td>Laser T&#186; (&#186;C)</td>
+                <td>{{ module.detail.curLaserTemp }}</td>
+              </tr>
+              <tr>
+                <td>Laser current (A)</td>
+                <td>{{ module.detail.curAmp }}</td>
+              </tr>
+              <tr>
+                <td>Int. T&#186; (&#186;)</td>
+                <td>{{ module.detail.curInternalTemp }}</td>
+              </tr>
+              <tr>
+                <td>Power level (dBm)</td>
+                <td>{{ module.detail.powerPd1 }}</td>
+              </tr>
+              <tr>
+                <td>PSU voltage (V)</td>
+                <td>{{ module.detail.powerSupply }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-5">
+      <div class="block">
+        <h2>Control</h2>
+
+        <form role="form" ng-submit="module.setControlMode()">
+
+          <div class="form-group">
+            <label>Mode opendrive</label>
+            <select ng-model="module.controlMode" class="form-control">
+              <option name="CC">CC</option>
+              <option name="GC">GC</option>
+              <option name="PC">PC</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Value</label>
+            <input type="text" ng-model="module.controlValue" class="form-control" />
+            <p class="help-block">A value in {{ module.controlValueType }}</p>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Set</button>
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="row">
+
+    <div class="col-md-5 col-md-offset-1">
+      <div class="block">
+        <h2>Other values</h2>
+      </div>
+    </div>
+
+  </div>
 
 </div>

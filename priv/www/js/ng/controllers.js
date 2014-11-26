@@ -23,14 +23,44 @@ angular.module('bkfwApp.controllers', [])
 
 }])
 
-.controller('moduleCtrl', ['$timeout', '$stateParams', 'modules', function($timeout, $stateParams, modules) {
+.controller('moduleCtrl', ['$scope', '$timeout', '$stateParams', 'modules', 'dialogs', function($scope, $timeout, $stateParams, modules, dialogs) {
+
+  var controlValueTypes = {
+    CC: 'mA',
+    GC: 'dB',
+    PC: 'dBm'
+  };
 
   this.detail = {};
+  this.controlMode = null;
+  this.controlValue = null;
+  this.controlValueType = null;
+
+  this.setControlMode = function() {
+    console.debug("Setting control mode...");
+
+    dialogs.confirm("Are you sure ?")
+
+    .then(angular.bind(this, function() {
+        console.debug("Setting control mode " + this.controlMode);
+    }));
+  };
 
   modules.detail($stateParams.moduleIndex)
   .then(angular.bind(this, function(value) {
     this.detail = value;
+    this.controlMode = this.detail.mode;
   }));
+
+  $scope.$watch(
+    angular.bind(this, function() {
+      return this.controlMode;
+    }),
+    angular.bind(this, function(newVal) {
+      if (newVal)
+        this.controlValueType = controlValueTypes[this.controlMode];
+    })
+  );
 
 }])
 
