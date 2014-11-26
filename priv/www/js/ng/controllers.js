@@ -6,10 +6,10 @@ angular.module('bkfwApp.controllers', [])
 
 .controller('dashboardCtrl', ['$timeout', 'modules', function($timeout, modules) {
 
-  this.list = [];
+  this.list = modules.list;
 
   this.getList = function() {
-    modules.list()
+    modules.getList()
     .then(angular.bind(this, function(values) {
       this.list = values;
     }))
@@ -20,6 +20,23 @@ angular.module('bkfwApp.controllers', [])
   // get modules list now.
   this.getList();
 
+}])
+
+.controller('modulesMenuCtrl', ['$scope', 'modules', function($scope, modules) {
+
+  this.modules = modules.list;
+
+  $scope.$watch(
+    function() {
+      return modules.list;
+    },
+    angular.bind(this, function(newVal) {
+      if (newVal) {
+        this.modules = newVal;
+      }
+    }),
+    true
+  );
 
 }])
 
