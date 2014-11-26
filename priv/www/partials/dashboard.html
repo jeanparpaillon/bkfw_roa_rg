@@ -1,40 +1,32 @@
-<!-- partial-home/html -->
-<div class="row">
-  <div class="col-sm-3 col-md-2 sidebar">
-    <ul class="nav nav-sidebar">
-      <li class="active"><a href="#">Overview <span class="sr-only">(current)</span></a></li>
-      <li><a ui-sref="#">Modules</a></li>
-      <li><a ui-sref="#">System</a></li>
-    </ul>
-  </div>
-  <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-    <h1 class="page-header">Dashboard</h1>
+<div ng-controller="dashboardCtrl as dashboard">
 
-    <div class="table-responsive">
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>#</th>
-	    <th>Mode</th>
-	    <th>Laser T&#186; (&#186;C)</th>
-            <th>Laser current (A)</th>
-            <th>Int. T&#186; (&#186;)</th>
-            <th>Power level (dBm)</th>
-            <th>PSU voltage (V)</th>
-          </tr>
-        </thead>
-        <tbody>
-	  <tr ng-repeat="edfa in edfaList" >
-	    <td>{{ edfa.index }}</td>
-	    <td>{{ edfa.mode }}</td>
-	    <td>{{ edfa.curLaserTemp }}</td>
-	    <td>{{ edfa.curAmp }}</td>
-	    <td>{{ edfa.curInternalTemp }}</td>
-	    <td>{{ edfa.powerPd1 }}</td>
-	    <td>{{ edfa.powerSupply }}</td>
-	  </tr>
-        </tbody>
-      </table>
-    </div>
+  <h1 class="page-header">Dashboard</h1>
+
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Mode</th>
+          <th>Laser T&#186; (&#186;C)</th>
+          <th>Laser current (A)</th>
+          <th>Int. T&#186; (&#186;)</th>
+          <th>Power level (dBm)</th>
+          <th>PSU voltage (V)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="edfa in dashboard.list">
+          <td>{{ edfa.index }}</td>
+          <td>{{ edfa.mode }}</td>
+          <td>{{ edfa.curLaserTemp }}</td>
+          <td>{{ edfa.curAmp }}</td>
+          <td>{{ edfa.curInternalTemp }}</td>
+          <td>{{ edfa.powerPd1 }}</td>
+          <td>{{ edfa.powerSupply }}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
+
 </div>

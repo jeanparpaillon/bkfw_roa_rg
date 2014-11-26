@@ -4,40 +4,22 @@
 
 angular.module('bkfwApp.controllers', [])
 
-.controller('homeCtrl', ['$scope', '$resource', function($scope, $resource) {
+.controller('dashboardCtrl', ['$timeout', 'modules', function($timeout, modules) {
 
-	//var Edfas = $resource('/api/edfa/:index', {index: '@index'});
-	//$scope.edfaList = Edfas.query();
+  this.list = [];
 
-	$scope.edfaList = [
-	    {
-		index: 3,
-		mode: "PC",
-		curLaserTemp: 43.4,
-		curAmp: 3,
-		curInternalTemp: 32,
-		powerPd1: 23,
-		powerSupply: 13
-	    },
-	    {
-		index: 4,
-		mode: "GC",
-		curLaserTemp: 48,
-		curAmp: 2.5,
-		curInternalTemp: 37.2,
-		powerPd1: 27,
-		powerSupply: 14.43
-	    },
-	    {
-		index: 7,
-		mode: "GC",
-		curLaserTemp: 45,
-		curAmp: 2.3,
-		curInternalTemp: 34.2,
-		powerPd1: 23,
-		powerSupply: 12.1
-	    }
-	];
+  this.getList = function() {
+    modules.list()
+    .then(angular.bind(this, function(values) {
+      this.list = values;
+    }))
+    // refresh modules list 3 secs later
+    .finally($timeout(angular.bind(this, this.getList), 3000));
+  };
+
+  // get modules list now.
+  this.getList();
+
 
 }])
 

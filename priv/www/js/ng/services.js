@@ -51,4 +51,52 @@ angular.module('bkfwApp.services', [])
     }
   };
 
+}])
+
+.factory('modules', ['$resource', '$q', function($resource, $q) {
+
+  return {
+
+    list: function() {
+      return $q(function(resolve, reject) {
+
+        resolve([
+          {
+          index: 3,
+          mode: "PC",
+          curLaserTemp: Math.random() * 60,
+          curAmp: 3,
+          curInternalTemp: 32,
+          powerPd1: 23,
+          powerSupply: 13
+          },
+          {
+          index: 4,
+          mode: "GC",
+          curLaserTemp: 48,
+          curAmp: 2.5,
+          curInternalTemp: 37.2,
+          powerPd1: 27,
+          powerSupply: 14.43
+    	    },
+	        {
+          index: 7,
+          mode: "GC",
+          curLaserTemp: 45,
+          curAmp: 2.3,
+          curInternalTemp: 34.2,
+          powerPd1: 23,
+          powerSupply: 12.1
+	        }
+        ]);
+
+      });
+    },
+
+    detail: function(id) {
+
+    }
+
+  };
+
 }]);
