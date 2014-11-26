@@ -1,11 +1,38 @@
 {application, bkfw,
  [
-  {description, "BKtel firmware"},
-  {vsn, "1"},
-  {registered, []},
+  {id, "BKtel EDFA firmware"},
+  {description, "BKtel EDFA firmware"},
+  {vsn, git},
+  {modules, [
+	     bkfw_app,
+	     bkfw_com,
+	     bkfw_config,
+	     bkfw_edfa,
+	     bkfw,
+	     bkfw_http,
+	     bkfw_index,
+	     bkfw_mcu,
+	     bkfw_mcus_sup,
+	     bkfw_parser,
+	     bkfw_scanner,
+	     bkfw_srv,
+	     bkfw_sup
+	    ]},
+  {registered, [
+		bkfw_config,
+		bkfw_mcus_sup,
+		bkfw_srv,
+		bkfw_sup
+	       ]},
   {applications, [
                   kernel,
-                  stdlib
+                  stdlib,
+		  ranch,
+		  crypto,
+		  cowlib,
+		  cowboy,
+		  snmp,
+		  mnesia
                  ]},
   {mod, { bkfw_app, []}},
   {env, []}
