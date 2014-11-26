@@ -57,10 +57,12 @@ angular.module('bkfwApp.services', [])
 
   return {
 
-    list: function() {
-      return $q(function(resolve, reject) {
+    list: [],
 
-        resolve([
+    getList: function() {
+      return $q(angular.bind(this, function(resolve, reject) {
+
+        this.list = [
           {
           index: 3,
           mode: "PC",
@@ -88,16 +90,18 @@ angular.module('bkfwApp.services', [])
           powerPd1: 23,
           powerSupply: 12.1
 	        }
-        ]);
+        ];
 
-      });
+        resolve(this.list);
+
+      }));
     },
 
     detail: function(id) {
 
       return $q(angular.bind(this, function(resolve, reject) {
 
-        var list = this.list()
+        this.getList()
         .then(function(values) {
           return values.filter(function(value) {
             return value.index == id;
