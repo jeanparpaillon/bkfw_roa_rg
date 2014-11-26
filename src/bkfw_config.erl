@@ -20,8 +20,23 @@
 
 -define(SERVER, ?MODULE).
 -type category() :: net | community | protocol | firmware.
-
--record(state, {}).
+-type net_opt() :: {type, static | dhcp} |
+		   {ip, binary()} |
+		   {netmask, binary()} |
+		   {gateway, binary()}.
+-type auth_opt() :: {password, binary()} |
+		    {comm_public, binary()} |
+		    {comm_restricted, binary()}.
+-type protocol_opt() :: {snmpv1, boolean()} |
+			{snmpv2, boolean()} |
+			{snmpv3, boolean()}.
+-type firmware_opt() :: {version, binary()}.
+-record(state, {
+	  net           :: [net_opt()],
+	  auth          :: [auth_opt()],
+	  protocol      :: [protocol_opt()],
+	  firmware      :: [firmware_opt()]
+	 }).
 
 %%%===================================================================
 %%% API
@@ -57,7 +72,7 @@ get_kv(Cat) ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    {ok, #state{}}.
+    {ok, #state{net=[{type, dhcp}]}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -73,7 +88,7 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({get_kv, net}, _From, State) ->
+handle_call({get_kv, net}, _From, #state{net=_Net}=State) ->
     {reply, [
 	     {type, static},
 	     {ip, <<"192.168.0.1">>},
@@ -95,9 +110,8 @@ handle_call({get_kv, firmware}, _From, State) ->
     {reply, [
 	     {version, <<"0.1">>}
 	    ], State};
-handle_call(_Request, _From, State) ->
-    Reply = ok,
-    {reply, Reply, State}.
+handle_call(_Req, _From, State) ->
+    {reply, ok, State}.
 
 %%--------------------------------------------------------------------
 %% @private
