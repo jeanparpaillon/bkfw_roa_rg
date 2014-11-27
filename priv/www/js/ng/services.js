@@ -106,7 +106,9 @@ angular.module('bkfwApp.services', [])
 
       var list = this.api.query(angular.bind(this, function() {
         // avoid interface flickering
-        this.list = list;
+        this.list = list.sort(function(a, b) {
+          return a.index > b.index;
+        });
         refreshId = $timeout(angular.bind(this, this.refreshList), refreshDelay);
       }));
 
