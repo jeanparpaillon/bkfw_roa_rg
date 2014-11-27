@@ -11,6 +11,12 @@ angular.module('bkfwApp', [
 	'ui.router'
 ])
 
+.run(['modules', function(modules) {
+
+  modules.refreshList(3000);
+
+}])
+
 .config(function($stateProvider, $urlRouterProvider) {
 
 	$urlRouterProvider.otherwise('/dashboard');

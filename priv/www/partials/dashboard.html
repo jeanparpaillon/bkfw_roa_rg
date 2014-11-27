@@ -1,4 +1,4 @@
-<div ng-controller="dashboardCtrl as dashboard">
+<div>
 
   <h1 class="page-header">Dashboard</h1>
 
@@ -16,7 +16,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr class="dashboard-row" ng-repeat="edfa in dashboard.list" ui-sref="module({moduleIndex: edfa.index})">
+        <tr class="dashboard-row" ng-repeat="edfa in global.modules.list" ui-sref="module({moduleIndex: edfa.index})">
           <td>{{ edfa.index }}</td>
           <td>{{ edfa.mode }}</td>
           <td>{{ edfa.curLaserTemp }}</td>

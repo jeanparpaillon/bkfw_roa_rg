@@ -53,16 +53,39 @@ angular.module('bkfwApp.services', [])
 
 }])
 
-.factory('modules', ['$resource', '$q', function($resource, $q) {
+.factory('modules', ['$resource', '$timeout', '$q', function($resource, $timeout, $q) {
+
+  var refreshId,
+      refreshDelay;
 
   return {
 
     list: [],
 
+    refreshList: function(delay) {
+
+      if (delay)
+        refreshDelay = delay;
+      if (refreshId)
+        $timeout.cancel(refreshId);
+
+      this.getList()
+
+      .then(angular.bind(this, function(list) {
+        console.debug("Refreshing modules list");
+        this.list = list;
+      }))
+
+      .finally(angular.bind(this, function() {
+        refreshId = $timeout(angular.bind(this, this.refreshList), refreshDelay);
+      }));
+
+    },
+
     getList: function() {
       return $q(angular.bind(this, function(resolve, reject) {
 
-        this.list = [
+        resolve([
           {
           index: 3,
           mode: "PC",
@@ -90,9 +113,7 @@ angular.module('bkfwApp.services', [])
           powerPd1: 23,
           powerSupply: 12.1
 	        }
-        ];
-
-        resolve(this.list);
+        ]);
 
       }));
     },

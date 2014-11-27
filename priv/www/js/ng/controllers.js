@@ -4,39 +4,9 @@
 
 angular.module('bkfwApp.controllers', [])
 
-.controller('dashboardCtrl', ['$timeout', 'modules', function($timeout, modules) {
+.controller('globalCtrl', ['$timeout', 'modules', function($timeout, modules) {
 
-  this.list = modules.list;
-
-  this.getList = function() {
-    modules.getList()
-    .then(angular.bind(this, function(values) {
-      this.list = values;
-    }))
-    // refresh modules list 3 secs later
-    .finally($timeout(angular.bind(this, this.getList), 3000));
-  };
-
-  // get modules list now.
-  this.getList();
-
-}])
-
-.controller('modulesMenuCtrl', ['$scope', 'modules', function($scope, modules) {
-
-  this.modules = modules.list;
-
-  $scope.$watch(
-    function() {
-      return modules.list;
-    },
-    angular.bind(this, function(newVal) {
-      if (newVal) {
-        this.modules = newVal;
-      }
-    }),
-    true
-  );
+  this.modules = modules;
 
 }])
 
