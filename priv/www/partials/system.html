@@ -1,0 +1,90 @@
+<h1 class="page-header">System</h1>
+
+<div class="row">
+
+  <div class="col-md-6">
+
+    <div class="block">
+      <h2>Network</h2>
+
+      <form role="form" ng-submit="system.saveNetwork()">
+        <div class="form-group">
+          <label>Configuration mode</label>
+          <select ng-model="system.network.type" class="form-control">
+            <option value="dhcp">DHCP (Automatic)</option>
+            <option value="static">Manual configuration</option>
+          </select>
+        </div>
+
+        <div class="form-group" ng-if="system.network.type == 'static'">
+          <label>IP Address</label>
+          <input type="text" ng-model="system.network.ip" class="form-control" />
+        </div>
+
+        <div class="form-group" ng-if="system.network.type == 'static'">
+          <label>Netmask</label>
+          <input type="text" ng-model="system.network.netmask" class="form-control" />
+        </div>
+
+        <div class="form-group" ng-if="system.network.type == 'static'">
+          <label>Gateway</label>
+          <input type="text" ng-model="system.network.gateway" class="form-control" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Apply</button>
+      </form>
+    </div>
+
+    <div class="block">
+      <h2>Upgrade</h2>
+
+      <p class="text-info">Current version is : {{ system.firmware.version }}</p>
+
+      <form role="form" ng-submit="system.upgrade()">
+        <div class="form-group">
+          <label>Firmware file</label>
+          <input type="file" ng-model="system.firmware.file" class="form-control" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Upgrade</button>
+      </form>
+    </div>
+
+  </div>
+
+  <div class="col-md-6">
+
+    <div class="block">
+      <h2>Security</h2>
+
+      <form role="form" ng-submit="system.saveSecurity()">
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" ng-model="system.password" class="form-control" />
+          <p class="help-block">Admin and SNMPv3 (when enabled) password</p>
+        </div>
+
+        <div class="form-group">
+          <label>Community name</label>
+          <input type="text" ng-model="system.community" class="form-control" />
+        </div>
+
+        <div class="checkbox">
+          <label ng-repeat="(protocol, enabled) in system.protocols">
+            <input type="checkbox" ng-model="system.protocols[protocol]" /> {{ protocol }}
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Apply</button>
+      </form>
+    </div>
+
+    <div class="block">
+      <br />
+      <button type="button" class="btn btn-warning btn-block" ng-click="system.reboot()">Reboot</button>
+      <br />
+    </div>
+
+  </div>
+
+</div>
