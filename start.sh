@@ -7,6 +7,34 @@ reldir=${BASEDIR}/rel
 
 USERCONF=/var/tmp/bkfw_user.conf
 
+usage() {
+    echo "Usage: $0 [-p XXXX] /path/to/com"
+}
+
+port=8000
+while getopts ":p:" opt; do
+    case $opt in
+	p)
+	    shift $((OPTIND -1))
+	    port=$OPTARG
+	    ;;
+	:)
+	    usage
+	    exit 1
+	    ;;
+	*)
+	    usage
+	    exit 1
+    esac
+done
+
+if [ $# -lt 1 ]; then
+    usage
+    exit 1
+fi
+
+com=$1
+
 if [ ! -e /var/tmp/bkfw_user.confif ]; then
     echo "[]." > /var/tmp/bkfw_user.config
 fi
@@ -14,7 +42,8 @@ fi
 erl -sname agent \
     -pa ${ebindir} \
     -pa ${depsdir} \
-    -bkfw http "[{port, 8000}]" \
+    -bkfw http "[{port, $port}]" \
+    -bkfw com "\"$com\"" \
     -config ${reldir}/files/sys \
     -s bkfw
 
