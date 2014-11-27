@@ -14,7 +14,8 @@
 
 %% API
 -export([start_link/0,
-	 get_kv/1]).
+	 get_kv/1,
+	 set_kv/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -59,6 +60,10 @@ start_link() ->
 get_kv(Cat) ->
     gen_server:call(?SERVER, {get_kv, Cat}).
 
+-spec set_kv(category(), term()) -> ok | {error, term()}.
+set_kv(Cat, Props) ->
+    gen_server:call(?SERVER, {set_kv, Cat, Props}).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -75,7 +80,8 @@ get_kv(Cat) ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    {ok, #state{net=application:get_env(bkfw, net, [])}}.
+    {ok, #state{net=application:get_env(bkfw, net, []),
+		firmware=load_resources()}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -109,21 +115,26 @@ handle_call({get_kv, net}, _From, #state{net=Net}=State) ->
 		    end
 	    end,
     {reply, Props, State};
+
 handle_call({get_kv, community}, _From, State) ->
     {reply, [
 	     {public, <<"public">>},
 	     {restricted, <<"private">>}
 	    ], State};
+
 handle_call({get_kv, protocol}, _From, State) ->
     {reply, [
 	     {snmpv1, true},
 	     {snmpv2, false},
 	     {snmpv3, false}
 	    ], State};
-handle_call({get_kv, firmware}, _From, State) ->
+
+handle_call({get_kv, firmware}, _From, #state{firmware=FW}=S) ->
     {reply, [
-	     {version, <<"0.1">>}
-	    ], State};
+	     {id, list_to_binary(proplists:get_value(description, FW, ""))},
+	     {version, list_to_binary(proplists:get_value(vsn, FW, ""))}
+	    ], S};
+
 handle_call(_Req, _From, State) ->
     {reply, ok, State}.
 
@@ -207,3 +218,9 @@ get_if_infos(NetIf) ->
 	       T2 -> list_to_binary(inet:ntoa(T2))
 	   end,
     [{ip, Addr}, {netmask, Mask}].
+
+load_resources() ->
+    case file:consult(filename:join(code:lib_dir(bkfw, ebin), "bkfw.app")) of
+	{ok, [{application, bkfw, Props}]} -> Props;
+	_ -> []
+    end.

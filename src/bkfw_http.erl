@@ -14,7 +14,8 @@
 	 content_types_provided/2,
 	 resource_exists/2,
 	 allow_missing_post/2,
-	 to_json/2
+	 to_json/2,
+	 from_json/2
 	]).
 
 -define(PORT, 8080).
@@ -78,9 +79,14 @@ allowed_methods(Req, State) ->
     {[<<"GET">>, <<"HEAD">>, <<"POST">>, <<"OPTIONS">>], Req, State}.
 
 content_types_accepted(Req, State) ->
-    {[
-      {{<<"application">>, <<"json">>, []}, from_json}
-     ], Req, State}.
+    case cowboy_req:has_body(Req) of
+	true ->
+	    {[
+	      {{<<"application">>, <<"json">>, []}, from_json}
+	     ], Req, State};
+	false ->
+	    {[], Req, State}
+    end.
 
 content_types_provided(Req, State) ->
     {[
@@ -115,6 +121,8 @@ resource_exists(Req, S) ->
 allow_missing_post(Req, State) ->
     {false, Req, State}.
 
+
+
 to_json(Req, #state{section=mcu, index=undefined}=S) ->
     Mcus = mnesia:dirty_match_object(#edfaMcuTable{_='_'}),
     Ejson = lists:map(fun bkfw_mcu:get_kv/1, Mcus),
@@ -143,3 +151,36 @@ to_json(Req, #state{section=sys, sys=protocol}=S) ->
 
 to_json(Req, #state{section=sys, sys=firmware}=S) ->
     {jsx:encode(bkfw_config:get_kv(firmware), ?JSX_OPTS), Req, S}.
+
+
+from_json(Req, #state{section=sys, sys=Cat}=S) ->
+    case parse_body(Req) of
+	{error, invalid_body, Req2} ->
+	    {false, Req2, S};
+	{error, Err, Req2} ->
+	    ?error("Internal error: ~p~n", [Err]),
+	    {halt, Req2, S};
+	{ok, Json, Req2} ->
+	    case bkfw_config:set_kv(Cat, Json) of
+		ok ->
+		    {true, Req2, S};
+		{error, Err} ->
+		    ?error("Request error: ~p~n", [Err]),
+		    {false, Req2, S}
+	    end
+    end.
+
+parse_body(Req) ->
+    case cowboy_req:body(Req) of
+	{ok, <<>>, Req2} ->
+	    {error, invalid_body, Req2};
+	{ok, Body, Req2} ->
+	    try jsx:decode(Body, [{labels, attempt_atom}]) of
+		Props when is_list(Props) ->
+		    {ok, Props, Req2}
+	    catch error:badarg ->
+		    {error, invalid_body, Req2}
+	    end;
+	{error, Err} ->
+	    {error, Err}
+    end.
