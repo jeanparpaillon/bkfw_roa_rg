@@ -82,6 +82,17 @@ angular.module('bkfwApp.services', [])
 
   return {
 
+    modes: {
+      1: {name: 'PC', valueType: 'dBm'},
+      PC: 1,
+      2: {name: 'GC', valueType: 'dB'},
+      GC: 2,
+      3: {name: 'CC', valueType: 'mA'},
+      CC: 3,
+      4: {name: 'OFF', valueType: null},
+      OFF: 4
+    },
+
     api: $resource('/api/mcu/:mcuIndex', {mcuIndex: '@index'}),
 
     list: [],

@@ -12,16 +12,14 @@ angular.module('bkfwApp.controllers', [])
 
 .controller('mcuCtrl', ['$scope', '$timeout', '$stateParams', 'mcu', 'dialogs', function($scope, $timeout, $stateParams, mcu, dialogs) {
 
-  var controlValueTypes = {
-    CC: 'mA',
-    GC: 'dB',
-    PC: 'dBm'
-  };
-
-  this.detail = mcu.api.get({}, {index: $stateParams.mcuIndex});
-
+  this.controlMode = null;
   this.controlValue = null;
-  this.controlValueType = null;
+
+  this.modes = mcu.modes;
+  this.detail = mcu.api.get({}, {index: $stateParams.mcuIndex},
+                            angular.bind(this, function() {
+                              this.controlMode = this.detail.operatingMode;
+                            }));
 
   this.setControlMode = function() {
     console.debug("Setting control mode...");

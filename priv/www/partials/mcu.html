@@ -17,7 +17,7 @@
             <tbody>
               <tr>
                 <td>Mode</td>
-                <td>{{ mcu.detail.operatingMode }}</td>
+                <td>{{ mcu.detail.operatingMode | mcuMode }}</td>
               </tr>
               <tr>
                 <td>Laser T&#186; (&#186;C)</td>
@@ -104,18 +104,14 @@
 
           <div class="form-group">
             <label>Operating mode</label>
-            <select ng-model="mcu.detail.operatingMode" class="form-control">
-              <option value="1">PC</option>
-              <option value="2">GC</option>
-              <option value="3">CC</option>
-              <option value="4">OFF</option>
+            <select ng-model="mcu.controlMode" class="form-control">
+              <option ng-repeat="(value, info) in mcu.modes" value="{{ value }}">{{ info.name }}</option>
             </select>
           </div>
 
-          <div class="form-group">
-            <label>Value</label>
+          <div class="form-group" ng-if="mcu.controlMode != mcu.modes.OFF">
+            <label>Value in {{ mcu.modes[mcu.controlMode].valueType }}</label>
             <input type="text" ng-model="mcu.controlValue" class="form-control" />
-            <p class="help-block">A value in {{ mcu.controlValueType }}</p>
           </div>
 
           <button type="submit" class="btn btn-primary">Set</button>
