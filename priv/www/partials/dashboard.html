@@ -4,33 +4,36 @@
 
   <edfa-info></edfa-info>
 
-  <div class="table-responsive">
-    <table class="table table-striped table-hover">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Mode</th>
-          <th>Laser T&#186; (&#186;C)</th>
-          <th>Laser current (A)</th>
-          <th>Int. T&#186; (&#186;)</th>
-          <th>Power level (dBm)</th>
-          <th>PSU voltage (V)</th>
-          <th>PSU voltage (V)</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr class="dashboard-row" ng-repeat="mcu in global.mcu.list" ui-sref="mcu({mcuIndex: mcu.index})">
-          <td>{{ mcu.index }}</td>
-          <td>{{ mcu.operatingMode }}</td>
-          <td>{{ mcu.curLaserTemp }}</td>
-          <td>{{ mcu.curAmp }}</td>
-          <td>{{ mcu.curInternalAmp }}</td>
-          <td>{{ mcu.powerInput }}</td>
-          <td>{{ mcu.powerOutput }}</td>
-          <td>{{ mcu.powerSupply }}</td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="block">
+    <h2>MCU list</h2>
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Mode</th>
+            <th>Laser T&#186; (&#186;C)</th>
+            <th>Laser current (A)</th>
+            <th>Int. T&#186; (&#186;)</th>
+            <th>Power level (dBm)</th>
+            <th>PSU voltage (V)</th>
+            <th>PSU voltage (V)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="dashboard-row" ng-repeat="mcu in global.mcu.list" ui-sref="mcu({mcuIndex: mcu.index})">
+            <td>{{ mcu.index }}</td>
+            <td>{{ mcu.operatingMode | mcuMode }}</td>
+            <td>{{ mcu.curLaserTemp }}</td>
+            <td>{{ mcu.curAmp }}</td>
+            <td>{{ mcu.curInternalAmp }}</td>
+            <td>{{ mcu.powerInput }}</td>
+            <td>{{ mcu.powerOutput }}</td>
+            <td>{{ mcu.powerSupply }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
 </div>

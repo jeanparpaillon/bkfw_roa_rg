@@ -37,8 +37,6 @@ h1.page-header {
  * Main content
  */
 .content {
-  border-left: 2px solid #aaa;
-  padding-left: 20px;
 }
 
 /*
@@ -77,6 +75,10 @@ h1.page-header {
 
 .block h2 {
   font-size: 26px;
+}
+
+.block table {
+  border: 1px solid #ddd;
 }
 
 .table {

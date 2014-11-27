@@ -8,12 +8,6 @@
         <h2>Monitoring</h2>
         <div class="table-responsive">
           <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>Param</th>
-                <th>Value</th>
-              </tr>
-            </thead>
             <tbody>
               <tr>
                 <td>Mode</td>
@@ -51,7 +45,7 @@
       <div class="block">
         <h2>Identity</h2>
         <div class="table-responsive">
-          <table class="table">
+          <table class="table table-hover">
             <tbody>
               <tr>
                 <td>Vendor</td>
@@ -105,12 +99,12 @@
           <div class="form-group">
             <label>Operating mode</label>
             <select ng-model="mcu.controlMode" class="form-control">
-              <option ng-repeat="(value, info) in mcu.modes" value="{{ value }}">{{ info.name }}</option>
+              <option ng-repeat="(id, info) in mcu.modeID" value="{{ id }}">{{ info.name }}</option>
             </select>
           </div>
 
-          <div class="form-group" ng-if="mcu.controlMode != mcu.modes.OFF">
-            <label>Value in {{ mcu.modes[mcu.controlMode].valueType }}</label>
+          <div class="form-group" ng-if="mcu.controlMode != mcu.mode.OFF">
+            <label>Value in {{ mcu.modeID[mcu.controlMode].valueType }}</label>
             <input type="text" ng-model="mcu.controlValue" class="form-control" />
           </div>
 

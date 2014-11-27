@@ -68,8 +68,9 @@ angular.module('bkfwApp.utils', [])
 
 .filter('mcuMode', ['mcu', function(mcu) {
 
-  return function(index) {
-    return mcu.modes[index].name;
+  return function(id) {
+    id = id || mcu.mode.OFF;
+    return mcu.modeID[id].name;
   };
 
 }]);

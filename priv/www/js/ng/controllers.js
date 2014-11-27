@@ -12,34 +12,29 @@ angular.module('bkfwApp.controllers', [])
 
 .controller('mcuCtrl', ['$scope', '$timeout', '$stateParams', 'mcu', 'dialogs', function($scope, $timeout, $stateParams, mcu, dialogs) {
 
-  this.controlMode = null;
+  this.mode = mcu.mode;
+  this.modeID = mcu.modeID;
+
+  // default values
+  this.controlMode = mcu.mode.OFF;
   this.controlValue = null;
 
-  this.modes = mcu.modes;
   this.detail = mcu.api.get({}, {index: $stateParams.mcuIndex},
                             angular.bind(this, function() {
+                              // on get()
                               this.controlMode = this.detail.operatingMode;
+                              console.debug(this.detail);
                             }));
 
-  this.setControlMode = function() {
-    console.debug("Setting control mode...");
+  this.setOperatingMode = function() {
+    console.debug("Setting operating mode...");
 
     dialogs.confirm("Are you sure ?")
 
     .then(angular.bind(this, function() {
-        console.debug("Setting control mode " + this.detail.operatingMode);
+        console.debug("Setting operating mode " + this.controlMode);
     }));
   };
-
-  $scope.$watch(
-    angular.bind(this, function() {
-      return this.detail.operatingMode;
-    }),
-    angular.bind(this, function(newVal) {
-      if (newVal)
-        this.controlValueType = controlValueTypes[this.detail.operatingMode];
-    })
-  );
 
 }])
 
