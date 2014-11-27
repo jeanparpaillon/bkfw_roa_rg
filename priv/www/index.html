@@ -62,8 +62,8 @@
           <div class="sidebar">
             <ul class="nav nav-pills nav-stacked">
               <li ui-sref-active="active"><a ui-sref="dashboard">Dashboard</a></li>
-              <li ng-repeat="edfa in global.modules.list" ui-sref-active="active">
-                <a ui-sref="module({moduleIndex: edfa.index})">Module #{{ edfa.index }}</a>
+              <li ng-repeat="mcu in global.mcu.list" ui-sref-active="active">
+                <a ui-sref="mcu({mcuIndex: mcu.index})">MCU #{{ mcu.index }}</a>
               </li>
               <li ui-sref-active="active"><a ui-sref="system">System</a></li>
             </ul>

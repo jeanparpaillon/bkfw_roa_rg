@@ -53,12 +53,14 @@ angular.module('bkfwApp.services', [])
 
 }])
 
-.factory('modules', ['$resource', '$timeout', '$q', function($resource, $timeout, $q) {
+.factory('mcu', ['$resource', '$timeout', function($resource, $timeout) {
 
   var refreshId,
       refreshDelay;
 
   return {
+
+    api: $resource('/api/mcu/:mcuIndex', {mcuIndex: '@index'}),
 
     list: [],
 
@@ -69,76 +71,13 @@ angular.module('bkfwApp.services', [])
       if (refreshId)
         $timeout.cancel(refreshId);
 
-      this.getList()
-
-      .then(angular.bind(this, function(list) {
-        console.debug("Refreshing modules list");
+      var list = this.api.query(angular.bind(this, function() {
+        // avoid interface flickering
         this.list = list;
-      }))
-
-      .finally(angular.bind(this, function() {
         refreshId = $timeout(angular.bind(this, this.refreshList), refreshDelay);
       }));
 
     },
-
-    getList: function() {
-      return $q(angular.bind(this, function(resolve, reject) {
-
-        resolve([
-          {
-          index: 3,
-          mode: "PC",
-          curLaserTemp: Math.random() * 60,
-          curAmp: 3,
-          curInternalTemp: 32,
-          powerPd1: 23,
-          powerSupply: 13
-          },
-          {
-          index: 4,
-          mode: "GC",
-          curLaserTemp: 48,
-          curAmp: 2.5,
-          curInternalTemp: 37.2,
-          powerPd1: 27,
-          powerSupply: 14.43
-    	    },
-	        {
-          index: 7,
-          mode: "GC",
-          curLaserTemp: 45,
-          curAmp: 2.3,
-          curInternalTemp: 34.2,
-          powerPd1: 23,
-          powerSupply: 12.1
-	        }
-        ]);
-
-      }));
-    },
-
-    detail: function(id) {
-
-      return $q(angular.bind(this, function(resolve, reject) {
-
-        this.getList()
-        .then(function(values) {
-          return values.filter(function(value) {
-            return value.index == id;
-          });
-        })
-        .then(function(values) {
-          if (values.length == 1) {
-            resolve(values[0]);
-          }
-          else {
-            reject("Module not detected");
-          }
-        });
-      }));
-
-    }
 
   };
 

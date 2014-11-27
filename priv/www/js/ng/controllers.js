@@ -4,13 +4,13 @@
 
 angular.module('bkfwApp.controllers', [])
 
-.controller('globalCtrl', ['$timeout', 'modules', function($timeout, modules) {
+.controller('globalCtrl', ['$timeout', 'mcu', function($timeout, mcu) {
 
-  this.modules = modules;
+  this.mcu = mcu;
 
 }])
 
-.controller('moduleCtrl', ['$scope', '$timeout', '$stateParams', 'modules', 'dialogs', function($scope, $timeout, $stateParams, modules, dialogs) {
+.controller('mcuCtrl', ['$scope', '$timeout', '$stateParams', 'mcu', 'dialogs', function($scope, $timeout, $stateParams, mcu, dialogs) {
 
   var controlValueTypes = {
     CC: 'mA',
@@ -18,8 +18,8 @@ angular.module('bkfwApp.controllers', [])
     PC: 'dBm'
   };
 
-  this.detail = {};
-  this.controlMode = null;
+  this.detail = mcu.api.get({}, {index: $stateParams.mcuIndex});
+
   this.controlValue = null;
   this.controlValueType = null;
 
@@ -29,23 +29,17 @@ angular.module('bkfwApp.controllers', [])
     dialogs.confirm("Are you sure ?")
 
     .then(angular.bind(this, function() {
-        console.debug("Setting control mode " + this.controlMode);
+        console.debug("Setting control mode " + this.detail.operatingMode);
     }));
   };
 
-  modules.detail($stateParams.moduleIndex)
-  .then(angular.bind(this, function(value) {
-    this.detail = value;
-    this.controlMode = this.detail.mode;
-  }));
-
   $scope.$watch(
     angular.bind(this, function() {
-      return this.controlMode;
+      return this.detail.operatingMode;
     }),
     angular.bind(this, function(newVal) {
       if (newVal)
-        this.controlValueType = controlValueTypes[this.controlMode];
+        this.controlValueType = controlValueTypes[this.detail.operatingMode];
     })
   );
 

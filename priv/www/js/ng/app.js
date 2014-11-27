@@ -11,9 +11,9 @@ angular.module('bkfwApp', [
 	'ui.router'
 ])
 
-.run(['modules', function(modules) {
+.run(['mcu', function(mcu) {
 
-  modules.refreshList(3000);
+  mcu.refreshList(3000);
 
 }])
 
@@ -28,9 +28,10 @@ angular.module('bkfwApp', [
 		templateUrl: 'partials/dashboard.html',
 	})
 
-  .state('module', {
-    url: '/module/:moduleIndex',
-    templateUrl: 'partials/module.html',
+  .state('mcu', {
+    url: '/mcu/:mcuIndex',
+    controller: 'mcuCtrl as mcu',
+    templateUrl: 'partials/mcu.html',
   })
 
   .state('system', {

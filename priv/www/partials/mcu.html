@@ -1,0 +1,128 @@
+<div>
+  <h1 class="page-header">MCU #{{ mcu.detail.index }}</h1>
+
+  <div class="row">
+    <div class="col-md-6">
+
+      <div class="block">
+        <h2>Monitoring</h2>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Param</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Mode</td>
+                <td>{{ mcu.detail.operatingMode }}</td>
+              </tr>
+              <tr>
+                <td>Laser T&#186; (&#186;C)</td>
+                <td>{{ mcu.detail.curLaserTemp }}</td>
+              </tr>
+              <tr>
+                <td>Laser current (A)</td>
+                <td>{{ mcu.detail.curAmp }}</td>
+              </tr>
+              <tr>
+                <td>Int. T&#186; (&#186;)</td>
+                <td>{{ mcu.detail.curInternalAmp }}</td>
+              </tr>
+              <tr>
+                <td>Power level (dBm)</td>
+                <td>{{ mcu.detail.powerInput }}</td>
+              </tr>
+              <tr>
+                <td>Power level (dBm)</td>
+                <td>{{ mcu.detail.powerOutput }}</td>
+              </tr>
+              <tr>
+                <td>PSU voltage (V)</td>
+                <td>{{ mcu.detail.powerSupply }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="block">
+        <h2>Identity</h2>
+        <div class="table-responsive">
+          <table class="table">
+            <tbody>
+              <tr>
+                <td>Vendor</td>
+                <td>{{ mcu.detail.vendor }}</td>
+              </tr>
+              <tr>
+                <td>Module type</td>
+                <td>{{ mcu.detail.moduleType }}</td>
+              </tr>
+              <tr>
+                <td>Hardware version</td>
+                <td>{{ mcu.detail.hwVer }}</td>
+              </tr>
+              <tr>
+                <td>Hardware revision</td>
+                <td>{{ mcu.detail.hwRev }}</td>
+              </tr>
+              <tr>
+                <td>Software version</td>
+                <td>{{ mcu.detail.swVer }}</td>
+              </tr>
+              <tr>
+                <td>Firmware version</td>
+                <td>{{ mcu.detail.fwVer }}</td>
+              </tr>
+              <tr>
+                <td>Part num.</td>
+                <td>{{ mcu.detail.partNum }}</td>
+              </tr>
+              <tr>
+                <td>Serial num.</td>
+                <td>{{ mcu.detail.serialNum }}</td>
+              </tr>
+              <tr>
+                <td>Product date</td>
+                <td>{{ mcu.detail.productDate }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+    <div class="col-md-6">
+
+      <div class="block">
+        <h2>Control</h2>
+
+        <form role="form" ng-submit="mcu.setOperatingMode()">
+
+          <div class="form-group">
+            <label>Operating mode</label>
+            <select ng-model="mcu.detail.operatingMode" class="form-control">
+              <option value="1">PC</option>
+              <option value="2">GC</option>
+              <option value="3">CC</option>
+              <option value="4">OFF</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Value</label>
+            <input type="text" ng-model="mcu.controlValue" class="form-control" />
+            <p class="help-block">A value in {{ mcu.controlValueType }}</p>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Set</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+</div>

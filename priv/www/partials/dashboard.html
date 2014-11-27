@@ -13,17 +13,19 @@
           <th>Int. T&#186; (&#186;)</th>
           <th>Power level (dBm)</th>
           <th>PSU voltage (V)</th>
+          <th>PSU voltage (V)</th>
         </tr>
       </thead>
       <tbody>
-        <tr class="dashboard-row" ng-repeat="edfa in global.modules.list" ui-sref="module({moduleIndex: edfa.index})">
-          <td>{{ edfa.index }}</td>
-          <td>{{ edfa.mode }}</td>
-          <td>{{ edfa.curLaserTemp }}</td>
-          <td>{{ edfa.curAmp }}</td>
-          <td>{{ edfa.curInternalTemp }}</td>
-          <td>{{ edfa.powerPd1 }}</td>
-          <td>{{ edfa.powerSupply }}</td>
+        <tr class="dashboard-row" ng-repeat="mcu in global.mcu.list" ui-sref="mcu({mcuIndex: mcu.index})">
+          <td>{{ mcu.index }}</td>
+          <td>{{ mcu.operatingMode }}</td>
+          <td>{{ mcu.curLaserTemp }}</td>
+          <td>{{ mcu.curAmp }}</td>
+          <td>{{ mcu.curInternalAmp }}</td>
+          <td>{{ mcu.powerInput }}</td>
+          <td>{{ mcu.powerOutput }}</td>
+          <td>{{ mcu.powerSupply }}</td>
         </tr>
       </tbody>
     </table>
