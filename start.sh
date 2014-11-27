@@ -14,7 +14,7 @@ fi
 erl -sname agent \
     -pa ${ebindir} \
     -pa ${depsdir} \
-    -bkfw http "[{port, 8080}]" \
+    -bkfw http "[{port, 8000}]" \
     -config ${reldir}/files/sys \
     -s bkfw
 

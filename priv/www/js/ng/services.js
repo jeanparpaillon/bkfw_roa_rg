@@ -53,6 +53,28 @@ angular.module('bkfwApp.services', [])
 
 }])
 
+.factory('edfa', ['$resource', function($resource) {
+
+  return $resource('/api/edfa');
+
+}])
+
+.factory('sys', ['$resource', function($resource) {
+
+  return {
+
+    net: $resource('/api/sys/net'),
+
+    community: $resource('/api/sys/community'),
+
+    protocol: $resource('/api/sys/protocol'),
+
+    firmware: $resource('/api/sys/firmware')
+
+  };
+
+}])
+
 .factory('mcu', ['$resource', '$timeout', function($resource, $timeout) {
 
   var refreshId,

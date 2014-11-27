@@ -45,34 +45,17 @@ angular.module('bkfwApp.controllers', [])
 
 }])
 
-.controller('systemCtrl', [function() {
+.controller('systemCtrl', ['sys', function(sys) {
 
-  this.network = {
-    type: "dhcp",
-    ip: null,
-    netmask: null,
-    gateway: null
-  };
+  this.network = sys.net.get();
 
   this.password = "foo";
 
-  this.community = "bar";
+  this.community = sys.community.get();
 
-  this.protocols = {
-    snmpv1: true,
-    snmpv2: false,
-    snmpv3: true
-  };
+  this.protocol = sys.protocol.get();
 
-  this.firmware = {
-    file: null,
-    version: "v0.1"
-  };
-
-  this.saveNetwork = function() {
-
-  };
-
+  this.firmware = sys.firmware.get();
 
 }])
 

@@ -38,7 +38,7 @@
     <div class="block">
       <h2>Upgrade</h2>
 
-      <p class="text-info">Current version is : {{ system.firmware.version }}</p>
+      <p class="text-info">{{ system.firmware.id }} version <strong>{{ system.firmware.version }}</strong></p>
 
       <form role="form" ng-submit="system.upgrade()">
         <div class="form-group">
@@ -65,13 +65,18 @@
         </div>
 
         <div class="form-group">
-          <label>Community name</label>
-          <input type="text" ng-model="system.community" class="form-control" />
+          <label>Public community</label>
+          <input type="text" ng-model="system.community.public" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label>Restricted community</label>
+          <input type="text" ng-model="system.community.restricted" class="form-control" />
         </div>
 
         <div class="checkbox">
-          <label ng-repeat="(protocol, enabled) in system.protocols">
-            <input type="checkbox" ng-model="system.protocols[protocol]" /> {{ protocol }}
+          <label ng-repeat="(protocol, enabled) in system.protocol">
+            <input type="checkbox" ng-model="system.protocol[protocol]" /> {{ protocol }}
           </label>
         </div>
 
