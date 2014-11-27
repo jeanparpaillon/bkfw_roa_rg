@@ -8,6 +8,8 @@
 %%%-------------------------------------------------------------------
 -module(bkfw_config).
 
+-include("bkfw.hrl").
+
 -behaviour(gen_server).
 
 %% API
@@ -21,6 +23,7 @@
 -define(SERVER, ?MODULE).
 -type category() :: net | community | protocol | firmware.
 -type net_opt() :: {type, static | dhcp} |
+		   {ifname, string()} |
 		   {ip, binary()} |
 		   {netmask, binary()} |
 		   {gateway, binary()}.
@@ -72,7 +75,7 @@ get_kv(Cat) ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    {ok, #state{net=[{type, dhcp}]}}.
+    {ok, #state{net=application:get_env(bkfw, net, [])}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -88,13 +91,24 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({get_kv, net}, _From, #state{net=_Net}=State) ->
-    {reply, [
-	     {type, static},
-	     {ip, <<"192.168.0.1">>},
-	     {netmask, <<"255.255.255.0">>},
-	     {gateway, <<"192.168.0.254">>}
-	    ], State};
+handle_call({get_kv, net}, _From, #state{net=Net}=State) ->
+    IfName = proplists:get_value(ifname, Net),
+    Props = case proplists:get_value(type, Net) of
+		static ->
+		    [
+		     {type, static},
+		     {ip, proplists:get_value(ip, Net)},
+		     {netmask, proplists:get_value(netmask, Net)},
+		     {gateway, proplists:get_value(gateway, Net)}
+		    ];
+		dhcp ->
+		    P = [{type, dhcp}],
+		    case get_if(IfName) of
+			undefined -> P;		    
+			NetIf -> get_if_infos(NetIf) ++ P
+		    end
+	    end,
+    {reply, Props, State};
 handle_call({get_kv, community}, _From, State) ->
     {reply, [
 	     {public, <<"public">>},
@@ -167,3 +181,29 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+get_if(Name) ->
+    case inet:getifaddrs() of
+	{ok, List} ->
+	    filter_if(Name, List);
+	{error, Err} ->
+	    ?error("Error getting network interfaces: ~p~n", [Err]),
+	    undefined
+    end.
+
+filter_if(_, []) ->
+    undefined;
+filter_if(Name, [{Name, Props} | _]) ->
+    Props;
+filter_if(Name, [{_, _} | Tail]) ->
+    filter_if(Name, Tail).
+
+get_if_infos(NetIf) ->
+    Addr = case proplists:get_value(addr, NetIf) of
+	       undefined -> <<>>;
+	       T1 -> list_to_binary(inet:ntoa(T1))
+	   end,
+    Mask = case proplists:get_value(netmask, NetIf) of
+	       undefined -> <<>>;
+	       T2 -> list_to_binary(inet:ntoa(T2))
+	   end,
+    [{ip, Addr}, {netmask, Mask}].
