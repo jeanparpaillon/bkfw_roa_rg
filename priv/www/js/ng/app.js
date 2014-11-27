@@ -33,6 +33,12 @@ angular.module('bkfwApp', [
     templateUrl: 'partials/module.html',
   })
 
+  .state('system', {
+    url: '/system',
+    controller: 'systemCtrl as system',
+    templateUrl: 'partials/system.html',
+  })
+
   .state('login', {
 		url: '/login',
 		templateUrl: 'partials/login.html'

@@ -51,6 +51,37 @@ angular.module('bkfwApp.controllers', [])
 
 }])
 
+.controller('systemCtrl', [function() {
+
+  this.network = {
+    type: "dhcp",
+    ip: null,
+    netmask: null,
+    gateway: null
+  };
+
+  this.password = "foo";
+
+  this.community = "bar";
+
+  this.protocols = {
+    snmpv1: true,
+    snmpv2: false,
+    snmpv3: true
+  };
+
+  this.firmware = {
+    file: null,
+    version: "v0.1"
+  };
+
+  this.saveNetwork = function() {
+
+  };
+
+
+}])
+
 .controller('loginCtrl', ['$state', 'session', function($state, session) {
 
   if (session.connected)

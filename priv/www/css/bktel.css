@@ -115,3 +115,7 @@ form {
   max-height: 300px;
   overflow: auto;
 }
+
+div.checkbox label {
+  margin-right: 1em;
+}
