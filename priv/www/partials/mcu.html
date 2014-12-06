@@ -42,52 +42,6 @@
         </div>
       </div>
 
-      <div class="block">
-        <h2>Identity</h2>
-        <div class="table-responsive">
-          <table class="table table-hover">
-            <tbody>
-              <tr>
-                <td>Vendor</td>
-                <td>{{ mcu.detail.vendor }}</td>
-              </tr>
-              <tr>
-                <td>Module type</td>
-                <td>{{ mcu.detail.moduleType }}</td>
-              </tr>
-              <tr>
-                <td>Hardware version</td>
-                <td>{{ mcu.detail.hwVer }}</td>
-              </tr>
-              <tr>
-                <td>Hardware revision</td>
-                <td>{{ mcu.detail.hwRev }}</td>
-              </tr>
-              <tr>
-                <td>Software version</td>
-                <td>{{ mcu.detail.swVer }}</td>
-              </tr>
-              <tr>
-                <td>Firmware version</td>
-                <td>{{ mcu.detail.fwVer }}</td>
-              </tr>
-              <tr>
-                <td>Part num.</td>
-                <td>{{ mcu.detail.partNum }}</td>
-              </tr>
-              <tr>
-                <td>Serial num.</td>
-                <td>{{ mcu.detail.serialNum }}</td>
-              </tr>
-              <tr>
-                <td>Product date</td>
-                <td>{{ mcu.detail.productDate }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
     </div>
     <div class="col-md-6">
 
@@ -114,5 +68,75 @@
     </div>
 
   </div>
+
+  <div class="row">
+
+    <div class="col-md-12">
+
+      <div class="block">
+
+        <h2>Identity</h2>
+
+        <div class="row">
+
+          <div class="col-sm-6">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <tbody>
+                  <tr>
+                    <td>Vendor</td>
+                    <td>{{ mcu.detail.vendor }}</td>
+                  </tr>
+                  <tr>
+                    <td>Module type</td>
+                    <td>{{ mcu.detail.moduleType }}</td>
+                  </tr>
+                  <tr>
+                    <td>Part num.</td>
+                    <td>{{ mcu.detail.partNum }}</td>
+                  </tr>
+                  <tr>
+                    <td>Serial num.</td>
+                    <td>{{ mcu.detail.serialNum }}</td>
+                  </tr>
+                  <tr>
+                    <td>Product date</td>
+                    <td>{{ mcu.detail.productDate }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="col-sm-6">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <tbody>
+                  <tr>
+                    <td>Hardware version</td>
+                    <td>{{ mcu.detail.hwVer }}</td>
+                  </tr>
+                  <tr>
+                    <td>Hardware revision</td>
+                    <td>{{ mcu.detail.hwRev }}</td>
+                  </tr>
+                  <tr>
+                    <td>Software version</td>
+                    <td>{{ mcu.detail.swVer }}</td>
+                  </tr>
+                  <tr>
+                    <td>Firmware version</td>
+                    <td>{{ mcu.detail.fwVer }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div> <!-- row -->
+
+      </div>
+
+    </div> <!-- row -->
 
 </div>
