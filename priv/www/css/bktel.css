@@ -1,11 +1,6 @@
 /*
- * Base structure
+ * Common elements
  */
-
-/* Move down content because we have a fixed navbar that is 50px tall */
-body {
-  padding-top: 135px;
-}
 
 h1 {
   font-size: 30px;
@@ -16,46 +11,22 @@ h1.page-header {
 }
 
 /*
- * Global add-ons
+ * Upper nav logo
  */
-
-.sub-header {
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
+.logo {
+  height: 117px;
 }
 
-/*
- * Top navigation
- * Hide default border to remove 1px line.
- */
-.navbar-fixed-top {
-    border: 0;
-    height: 115px;
+.top-nav {
+  margin-bottom: 0px;
+  border-radius: 0px;
 }
 
 /*
  * Main content
  */
-.content {
-}
-
-/*
- * Placeholder dashboard ideas
- */
-
-.placeholders {
-  margin-bottom: 30px;
-  text-align: center;
-}
-.placeholders h4 {
-  margin-bottom: 0;
-}
-.placeholder {
-  margin-bottom: 20px;
-}
-.placeholder img {
-  display: inline-block;
-  border-radius: 50%;
+.page {
+  padding-top: 20px;
 }
 
 .form-signin-heading {

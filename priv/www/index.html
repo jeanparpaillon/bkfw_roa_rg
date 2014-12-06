@@ -18,6 +18,8 @@
 
     <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet" />
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/bootstrap.min.js"></script>
 
     <!-- Custom stylesheet -->
     <link href="css/bktel.css" rel="stylesheet" />
@@ -31,47 +33,55 @@
 
   </head>
   <body ng-controller="globalCtrl as global">
-    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation" ng-controller="navCtrl as nav">
+    <nav class="navbar navbar-inverse top-nav" ng-controller="navCtrl as nav">
       <div class="container-fluid">
         <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" ui-sref="dashboard">
+          <a class="navbar-brand logo" ui-sref="dashboard">
             <img src="img/logo_250.png" alt="BKtel logo" />
           </a>
         </div>
-        <div id="navbar" class="navbar-collapse collapse">
-          <ul class="nav navbar-nav navbar-right">
-            <li ng-hide="nav.session.connected"><a ui-sref="login">Login</a></li>
-            <li ng-show="nav.session.connected"><span class="navbar-text">{{ nav.session.user }}</span></li>
-            <li ng-show="nav.session.connected"><a ui-sref="logout">Logout</a></li>
-          </ul>
-        </div>
+        <ul class="nav navbar-nav navbar-right">
+          <li ng-hide="nav.session.connected"><a ui-sref="login">Login</a></li>
+          <li ng-show="nav.session.connected"><span class="navbar-text">{{ nav.session.user }}</span></li>
+          <li ng-show="nav.session.connected"><a ui-sref="logout">Logout</a></li>
+        </ul>
       </div>
     </nav>
 
     <dialogs></dialogs>
 
-    <div class="container-fluid">
+    <div class="container-fluid page">
       <div class="row">
         <div class="col-sm-3 col-md-2">
-          <div class="sidebar">
-            <ul class="nav nav-pills nav-stacked">
-              <li ui-sref-active="active"><a ui-sref="dashboard">Dashboard</a></li>
-              <li ng-repeat="mcu in global.mcu.list" ui-sref-active="active">
-                <a ui-sref="mcu({mcuIndex: mcu.index})">MCU #{{ mcu.index }}</a>
-              </li>
-              <li ui-sref-active="active"><a ui-sref="system">System</a></li>
-            </ul>
-          </div>
+
+          <nav class="navbar side-nav" role="navigation">
+            <div class="navbar-header navbar-default">
+              <button type="button" class="navbar-toggle navbar-default"
+                      data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <span class="navbar-brand visible-xs-block">Menu</span>
+            </div>
+
+            <div class="collapse navbar-collapse">
+              <ul class="nav nav-pills nav-stacked">
+                <li ui-sref-active="active"><a ui-sref="dashboard">Dashboard</a></li>
+                <li ui-sref-active="active"><a ui-sref="system">System</a></li>
+                <hr class="hidden-xs" />
+                <li ng-repeat="mcu in global.mcu.list" ui-sref-active="active"
+                  class="hidden-xs">
+                  <a ui-sref="mcu({mcuIndex: mcu.index})">MCU #{{ mcu.index }}</a>
+                </li>
+              </ul>
+            </div>
+          </nav>
+
         </div>
+
         <div class="col-sm-9 col-md-10">
-          <div class="content" ui-view>
-          </div>
+          <div class="content" ui-view></div>
         </div>
       </div>
     </div>
