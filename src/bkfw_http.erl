@@ -78,6 +78,7 @@ allowed_methods(Req, #state{section=edfa}=S) ->
 allowed_methods(Req, State) ->
     {[<<"GET">>, <<"HEAD">>, <<"POST">>, <<"OPTIONS">>], Req, State}.
 
+
 content_types_accepted(Req, State) ->
     case cowboy_req:has_body(Req) of
 	true ->
@@ -88,10 +89,12 @@ content_types_accepted(Req, State) ->
 	    {[], Req, State}
     end.
 
+
 content_types_provided(Req, State) ->
     {[
       {{<<"application">>, <<"json">>, []}, to_json}
      ], Req, State}.
+
 
 resource_exists(Req, #state{section=mcu, index=badarg}=S) ->
     {false, Req, S};
@@ -118,6 +121,7 @@ resource_exists(Req, #state{section=undefined}=S) ->
 resource_exists(Req, S) ->
     {true, Req, S}.
 
+
 allow_missing_post(Req, State) ->
     {false, Req, State}.
 
@@ -135,7 +139,7 @@ to_json(Req, #state{section=edfa}=S) ->
     {jsx:encode(bkfw_edfa:get(), ?JSX_OPTS), Req, S};
 
 to_json(Req, #state{section=sys, sys=login}=S) ->
-    {<<>>, Req, S};
+    {jsx:encode(bkfw_config:get_kv(login)), Req, S};
 
 to_json(Req, #state{section=sys, sys=net}=S) ->
     {jsx:encode(bkfw_config:get_kv(net), ?JSX_OPTS), Req, S};
@@ -153,6 +157,10 @@ to_json(Req, #state{section=sys, sys=firmware}=S) ->
     {jsx:encode(bkfw_config:get_kv(firmware), ?JSX_OPTS), Req, S}.
 
 
+from_json(Req, #state{section=sys, sys=login}=S) ->
+    case cowboy_req:body_qs(Req) of
+	{ok, Qs, Req2} ->
+	    
 from_json(Req, #state{section=sys, sys=Cat}=S) ->
     case parse_body(Req) of
 	{error, invalid_body, Req2} ->

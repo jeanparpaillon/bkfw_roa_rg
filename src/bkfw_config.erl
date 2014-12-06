@@ -35,11 +35,13 @@
 			{snmpv2, boolean()} |
 			{snmpv3, boolean()}.
 -type firmware_opt() :: {version, binary()}.
+-type session_opt() :: #session{}.
 -record(state, {
 	  net           :: [net_opt()],
 	  auth          :: [auth_opt()],
 	  protocol      :: [protocol_opt()],
-	  firmware      :: [firmware_opt()]
+	  firmware      :: [firmware_opt()],
+	  session       :: session_opt()
 	 }).
 
 %%%===================================================================
@@ -81,7 +83,8 @@ set_kv(Cat, Props) ->
 %%--------------------------------------------------------------------
 init([]) ->
     {ok, #state{net=application:get_env(bkfw, net, []),
-		firmware=load_resources()}}.
+		firmware=load_resources(),
+		session=undefined}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -134,6 +137,12 @@ handle_call({get_kv, firmware}, _From, #state{firmware=FW}=S) ->
 	     {id, list_to_binary(proplists:get_value(description, FW, ""))},
 	     {version, list_to_binary(proplists:get_value(vsn, FW, ""))}
 	    ], S};
+
+handle_call({get_kv, login}, _From, #state{session=#session{user=User}}=S) ->
+    {reply, [{user, User}], S};
+
+handle_call({get_kv, login}, _From, #state{session=undefined}=S) ->
+    {reply, [], S};
 
 handle_call(_Req, _From, State) ->
     {reply, ok, State}.
