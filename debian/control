@@ -1,0 +1,13 @@
+Source: bkfw
+Section: admin
+Priority: standard
+Maintainer: Jean Parpaillon <jean.parpailon@free.fr>
+Build-Depends: debhelper (>=9), rebar
+Standards-Version: 3.9.4
+Homepage: http://linkedin.com/in/jeanparpaillon
+
+Package: bkfw
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, erlang-mini (>= 1:17.1) | erlang (>= 1:17.1)
+Description: Firmware for EDFA
+ Firmware for EDFA modules, providing HTTP and SNMP interfaces

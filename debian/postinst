@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+
+if [ ! -e /var/lib/bkfw/factory.config ]; then
+    touch /var/lib/bkfw/factory.config
+fi
+
+if [ ! -e /var/lib/bkfw/user.config ]; then
+    touch /var/lib/bkfw/user.config
+fi
+
+exit 0

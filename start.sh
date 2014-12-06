@@ -35,8 +35,12 @@ fi
 
 com=$1
 
-if [ ! -e /var/tmp/bkfw_user.confif ]; then
-    echo "[]." > /var/tmp/bkfw_user.config
+if [ ! -e /var/lib/bkfw/factory.config ]; then
+    echo "[]." > /var/lib/bkfw/factory.config
+fi
+
+if [ ! -e /var/lib/bkfw/user.config ]; then
+    echo "[]." > /var/lib/bkfw/user.config
 fi
 
 erl -sname agent \

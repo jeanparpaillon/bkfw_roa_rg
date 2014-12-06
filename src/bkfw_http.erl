@@ -157,10 +157,6 @@ to_json(Req, #state{section=sys, sys=firmware}=S) ->
     {jsx:encode(bkfw_config:get_kv(firmware), ?JSX_OPTS), Req, S}.
 
 
-from_json(Req, #state{section=sys, sys=login}=S) ->
-    case cowboy_req:body_qs(Req) of
-	{ok, Qs, Req2} ->
-	    
 from_json(Req, #state{section=sys, sys=Cat}=S) ->
     case parse_body(Req) of
 	{error, invalid_body, Req2} ->
