@@ -34,10 +34,13 @@
 get_config() ->
     Opts = application:get_env(bkfw, http, []),
     Dir = filename:join(code:priv_dir(bkfw), "www"),
+    DftLogo = filename:join(code:priv_dir(bkfw), "logo.png"),
+    Logo = application:get_env(bkfw, logo, DftLogo),
     Handlers = [
 		{"/api/mcu/[:index]", bkfw_http, mcu},
 		{"/api/edfa",       bkfw_http, edfa},
 		{"/api/sys/:name",  bkfw_http, sys},
+		{"/logo", cowboy_static, {file, Logo, [{mimetypes, cow_mimetypes, all}]}},
 		{"/[...]", cowboy_static, {dir, Dir, [{mimetypes, cow_mimetypes, all}]}}
 	       ],
     Args = [http, 1, 
