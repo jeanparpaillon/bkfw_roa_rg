@@ -8,6 +8,6 @@ Homepage: http://linkedin.com/in/jeanparpaillon
 
 Package: bkfw
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, erlang-mini (>= 1:17.1) | erlang (>= 1:17.1)
+Depends: ${shlibs:Depends}, ${misc:Depends}, erlang-mini (>= 1:17.1) | erlang (>= 1:17.1), build-essential
 Description: Firmware for EDFA
  Firmware for EDFA modules, providing HTTP and SNMP interfaces

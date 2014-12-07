@@ -9,6 +9,12 @@ if [ ! -e /var/lib/bkfw/user.config ]; then
     echo "[]." > /var/lib/bkfw/user.config
 fi
 
+# Compile cereal port driver at installation (avoid arch any/cross compile)
+( cd /var/lib/bkfw/cereal && \
+  ./rebar -q compile
+)
+cp /var/lib/bkfw/cereal/priv/cereal.so `find /opt/bkfw/lib -name cereal.so`
+
 #DEBHELPER#
 
 exit 0

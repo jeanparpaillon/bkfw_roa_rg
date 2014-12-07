@@ -4,8 +4,13 @@
 	dh $@
 
 override_dh_clean:
-	rebar -r clean
+	dh_clean
+	rm -rf rel/bkfw
 
-override_dh_auto_build:
-	dh_auto_build
-	rebar generate
+override_dh_auto_install:
+	dh_auto_install
+	mkdir debian/cereal
+	tar -cf - -C deps/cereal \
+	  --exclude '.git' --exclude '.gitignore' --exclude '.rebar' ./ | \
+	  tar xfC - debian/cereal
+	cd debian/cereal && rebar clean
