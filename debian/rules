@@ -6,10 +6,11 @@
 override_dh_clean:
 	dh_clean
 	rm -rf rel/bkfw
+	rm -r debian/cereal
 
 override_dh_auto_install:
 	dh_auto_install
-	mkdir debian/cereal
+	mkdir -p debian/cereal
 	tar -cf - -C deps/cereal \
 	  --exclude '.git' --exclude '.gitignore' --exclude '.rebar' ./ | \
 	  tar xfC - debian/cereal
