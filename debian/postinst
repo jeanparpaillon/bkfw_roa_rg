@@ -2,11 +2,13 @@
 set -e
 
 if [ ! -e /var/lib/bkfw/factory.config ]; then
-    touch /var/lib/bkfw/factory.config
+    echo "[]." > /var/lib/bkfw/factory.config
 fi
 
 if [ ! -e /var/lib/bkfw/user.config ]; then
-    touch /var/lib/bkfw/user.config
+    echo "[]." > /var/lib/bkfw/user.config
 fi
+
+#DEBHELPER#
 
 exit 0
