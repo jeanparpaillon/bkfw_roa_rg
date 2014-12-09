@@ -30,11 +30,13 @@
                  ]},
   {mod, { bkfw_app, []}},
   {env, [
-	 {com, "/dev/pts/40"},
+	 {com, "/dev/ttyAMA0"},
 	 {slots_period, 10000},
 	 {mcu_period, 2000},
 	 {timeout, 2000},
 	 {max_queue, 1000},
-	 {http, [{port, 80}]}
+	 {http, [{port, 80}]},
+	 {upload_dir, "/var/lib/bkfw/upload"},
+	 {system_cmd, true}
 	]}
  ]}.

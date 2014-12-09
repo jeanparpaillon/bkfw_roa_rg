@@ -44,13 +44,13 @@ if [ ! -e /var/lib/bkfw/user.config ]; then
     echo "[]." > /var/lib/bkfw/user.config
 fi
 
-mkdir -p /var/lib/bkfw/upload
-
 erl -sname agent \
     -pa ${ebindir} \
     -pa ${depsdir} \
     -bkfw http "[{port, $port}]" \
     -bkfw com "\"$com\"" \
+    -bkfw upload_dir "\"/tmp\"" \
+    -bkfw system_cmd "false" \
     -config ${reldir}/files/sys \
     -s bkfw
 

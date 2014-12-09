@@ -17,6 +17,8 @@
 	 get_kv/1,
 	 set_kv/2]).
 
+-export([upgrade/1]).
+
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
@@ -65,6 +67,17 @@ get_kv(Cat) ->
 -spec set_kv(category(), term()) -> ok | {error, term()}.
 set_kv(Cat, Props) ->
     gen_server:call(?SERVER, {set_kv, Cat, Props}).
+
+-spec upgrade(string()) -> ok | {error, term()}.
+upgrade(Filename) ->
+    case script("check_pkg.sh", Filename) of
+	ok ->
+	    case script("upgrade.sh", Filename) of
+		ok -> cmd("reboot");
+		{error, Err} -> {error, Err}
+	    end;
+	{error, Err} -> {error, Err}
+    end.
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -232,4 +245,26 @@ load_resources() ->
     case file:consult(filename:join(code:lib_dir(bkfw, ebin), "bkfw.app")) of
 	{ok, [{application, bkfw, Props}]} -> Props;
 	_ -> []
+    end.
+
+script(Cmd, Args) ->
+    cmd(filename:join([code:priv_dir(bkfw), "scripts", Cmd]) ++ " " ++ Args).
+
+cmd(Cmd) ->
+    case application:get_env(bkfw, system_cmd) of
+	{ok, true} -> 
+	    case os:cmd(Cmd) of
+		"ok\n" ->
+		    ok;
+		"err_" ++ Err ->
+		    {error, Err};
+		Else ->
+		    {error, {unexpected, Else}}
+	    end;
+	{ok, false} -> 
+	    ?info("(fake) running: ~s~n", [iolist_to_binary(Cmd)]),
+	    ok;
+	undefined -> 
+	    ?info("(fake) running: ~s~n", [iolist_to_binary(Cmd)]),
+	    ok
     end.

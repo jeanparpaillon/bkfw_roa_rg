@@ -21,14 +21,14 @@
 
 -define(PORT, 8080).
 -define(JSX_OPTS, [{space, 1}, {indent, 2}]).
--define(UPLOAD_DIR, "/var/lib/bkfw/upload").
 -define(MAX_SIZE, 1024*1024*1024*50).
 
 -record(state, {
 	  section   = undefined :: mcu | edfa | sys,
 	  index     = undefined :: integer() | undefined | badarg,
 	  mcu       = undefined,
-	  sys       = undefined :: login | net | password | community | protocol | firmware
+	  sys       = undefined :: login | net | password | community | protocol | firmware,
+	  firmware  = undefined :: undefined | string()
 	 }).
 
 %%%
@@ -184,27 +184,30 @@ from_json(Req, #state{section=sys, sys=Cat}=S) ->
 	    end
     end.
 
-from_multipart(Req, #state{section=sys, sys=firmware}=S) ->
+from_multipart(Req, #state{section=sys, sys=firmware, firmware=Path}=S) ->
     case cowboy_req:part(Req) of
 	{ok, Hdr, Req2} ->
 	    case cow_multipart:form_data(Hdr) of
-		{data, Name} ->
-		    {ok, Body, Req3} = cowboy_req:part_body(Req2),
-		    ?debug("Got data: ~p=~p~n", [Name, Body]),
+		{data, _Name} ->
+		    {ok, _Body, Req3} = cowboy_req:part_body(Req2),
 		    from_multipart(Req3, S);
-		{file, Field, Filename, ContentType, Enc} ->
-		    ?debug("Received file ~p of content-type ~p [field=~p] [encoding=~p]~n~n", 
-			   [Filename, ContentType, Field, Enc]),
-		    case stream_file(Filename, Req2) of
+		{file, _Field, Filename, _ContentType, _Enc} ->
+		    Fullpath = filename:join(application:get_env(bkfw, upload_dir, ""), Filename),
+		    case stream_file(Fullpath, Req2) of
 			{ok, Req3} -> 
-			    from_multipart(Req3, S);
+			    from_multipart(Req3, S#state{firmware=Fullpath});
 			{error, Err} ->
 			    ?error("Error streaming file: ~p~n", [Err]),
 			    {halt, Req2, S}
 		    end
 	    end;
 	{done, Req2} ->
-	    {true, Req2, S}
+	    case bkfw_config:upgrade(Path) of
+		ok ->
+		    {true, Req2, S};
+		{error, _Err} ->
+		    {false, Req2, S}
+	    end
     end.	    
 
 parse_body(Req) ->
@@ -223,7 +226,7 @@ parse_body(Req) ->
     end.
 
 stream_file(Filename, Req) ->
-    case file:open(filename:join(?UPLOAD_DIR, Filename), [write]) of
+    case file:open(Filename, [write]) of
 	{ok, File} ->
 	    stream_file(File, Req, 0);
 	{error, Err} ->
@@ -240,7 +243,6 @@ stream_file(File, Req, Size) ->
 	    case file:write(File, Data) of
 		ok ->
 		    file:close(File),
-		    ?debug("Wrote file: ~p bytes~n", [Size + byte_size(Data)]),
 		    {ok, Req2};
 		{error, Err} ->
 		    ?error("Error writing file: ~p~n", [Err]),
