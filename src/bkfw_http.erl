@@ -16,11 +16,13 @@
 	 allow_missing_post/2,
 	 to_json/2,
 	 from_json/2,
-	 from_data/2
+	 from_multipart/2
 	]).
 
 -define(PORT, 8080).
 -define(JSX_OPTS, [{space, 1}, {indent, 2}]).
+-define(UPLOAD_DIR, "/var/lib/bkfw/upload").
+-define(MAX_SIZE, 1024*1024*1024*50).
 
 -record(state, {
 	  section   = undefined :: mcu | edfa | sys,
@@ -85,7 +87,7 @@ allowed_methods(Req, State) ->
 
 content_types_accepted(Req, #state{section=sys, sys=firmware}=State) ->
     {[
-      {{<<"multipart">>, <<"form-data">>, '*'}, from_data}
+      {{<<"multipart">>, <<"form-data">>, '*'}, from_multipart}
      ], Req, State};
 content_types_accepted(Req, State) ->
     case cowboy_req:has_body(Req) of
@@ -182,15 +184,28 @@ from_json(Req, #state{section=sys, sys=Cat}=S) ->
 	    end
     end.
 
-from_data(Req, #state{section=sys, sys=firmware}=S) ->
-    {ok, Hdr, Req2} = cowboy_req:part(Req),
-    {ok, _Data, Req3} = cowboy_req:part_body(Req2),
-    {file, Field, Filename, ContentType, Enc} =
-	cow_multipart:form_data(Hdr),
-    ?debug("Received file ~p of content-type ~p [field=~p] [encoding=~p]~n~n", 
-	   [Filename, ContentType, Field, Enc]),
-    {ok, Req3, S}.
-	    
+from_multipart(Req, #state{section=sys, sys=firmware}=S) ->
+    case cowboy_req:part(Req) of
+	{ok, Hdr, Req2} ->
+	    case cow_multipart:form_data(Hdr) of
+		{data, Name} ->
+		    {ok, Body, Req3} = cowboy_req:part_body(Req2),
+		    ?debug("Got data: ~p=~p~n", [Name, Body]),
+		    from_multipart(Req3, S);
+		{file, Field, Filename, ContentType, Enc} ->
+		    ?debug("Received file ~p of content-type ~p [field=~p] [encoding=~p]~n~n", 
+			   [Filename, ContentType, Field, Enc]),
+		    case stream_file(Filename, Req2) of
+			{ok, Req3} -> 
+			    from_multipart(Req3, S);
+			{error, Err} ->
+			    ?error("Error streaming file: ~p~n", [Err]),
+			    {halt, Req2, S}
+		    end
+	    end;
+	{done, Req2} ->
+	    {true, Req2, S}
+    end.	    
 
 parse_body(Req) ->
     case cowboy_req:body(Req) of
@@ -205,4 +220,37 @@ parse_body(Req) ->
 	    end;
 	{error, Err} ->
 	    {error, Err}
+    end.
+
+stream_file(Filename, Req) ->
+    case file:open(filename:join(?UPLOAD_DIR, Filename), [write]) of
+	{ok, File} ->
+	    stream_file(File, Req, 0);
+	{error, Err} ->
+	    {error, Err}
+    end.
+
+stream_file(File, _Req, Size) when Size > ?MAX_SIZE ->
+    file:close(File),
+    {error, max_size};
+
+stream_file(File, Req, Size) ->
+    case cowboy_req:part_body(Req) of
+	{ok, Data, Req2} ->
+	    case file:write(File, Data) of
+		ok ->
+		    file:close(File),
+		    ?debug("Wrote file: ~p bytes~n", [Size + byte_size(Data)]),
+		    {ok, Req2};
+		{error, Err} ->
+		    ?error("Error writing file: ~p~n", [Err]),
+		    {error, Err}
+	    end;
+	{more, Data, Req2} ->
+	    case file:write(File, Data) of
+		ok ->
+		    stream_file(File, Req2, Size + byte_size(Data));
+		{error, Err} ->
+		    {error, Err}
+	    end
     end.

@@ -44,6 +44,8 @@ if [ ! -e /var/lib/bkfw/user.config ]; then
     echo "[]." > /var/lib/bkfw/user.config
 fi
 
+mkdir -p /var/lib/bkfw/upload
+
 erl -sname agent \
     -pa ${ebindir} \
     -pa ${depsdir} \
