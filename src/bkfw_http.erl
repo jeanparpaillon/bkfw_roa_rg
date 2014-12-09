@@ -15,7 +15,8 @@
 	 resource_exists/2,
 	 allow_missing_post/2,
 	 to_json/2,
-	 from_json/2
+	 from_json/2,
+	 from_data/2
 	]).
 
 -define(PORT, 8080).
@@ -82,6 +83,10 @@ allowed_methods(Req, State) ->
     {[<<"GET">>, <<"HEAD">>, <<"POST">>, <<"OPTIONS">>], Req, State}.
 
 
+content_types_accepted(Req, #state{section=sys, sys=firmware}=State) ->
+    {[
+      {{<<"multipart">>, <<"form-data">>, '*'}, from_data}
+     ], Req, State};
 content_types_accepted(Req, State) ->
     case cowboy_req:has_body(Req) of
 	true ->
@@ -139,7 +144,7 @@ to_json(Req, #state{section=mcu, mcu=Mcu}=S) ->
     {jsx:encode(bkfw_mcu:get_kv(Mcu), ?JSX_OPTS), Req, S};
 
 to_json(Req, #state{section=edfa}=S) ->
-    {jsx:encode(bkfw_edfa:get(), ?JSX_OPTS), Req, S};
+    {jsx:encode(bkfw_edfa:get_kv(), ?JSX_OPTS), Req, S};
 
 to_json(Req, #state{section=sys, sys=login}=S) ->
     {jsx:encode(bkfw_config:get_kv(login)), Req, S};
@@ -176,6 +181,16 @@ from_json(Req, #state{section=sys, sys=Cat}=S) ->
 		    {false, Req2, S}
 	    end
     end.
+
+from_data(Req, #state{section=sys, sys=firmware}=S) ->
+    {ok, Hdr, Req2} = cowboy_req:part(Req),
+    {ok, _Data, Req3} = cowboy_req:part_body(Req2),
+    {file, Field, Filename, ContentType, Enc} =
+	cow_multipart:form_data(Hdr),
+    ?debug("Received file ~p of content-type ~p [field=~p] [encoding=~p]~n~n", 
+	   [Filename, ContentType, Field, Enc]),
+    {ok, Req3, S}.
+	    
 
 parse_body(Req) ->
     case cowboy_req:body(Req) of
