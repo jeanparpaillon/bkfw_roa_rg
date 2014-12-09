@@ -38,26 +38,26 @@ angular.module('bkfwApp.controllers', [])
 
 }])
 
-.controller('systemCtrl', ['sys', function(sys) {
+.controller('systemCtrl', ['sys', 'FileUploader', function(sys, FileUploader) {
+    this.firmware = sys.firmware.get();
 
-  this.network = sys.net.get();
-
-  this.password = "foo";
-
-  this.community = sys.community.get();
-
-  this.protocol = sys.protocol.get();
-
-  this.firmware = sys.firmware.get();
-
+    this.uploader = new FileUploader({
+	url: '/api/sys/firmware'
+    });
+	
+    this.network = sys.net.get();
+    this.password = "";
+    this.community = sys.community.get();
+    this.protocol = sys.protocol.get();
 }])
 
 .controller('loginCtrl', ['$state', 'session', function($state, session) {
 
-  if (session.connected)
-    $state.go('dashboard');
-
-  this.user = "admin";
+    if (session.connected) {
+	$state.go('dashboard');	
+    }
+    
+    this.user = "admin";
   this.password = null;
   this.error = "";
   this.connecting = false;
@@ -74,10 +74,11 @@ angular.module('bkfwApp.controllers', [])
           this.error = error;
         }),
         angular.bind(this, function(status) {
-          if (status == session.status.CONNECTING)
-            this.connecting = true;
-          else
-            this.connecting = false;
+            if (status == session.status.CONNECTING) {
+		this.connecting = true;
+	    } else {
+		this.connecting = false;		
+	    }
         })
       );
     }

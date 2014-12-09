@@ -40,13 +40,41 @@
 
       <p class="text-info">{{ system.firmware.id }} version <strong>{{ system.firmware.version }}</strong></p>
 
-      <form role="form" ng-submit="system.upgrade()">
+      <form role="form" >
         <div class="form-group">
           <label>Firmware file</label>
-          <input type="file" ng-model="system.firmware.file" class="form-control" />
-        </div>
+	  
+          <input type="file" nv-file-select="" uploader="system.uploader" class="form-control"
+		 ng-show="!system.uploader.queue.length"/>
 
-        <button type="submit" class="btn btn-primary">Upgrade</button>
+	  <table class="table">
+	    <tbody>
+	      <tr ng-repeat="item in system.uploader.queue">
+		<td><strong>{{ item.file.name }}</strong></td>
+		<td ng-show="system.uploader.isHTML5" nowrap>{{ item.file.size/1024/1024|number:2 }} MB</td>
+		<td ng-show="system.uploader.isHTML5">
+		  <div class="progress" style="margin-bottom: 0;">
+		    <div class="progress-bar" role="progressbar" ng-style="{ 'width': item.progress + '%' }"></div>
+		  </div>
+		</td>
+		<td class="text-center">
+		  <span ng-show="item.isSuccess"><i class="glyphicon glyphicon-ok"></i></span>
+		  <span ng-show="item.isCancel"><i class="glyphicon glyphicon-ban-circle"></i></span>
+		  <span ng-show="item.isError"><i class="glyphicon glyphicon-remove"></i></span>
+		</td>
+		<td nowrap>
+		  <button type="button" class="btn btn-success btn-xs" ng-click="item.upload()" ng-disabled="item.isReady || item.isUploading || item.isSuccess">
+		    <span class="glyphicon glyphicon-upload"></span> Upgrade
+		  </button>
+		  <button type="button" class="btn btn-danger btn-xs" ng-click="item.remove()">
+		    <span class="glyphicon glyphicon-trash"></span> Cancel
+		  </button>
+		</td>
+	      </tr>
+	    </tbody>
+	  </table>
+        </div>
+	
       </form>
     </div>
 

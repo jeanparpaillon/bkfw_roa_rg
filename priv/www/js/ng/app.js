@@ -3,12 +3,13 @@
 'use strict';
 
 angular.module('bkfwApp', [
-	'bkfwApp.services',
-	'bkfwApp.controllers',
-	'bkfwApp.directives',
-	'bkfwApp.utils',
-	'ngResource',
-	'ui.router'
+    'bkfwApp.services',
+    'bkfwApp.controllers',
+    'bkfwApp.directives',
+    'bkfwApp.utils',
+    'angularFileUpload',
+    'ngResource',
+    'ui.router'
 ])
 
 .run(['mcu', function(mcu) {
