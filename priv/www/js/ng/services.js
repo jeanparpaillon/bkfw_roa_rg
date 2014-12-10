@@ -55,7 +55,25 @@ angular.module('bkfwApp.services', [])
 
 .factory('edfa', ['$resource', function($resource) {
 
-  return $resource('/api/edfa');
+  return {
+
+    info: $resource('/api/edfa'),
+
+    label: {
+      curInternalTemp: "Internal Temp",
+      powerSupply: "Power Supply",
+      vendor: "Vendor",
+      moduleType: "Module Type",
+      hwVer: "Hardware version",
+      hwRev: "Hardware revision",
+      swVer: "Software version",
+      fwVer: "Firmware version",
+      partNum: "Part. Num",
+      serialNum: "Serial Number",
+      productDate: "Product Date"
+    }
+
+  };
 
 }])
 

@@ -94,3 +94,20 @@ form {
 div.checkbox label {
   margin-right: 1em;
 }
+
+.edfa {
+  background-color: #DFF1FF;
+  border-color: #337AB7;
+}
+
+.edfa table tr {
+  background-color: #EDF7FF;
+}
+
+.edfa table tr:hover {
+  background-color: #DFF1FF;
+}
+
+.edfa table td {
+  border: 0px !important;
+}
