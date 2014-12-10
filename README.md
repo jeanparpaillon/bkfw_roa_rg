@@ -6,13 +6,32 @@ Requirements:
 * erlang >= 16
 * socat
 
+# Factory settings
+
+Factory settings are placed in the following file:
+`/var/lib/bkfw/factory.config`
+
+Syntax is (don't forget brackets and final dot !):
+```
+[
+ {bkfw,
+   [
+     {param1, "string parameter"},
+     {param2, 12},
+     {param3, value}
+   ]
+ }
+].
+```
+
 # Parameters
 
-* `com` (string, mandatory): path to com device
-* `slots_period` (integer, default: 1000): refreshing time (ms) for occupied slots
-* `mcu_period` (integer, default: 1000): refreshing time (ms) for MCU status
-* `timeout` (integer, default: 1000): ms before timeout when communicating to COM port
-* `max_queue` (integer, default: 100): maximum size of queue for pending message (avoid out-of-memory)
+* `com` (string, default: "/dev/tty/AMA0"): path to com device
+* `slots_period` (integer, default: 10000): refreshing time (ms) for occupied slots
+* `mcu_period` (integer, default: 2000): refreshing time (ms) for MCU status
+* `timeout` (integer, default: 2000): ms before timeout when communicating to COM port
+* `max_queue` (integer, default: 1000): maximum size of queue for pending message (avoid out-of-memory)
+* `logo` (string, default: bktel logo): full path to logo, eg: /root/mylogo.png. width: 250px
 
 # Test with MCU emulation
 
