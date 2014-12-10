@@ -32,6 +32,11 @@ Syntax is (don't forget brackets and final dot !):
 * `timeout` (integer, default: 2000): ms before timeout when communicating to COM port
 * `max_queue` (integer, default: 1000): maximum size of queue for pending message (avoid out-of-memory)
 * `logo` (string, default: bktel logo): full path to logo, eg: /root/mylogo.png. width: 250px
+* `http` (list of tuples): cowboy HTTP server parameters, see http://ninenines.eu/docs/en/cowboy/HEAD/guide/getting_started/
+* `upload_dir` (string, default: "/var/lib/bkfw/upload"): path for uploaded firmware
+* `system_cmd` (true | false): if false, does not really execute system commands (reboot, etc.): for debugging purpose
+* `password` ({md5 | sha, hash_value}, default pasword: 'admin'): default admin password. hash_value is base64 encoded value of the hash, using md5 or sha1 algorithm. eg: {md5, "0DPiKuNIrrVmD8IUCuw1hQxNqZc="}
+
 
 # Test with MCU emulation
 

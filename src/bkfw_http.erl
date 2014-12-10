@@ -16,12 +16,14 @@
 	 allow_missing_post/2,
 	 to_json/2,
 	 from_json/2,
-	 from_multipart/2
+	 from_multipart/2,
+	 is_authorized/2
 	]).
 
 -define(PORT, 8080).
 -define(JSX_OPTS, [{space, 1}, {indent, 2}]).
 -define(MAX_SIZE, 1024*1024*1024*50).
+-define(REALM, <<"bkfw">>).
 
 -record(state, {
 	  section   = undefined :: mcu | edfa | sys,
@@ -105,6 +107,17 @@ content_types_provided(Req, State) ->
       {{<<"application">>, <<"json">>, []}, to_json}
      ], Req, State}.
 
+
+is_authorized(Req, #state{section=sys}=State) ->
+    require_auth(Req, State);
+is_authorized(Req, State) ->
+    case cowboy_req:method(Req) of
+	{<<"POST">>, Req2} ->
+	    require_auth(Req2, State);
+	{_, Req2} ->
+	    {true, Req2, State}
+    end.
+		
 
 resource_exists(Req, #state{section=mcu, index=badarg}=S) ->
     {false, Req, S};
@@ -255,4 +268,118 @@ stream_file(File, Req, Size) ->
 		{error, Err} ->
 		    {error, Err}
 	    end
+    end.
+
+require_auth(Req, State) ->
+    case cowboy_req:header(<<"authorization">>, Req) of
+	{undefined, Req2} ->
+	    {{false, auth_header(Req, State)}, Req2, State};
+	{Value, Req2} ->
+	    case parse_auth(Value) of
+		{basic, Auth} ->
+		    auth_basic_user(Auth, Req, State);
+		{digest, _Auth} ->
+		    % Unsupported
+		    {{false, auth_header(Req, State)}, Req2, State};
+		{error, Err} ->
+		    ?error("Error authenticating: ~p~n", [Err]),
+		    {halt, Req2, State}
+	    end
+    end.
+
+auth_basic_user(Auth, Req, State) ->
+    try binary:split(base64:decode(Auth), [<<":">>]) of
+	[User, Password] ->
+	    case auth_user(User, Password) of
+		true ->
+		    {true, Req, State};
+		false ->
+		    {{false, auth_header(Req, State)}, Req, State}
+	    end;
+	_ ->
+	    {{false, auth_header(Req, State)}, Req, State}
+    catch error:_Err ->
+	    {{false, auth_header(Req, State)}, Req, State}
+    end.
+
+auth_header(_, _) ->
+    [ "x-basic realm=\"", ?REALM, "\""].
+
+auth_user(<<"admin">>, Password) ->
+    case get_password() of
+	undefined -> false;
+	{Method, Hash} ->
+	    case base64:encode(crypto:hash(Method, Password)) of
+		Hash -> true;
+		_ -> false
+	    end
+    end.    
+
+get_password() ->
+    case application:get_env(bkfw, password, undefined) of
+	undefined -> undefined;
+	{Method, Hash} when Method =:= md5;
+			    Method =:= sha ->
+	    {Method, list_to_binary(Hash)};
+	_ -> undefined
+    end.
+
+-spec parse_auth(binary()) -> {basic | digest | error, term()}.
+parse_auth(Bin) ->
+    parse_method(parse_next(Bin)).
+
+parse_method({Method, Rest}) ->
+    case to_lower(Method) of
+	<<"x-basic">> -> parse_basic_hash(Rest);
+	<<"x-digest">> -> parse_digest(Rest);
+	M -> {error, {invalid_method, M}}
+    end.
+
+parse_basic_hash(Bin) ->
+    {basic, Bin}.
+
+parse_digest(Bin) ->
+    {digest, Bin}.
+
+parse_next(Bin) ->
+    case binary:split(Bin, <<" ">>, [trim]) of
+	[<<>>, Rest] -> parse_next(Rest);
+	[Next, Rest] -> {Next, Rest};
+	[Next] -> {Next, <<>>}
+    end.
+
+to_lower(Bin) ->
+    to_lower(Bin, <<>>).
+
+to_lower(<<>>, Acc) ->
+    Acc;
+to_lower(<< C, Rest/bits >>, Acc) ->
+    case C of
+	$A -> to_lower(Rest, << Acc/binary, $a >>);
+	$B -> to_lower(Rest, << Acc/binary, $b >>);
+	$C -> to_lower(Rest, << Acc/binary, $c >>);
+	$D -> to_lower(Rest, << Acc/binary, $d >>);
+	$E -> to_lower(Rest, << Acc/binary, $e >>);
+	$F -> to_lower(Rest, << Acc/binary, $f >>);
+	$G -> to_lower(Rest, << Acc/binary, $g >>);
+	$H -> to_lower(Rest, << Acc/binary, $h >>);
+	$I -> to_lower(Rest, << Acc/binary, $i >>);
+	$J -> to_lower(Rest, << Acc/binary, $j >>);
+	$K -> to_lower(Rest, << Acc/binary, $k >>);
+	$L -> to_lower(Rest, << Acc/binary, $l >>);
+	$M -> to_lower(Rest, << Acc/binary, $m >>);
+	$N -> to_lower(Rest, << Acc/binary, $n >>);
+	$O -> to_lower(Rest, << Acc/binary, $o >>);
+	$P -> to_lower(Rest, << Acc/binary, $p >>);
+	$Q -> to_lower(Rest, << Acc/binary, $q >>);
+	$R -> to_lower(Rest, << Acc/binary, $r >>);
+	$S -> to_lower(Rest, << Acc/binary, $s >>);
+	$T -> to_lower(Rest, << Acc/binary, $t >>);
+	$U -> to_lower(Rest, << Acc/binary, $u >>);
+	$V -> to_lower(Rest, << Acc/binary, $v >>);
+	$W -> to_lower(Rest, << Acc/binary, $w >>);
+	$X -> to_lower(Rest, << Acc/binary, $x >>);
+	$Y -> to_lower(Rest, << Acc/binary, $y >>);
+	$Z -> to_lower(Rest, << Acc/binary, $z >>);
+	_ -> to_lower(Rest, << Acc/binary, C >>)
     end.
