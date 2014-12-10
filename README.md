@@ -37,6 +37,14 @@ Syntax is (don't forget brackets and final dot !):
 * `system_cmd` (true | false): if false, does not really execute system commands (reboot, etc.): for debugging purpose
 * `password` ({md5 | sha, hash_value}, default pasword: 'admin'): default admin password. hash_value is base64 encoded value of the hash, using md5 or sha1 algorithm. eg: {md5, "0DPiKuNIrrVmD8IUCuw1hQxNqZc="}
 
+# HTTP Authentication
+
+HTTP authentication uses Basic mechanism with a special name, to avoid internal browser mechanism.
+On authentication needed, following headers is sent:
+```www-authenticate: x-basic realm="bkfw"```
+
+For succesful authentication, client must return:
+```authorization: x-basic ...```
 
 # Test with MCU emulation
 
