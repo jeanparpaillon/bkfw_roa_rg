@@ -72,10 +72,7 @@ set_kv(Cat, Props) ->
 upgrade(Filename) ->
     case script("check_pkg.sh", Filename) of
 	ok ->
-	    case script("upgrade.sh", Filename) of
-		ok -> cmd("reboot");
-		{error, Err} -> {error, Err}
-	    end;
+	    script("upgrade.sh", Filename);
 	{error, Err} -> {error, Err}
     end.
 
@@ -253,7 +250,7 @@ script(Cmd, Args) ->
 cmd(Cmd) ->
     case application:get_env(bkfw, system_cmd) of
 	{ok, true} -> 
-	    case os:cmd(Cmd) of
+	    case os:cmd(binary_to_list(iolist_to_binary(Cmd))) of
 		"ok\n" ->
 		    ok;
 		"err_" ++ Err ->
