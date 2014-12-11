@@ -27,12 +27,25 @@ angular.module('bkfwApp.controllers', [])
                             }));
 
   this.setOperatingMode = function() {
-    console.debug("Setting operating mode...");
-
     dialogs.confirm("Are you sure ?")
 
     .then(angular.bind(this, function() {
         console.debug("Setting operating mode " + this.controlMode);
+	this.detail.operatingMode = this.controlMode;
+	switch (this.controlMode) {
+	case mcu.mode.PC:
+	    this.detail.outputPowerConsign = this.controlValue;
+	    break;
+	case mcu.mode.GC:
+	    this.detail.gainConsign = this.controlValue;
+	    break;
+	case mcu.mode.CC:
+	    this.detail.ampConsign = this.controlValue;
+	    break;
+	default:
+	    break;
+	}
+	this.detail.$save();
     }));
   };
 

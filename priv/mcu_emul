@@ -90,11 +90,11 @@ handle_msg({ok, {Addr, spc, [Pow]}}, _Slots, To) ->
     reply(To, Addr, io_lib:format("SPC ~.2f", [Pow]));
 handle_msg({ok, {Addr, rmode, []}}, _Slots, To) ->
     reply(To, Addr, "MODE CC");
-handle_msg({ok, {Addr, smode, [Mode]}}, _Slots, To) when Mode == "PC";
-							 Mode == "GC";
-							 Mode == "CC";
-							 Mode == "OFF" ->
-    reply(To, Addr, ["SMODE ", Mode]);
+handle_msg({ok, {Addr, smode, [Mode]}}, _Slots, To) when Mode == pc;
+							 Mode == gc;
+							 Mode == cc;
+							 Mode == off ->
+    reply(To, Addr, ["SMODE ", atom_to_list(Mode)]);
 handle_msg({ok, {Addr, ra, []}}, _Slots, To) ->
     reply(To, Addr, "ALARMS: PUMP_TEMP BREF");
 handle_msg({ok, {Addr, rlt, [Pos]}}, _Slots, To) when is_integer(Pos) ->

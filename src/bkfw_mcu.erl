@@ -4,7 +4,8 @@
 -include("bkfw.hrl").
 
 -export([start_link/1,
-	 get_kv/1]).
+	 get_kv/1,
+	 set_kv/2]).
 
 %%% SNMP functions
 -export([table_func/2,
@@ -78,6 +79,41 @@ get_kv(#edfaMcuTable{}=T) ->
      {serialNum,           T#edfaMcuTable.serialNum},
      {productDate,         T#edfaMcuTable.productDate}
     ].
+
+set_kv(Idx, Kv) ->
+    try binary_to_integer(proplists:get_value(operatingMode, Kv, <<"0">>)) of
+	0 ->
+	    {error, missing_mode};
+	?edfaMcuOperatingMode_off ->
+	    bkfw_srv:command(Idx, smode, [<<"OFF">>]),
+	    ok;
+	?edfaMcuOperatingMode_cc ->
+	    case get_consign(ampConsign, Kv) of
+		undefined -> {error, missing_consign};
+		V -> 
+		    bkfw_srv:command(Idx, scc, [<<"1 ">>, io_lib:format("~.2f", [V])]),
+		    bkfw_srv:command(Idx, smode, [<<"CC">>]),
+		    ok
+	    end;
+	?edfaMcuOperatingMode_gc ->
+	    case get_consign(gainConsign, Kv) of
+		undefined -> {error, missing_consign};
+		V -> 
+		    bkfw_srv:command(Idx, sgc, [io_lib:format("~.2f", [V])]),
+		    bkfw_srv:command(Idx, smode, [<<"GC">>]),
+		    ok
+	    end;
+	?edfaMcuOperatingMode_pc ->
+	    case get_consign(outputPowerConsign, Kv) of
+		undefined -> {error, mising_consign};
+		V ->
+		    bkfw_srv:command(Idx, spc, [io_lib:format("~.2f", [V])]),
+		    bkfw_srv:command(Idx, smode, [<<"PC">>]),
+		    ok
+	    end
+    catch error:badarg ->
+	    {error, missing_mode}
+    end.
 
 
 %%% SNMP functions
@@ -386,3 +422,20 @@ handle_alarms([mute  | Tail], #state{entry=E}=S) ->
     Varbinds = [{edfaIndex, E#edfaMcuTable.index}],
     snmpa:send_notification2(snmp_master_agent, edfaMuteTrap, [{varbinds, Varbinds}]),
     handle_alarms(Tail, S).
+
+get_consign(Name, Kv) ->
+    case proplists:get_value(Name, Kv) of
+	undefined -> undefined;
+	Bin ->
+	    try binary_to_integer(Bin) of
+		I -> I + 0.0
+	    catch
+		error:badarg ->
+		    try binary_to_float(Bin) of
+			F -> F
+		    catch
+			error:badarg ->
+			    undefined
+		    end
+	    end
+    end.

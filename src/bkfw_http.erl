@@ -95,7 +95,7 @@ content_types_accepted(Req, State) ->
     case cowboy_req:has_body(Req) of
 	true ->
 	    {[
-	      {{<<"application">>, <<"json">>, []}, from_json}
+	      {{<<"application">>, <<"json">>, '*'}, from_json}
 	     ], Req, State};
 	false ->
 	    {[], Req, State}
@@ -104,16 +104,18 @@ content_types_accepted(Req, State) ->
 
 content_types_provided(Req, State) ->
     {[
-      {{<<"application">>, <<"json">>, []}, to_json}
+      {{<<"application">>, <<"json">>, '*'}, to_json}
      ], Req, State}.
 
 
 is_authorized(Req, #state{section=sys}=State) ->
-    require_auth(Req, State);
+    %require_auth(Req, State);
+    {true, Req, State};
 is_authorized(Req, State) ->
     case cowboy_req:method(Req) of
 	{<<"POST">>, Req2} ->
-	    require_auth(Req2, State);
+	    %require_auth(Req2, State);
+	    {true, Req, State};
 	{_, Req2} ->
 	    {true, Req2, State}
     end.
