@@ -5,18 +5,19 @@ IMPORTS
 	FROM SNMPv2-SMI;
 
 bktelPhotonics MODULE-IDENTITY
-    LAST-UPDATED "201410170000Z"
-    ORGANIZATION "BKtel Photonics"
+    LAST-UPDATED "201412110000Z"
+    ORGANIZATION "BKtel Photonics SAS"
     CONTACT-INFO
-            "   BKtel Photonics
+            "   BKtel Photonics SAS
 	    	website: www.bktel-photonics.com
-		email: photonics@bktel.com"
+		email: legoas@bktel.com
+		contact: Cyril Le Goas"
     DESCRIPTION
             "The MIB module as BKtel Photonics enterprise products."
 
-    REVISION      "201410170000Z"
+    REVISION      "201412110000Z"
     DESCRIPTION
 		"Initial revision."
-    ::= { enterprises 11412 }
+    ::= { enterprises 44890 }
 
 END
