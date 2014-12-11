@@ -323,7 +323,7 @@ auth_user(<<"admin">>, Password) ->
     case get_password() of
 	undefined -> false;
 	{md5, Hash} ->
-	    case base64:encode(crypto:hash(md5, Password)) of
+	    case base64:encode(Password) of
 		Hash -> true;
 		_ -> false
 	    end
