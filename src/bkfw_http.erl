@@ -109,13 +109,11 @@ content_types_provided(Req, State) ->
 
 
 is_authorized(Req, #state{section=sys}=State) ->
-    %require_auth(Req, State);
-    {true, Req, State};
+    require_auth(Req, State);
 is_authorized(Req, State) ->
     case cowboy_req:method(Req) of
 	{<<"POST">>, Req2} ->
-	    %require_auth(Req2, State);
-	    {true, Req, State};
+	    require_auth(Req2, State);
 	{_, Req2} ->
 	    {true, Req2, State}
     end.
