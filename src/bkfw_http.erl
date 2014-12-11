@@ -149,7 +149,6 @@ allow_missing_post(Req, State) ->
     {false, Req, State}.
 
 
-
 to_json(Req, #state{section=mcu, index=undefined}=S) ->
     Mcus = mnesia:dirty_match_object(#edfaMcuTable{_='_'}),
     Ejson = lists:map(fun bkfw_mcu:get_kv/1, Mcus),
@@ -180,6 +179,21 @@ to_json(Req, #state{section=sys, sys=firmware}=S) ->
     {jsx:encode(bkfw_config:get_kv(firmware), ?JSX_OPTS), Req, S}.
 
 
+from_json(Req, #state{section=mcu, index=I}=S) ->
+    case parse_body(Req) of
+	{error, invalid_body, Req2} ->
+	    {false, Req2, S};
+	{error, Err, Req2} ->
+	    ?error("Internal error: ~p~n", [Err]),
+	    {halt, Req2, S};
+	{ok, Json, Req2} ->
+	    case bkfw_mcu:set_kv(I, Json) of
+		ok ->
+		    {true, Req2, S};
+		{error, Err} ->
+		    ?error("Request error: ~p~n", [Err])
+	    end
+    end;
 from_json(Req, #state{section=sys, sys=Cat}=S) ->
     case parse_body(Req) of
 	{error, invalid_body, Req2} ->
@@ -308,12 +322,12 @@ auth_header(_, _) ->
 auth_user(<<"admin">>, Password) ->
     case get_password() of
 	undefined -> false;
-	{Method, Hash} ->
-	    case base64:encode(crypto:hash(Method, Password)) of
+	{md5, Hash} ->
+	    case base64:encode(crypto:hash(md5, Password)) of
 		Hash -> true;
 		_ -> false
 	    end
-    end.    
+    end.
 
 get_password() ->
     case application:get_env(bkfw, password, undefined) of

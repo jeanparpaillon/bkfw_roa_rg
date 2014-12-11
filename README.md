@@ -35,7 +35,7 @@ Syntax is (don't forget brackets and final dot !):
 * `http` (list of tuples): cowboy HTTP server parameters, see http://ninenines.eu/docs/en/cowboy/HEAD/guide/getting_started/
 * `upload_dir` (string, default: "/var/lib/bkfw/upload"): path for uploaded firmware
 * `system_cmd` (true | false): if false, does not really execute system commands (reboot, etc.): for debugging purpose
-* `password` ({md5 | sha, hash_value}, default pasword: 'admin'): default admin password. hash_value is base64 encoded value of the hash, using md5 or sha1 algorithm. eg: {md5, "0DPiKuNIrrVmD8IUCuw1hQxNqZc="}
+* `password` ({md5, hash_value}, default pasword: 'admin'): default admin password. hash_value is base64 encoded value of the hash, using md5 algorithm. eg: {md5, "0DPiKuNIrrVmD8IUCuw1hQxNqZc="}
 
 # HTTP Authentication
 
