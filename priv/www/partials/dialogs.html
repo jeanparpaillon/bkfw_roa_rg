@@ -1,17 +1,8 @@
 <div class="overlay" ng-show="dialogs.all().length > 0" ng-click="dialogs.close()"></div>
 <div class="popup alert alert-{{ dialog.klass }} popup-{{ dialog.type }}" ng-repeat="dialog in dialogs.all()" ng-switch="dialog.type">
-  <div ng-switch-when="confirm">
-    <h4>{{ dialog.title }}</h4>
-    <p ng-show="dialog.subtext">{{ dialog.subtext }}</p>
-    <br />
-    <button class="btn btn-{{ dialog.klass }}" type="button" ng-click="dialog.close(true)">Ok</button>
-    <button class="btn btn-default" type="button" ng-click="dialog.close(false)">Abort</button>
-  </div>
-  <div ng-switch-when="traceback">
-    <h4>Exception : {{ dialog.exception }}</h4>
-    <pre>{{ dialog.traceback }}</pre>
-    <p>Call : {{ dialog.call }}</p>
-    <br />
-    <button class="btn btn-{{ dialog.klass }}" type="button" ng-click="dialog.close(true)">Ok</button>
-  </div>
+  <h4>{{ dialog.title }}</h4>
+  <p ng-show="dialog.body">{{ dialog.body }}</p>
+  <br />
+  <button class="btn btn-{{ dialog.klass }}" type="button" ng-click="dialog.close(true)">Ok</button>
+  <button ng-show="dialog.type == 'confirm'" class="btn btn-default" type="button" ng-click="dialog.close(false)">Abort</button>
 </div>

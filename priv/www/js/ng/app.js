@@ -7,18 +7,28 @@ angular.module('bkfwApp', [
     'bkfwApp.controllers',
     'bkfwApp.directives',
     'bkfwApp.utils',
+    'http-auth-interceptor',
     'angularFileUpload',
     'ngResource',
     'ui.router'
 ])
 
-.run(['mcu', function(mcu) {
+.run(['$rootScope', 'AUTH_EVENTS', 'auth', 'mcu', function($rootScope, AUTH_EVENTS, auth, mcu) {
 
   mcu.refreshList(3000);
 
+  $rootScope.$on('$stateChangeStart', function (event, next) {
+      var needAuth = next.auth || false;
+      if (needAuth && !auth.isAuthenticated()) {
+        console.debug("need auth");
+        event.preventDefault();
+        $rootScope.$broadcast(AUTH_EVENTS.notAuthenticated);
+      }
+    });
+
 }])
 
-.config(function($stateProvider, $urlRouterProvider) {
+.config(function($stateProvider, $urlRouterProvider, $httpProvider) {
 
 	$urlRouterProvider.otherwise('/dashboard');
 
@@ -39,20 +49,26 @@ angular.module('bkfwApp', [
     url: '/system',
     controller: 'systemCtrl as system',
     templateUrl: 'partials/system.html',
+    auth: true
   })
 
   .state('login', {
 		url: '/login',
-		templateUrl: 'partials/login.html'
+		templateUrl: 'partials/login.html',
 	})
 
   .state('logout', {
 		url: '/logout',
-	  controller: ['$state', 'session', function($state, session) {
-      if (session.disconnect()) {
-        $state.go('dashboard');
-      }
+	  controller: ['$state', 'auth', function($state, auth) {
+      auth.disconnect();
     }]
 	});
+
+  //$httpProvider.interceptors.push([
+    //'$injector',
+    //function ($injector) {
+      //return $injector.get('authInterceptor');
+    //}
+  //]);
 
 });

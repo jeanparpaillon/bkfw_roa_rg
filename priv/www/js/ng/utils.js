@@ -29,23 +29,21 @@ angular.module('bkfwApp.utils', [])
       return popups;
     },
 
-    confirm: function(title, subtext) {
+    show: function(type, klass, title, body) {
       return new Dialog({
-        type: 'confirm',
-        klass: 'info',
+        type: type,
+        klass: klass,
         title: title,
-        subtext: subtext,
+        body: body
       }).result.promise;
     },
 
-    traceback: function(exception, traceback, call) {
-      return new Dialog({
-        type: 'traceback',
-        klass: 'danger',
-        exception: exception,
-        traceback: traceback,
-        call: call
-      }).result.promise;
+    confirm: function(title, body) {
+      return this.show('confirm', 'info', title, body);
+    },
+
+    success: function(title, body) {
+      return this.show('info', 'success', title, body);
     },
 
     close: function() {

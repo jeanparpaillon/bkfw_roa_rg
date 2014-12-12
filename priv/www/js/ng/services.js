@@ -2,52 +2,87 @@
 
 'use strict';
 
-angular.module('bkfwApp.services', [])
+angular.module('bkfwApp.services', ['base64', 'angular-md5'])
 
-.factory('session', ['$q', '$timeout', function($q, $timeout) {
+.factory('session', ['$http', function($http) {
 
   return {
-    user: null,
 
-    token: null,
-
-    get connected() {
-      return this.token !== null;
+    create: function(user, hash) {
+      this.user = user;
+      $http.defaults.headers.common.Authorization = "x-basic " + hash;
     },
 
-    status: {
-      DISCONNECTED: 0,
-      CONNECTING: 10,
-      CONNECTED: 20,
+    destroy: function() {
+      this.user = null;
+      delete $http.defaults.headers.common.Authorization;
+    }
+
+  };
+
+}])
+
+.constant('AUTH_EVENTS', {
+  // event:auth-* are used by angular-http-auth
+  loginSuccess: 'event:auth-loginConfirmed',
+  loginFailed: 'auth-login-failed',
+  logoutSuccess: 'auth-logout-success',
+  sessionTimeout: 'auth-session-timeout',
+  notAuthenticated: 'event:auth-loginRequired',
+  notAuthorized: 'event:auth-forbidden'
+})
+
+.factory('auth', ['$http', '$rootScope', 'authService', 'AUTH_EVENTS', 'session', '$base64', 'md5', function($http, $rootScope, authService, AUTH_EVENTS, session, $base64, md5) {
+
+  return {
+
+    authenticate: function(user, password) {
+
+      var hash;
+      if (password == "admin")
+        hash = "YWRtaW46ISMvKXpXpadDiUoOSoAfww==";
+      else
+        hash = "plop";
+
+      var req = {
+        method: 'GET',
+        url: '/api/sys/login',
+        headers: {
+          //'Authorization': "x-basic " + $base64.encode(user + ':' + md5.createHash(password))
+          'Authorization': "x-basic " + hash
+        }
+      };
+
+      return $http(req)
+
+      .success(function() {
+        session.create(user, hash);
+        console.debug('Auth confirmed, proceed..');
+        // the login is successfull, fire buffered
+        // http requests!
+        authService.loginConfirmed(user + "logged in.");
+      })
+
+      .error(function() {
+        console.debug('Login failed.');
+        $rootScope.$broadcast(AUTH_EVENTS.loginFailed, "Wrong username/password.");
+      });
+
     },
 
-    connect: function(user, password) {
-      var deferResult = $q.defer();
-      // do auth
-      $timeout(angular.bind(this, function() {
-        deferResult.notify(this.status.CONNECTING);
+    cancelAuthenticate: function() {
+      // when the user cancel the authentication
+      // process we need to clear buffered requests
+      authService.loginCancelled();
+    },
 
-        $timeout(angular.bind(this, function() {
-          if (password == "admin") {
-            deferResult.notify(this.status.CONNECTED);
-            this.token = "foo";
-            this.user = user;
-            deferResult.resolve(true);
-          }
-          else {
-            deferResult.notify(this.status.DISCONNECTED);
-            deferResult.reject("Wrong password");
-          }
-        }), 1000);
-
-      }), 50);
-      return deferResult.promise;
+    isAuthenticated: function() {
+      return !!session.user;
     },
 
     disconnect: function() {
-      this.token = null;
-      this.user = null;
-      return true;
+      session.destroy();
+      $rootScope.$broadcast(AUTH_EVENTS.logoutSuccess);
     }
   };
 

@@ -33,4 +33,39 @@ angular.module('bkfwApp.directives', [])
 
   };
 
-});
+})
+
+.directive('loginDialog', ['AUTH_EVENTS', function (AUTH_EVENTS) {
+
+  return {
+
+    restrict: 'A',
+
+    template: '<div ng-if="visible"><div class="overlay" ng-click="cancel()"></div><div class="popup alert alert-danger" ng-include="\'partials/login-form.html\'"></div></div>',
+
+    link: function (scope) {
+
+      var showDialog = function () {
+        scope.visible = true;
+      };
+      var hideDialog = function() {
+        scope.visible = false;
+      };
+
+      scope.visible = false;
+
+      scope.$on(AUTH_EVENTS.notAuthenticated, showDialog);
+      scope.$on(AUTH_EVENTS.sessionTimeout, showDialog);
+      scope.$on(AUTH_EVENTS.loginSuccess, hideDialog);
+    },
+
+    controller: ['$scope', 'auth', function($scope, auth) {
+      $scope.cancel = function() {
+        // forget about buffered requests...
+        auth.cancelAuthenticate();
+        $scope.visible = false;
+      };
+    }]
+
+  };
+}]);

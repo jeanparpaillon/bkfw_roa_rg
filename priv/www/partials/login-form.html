@@ -1,0 +1,16 @@
+<div ng-controller="loginCtrl as login">
+  <h1 class="page-header">Please sign in</h1>
+  <p ng-show="login.error" class="alert alert-danger">{{ login.error }}</p>
+  <form class="form-signin" role="form" ng-controller="loginCtrl as login"
+        ng-submit="login.authenticate(login.user, login.password)">
+    <div class="form-group">
+      <label for="inputLogin" class="sr-only">Login</label>
+      <input type="text" class="form-control" ng-model="login.user" required>
+    </div>
+    <div class="form-group">
+      <label for="inputPassword" class="sr-only">Password</label>
+      <input type="password" class="form-control" ng-model="login.password" placeholder="Password" required autofocus>
+    </div>
+    <button class="btn btn-lg btn-primary btn-block" type="submit" ng-disabled="login.connecting">Sign in <span bkfw-spinner ng-show="login.connecting" /></button>
+  </form>
+</div>

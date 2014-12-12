@@ -4,13 +4,22 @@
 
 angular.module('bkfwApp.controllers', [])
 
-.controller('globalCtrl', ['$timeout', 'mcu', function($timeout, mcu) {
+.controller('globalCtrl', ['$scope', '$state', 'AUTH_EVENTS', 'mcu', 'session', function($scope, $state, AUTH_EVENTS, mcu, session) {
 
   this.mcu = mcu;
+  this.session = session;
+
+  this.isLoginPage = function() {
+    return $state.is('login');
+  };
+
+  $scope.$on(AUTH_EVENTS.logoutSuccess, function() {
+    $state.go('dashboard');
+  });
 
 }])
 
-.controller('mcuCtrl', ['$scope', '$timeout', '$stateParams', 'mcu', 'dialogs', function($scope, $timeout, $stateParams, mcu, dialogs) {
+.controller('mcuCtrl', ['$scope', '$stateParams', 'mcu', 'dialogs', function($scope, $stateParams, mcu, dialogs) {
 
   this.mode = mcu.mode;
   this.modeID = mcu.modeID;
@@ -23,87 +32,69 @@ angular.module('bkfwApp.controllers', [])
                             angular.bind(this, function() {
                               // on get()
                               this.controlMode = this.detail.operatingMode;
-                              console.debug(this.detail);
                             }));
 
   this.setOperatingMode = function() {
+
     dialogs.confirm("Are you sure ?")
 
     .then(angular.bind(this, function() {
         console.debug("Setting operating mode " + this.controlMode);
-	this.detail.operatingMode = this.controlMode;
-	switch (this.controlMode) {
-	case mcu.mode.PC:
-	    this.detail.outputPowerConsign = this.controlValue;
-	    break;
-	case mcu.mode.GC:
-	    this.detail.gainConsign = this.controlValue;
-	    break;
-	case mcu.mode.CC:
-	    this.detail.ampConsign = this.controlValue;
-	    break;
-	default:
-	    break;
-	}
-	this.detail.$save();
+        this.detail.operatingMode = this.controlMode;
+
+        switch (this.controlMode) {
+          case mcu.mode.PC:
+            this.detail.outputPowerConsign = this.controlValue;
+            break;
+          case mcu.mode.GC:
+            this.detail.gainConsign = this.controlValue;
+            break;
+          case mcu.mode.CC:
+            this.detail.ampConsign = this.controlValue;
+            break;
+          default:
+            break;
+        }
+
+        this.detail.$save(angular.bind(this, function(detail) {
+          dialogs.success("Operating mode set to " + mcu.modeID[this.controlMode].name);
+        }));
+
     }));
   };
 
 }])
 
-.controller('systemCtrl', ['sys', 'FileUploader', function(sys, FileUploader) {
-    this.firmware = sys.firmware.get();
+.controller('systemCtrl', ['$state', 'sys', 'auth', 'FileUploader', function($state, sys, auth, FileUploader) {
 
-    this.uploader = new FileUploader({
-	url: '/api/sys/firmware'
-    });
-	
-    this.network = sys.net.get();
-    this.password = "";
-    this.community = sys.community.get();
-    this.protocol = sys.protocol.get();
+  this.firmware = sys.firmware.get();
+
+  this.uploader = new FileUploader({
+    url: '/api/sys/firmware'
+  });
+
+  this.network = sys.net.get();
+  this.password = "";
+  this.community = sys.community.get();
+  this.protocol = sys.protocol.get();
+
 }])
 
-.controller('loginCtrl', ['$state', 'session', function($state, session) {
+.controller('loginCtrl', ['$scope', '$state', 'auth', 'AUTH_EVENTS', function($scope, $state, auth, AUTH_EVENTS) {
 
-    if (session.connected) {
-	$state.go('dashboard');	
-    }
-    
-    this.user = "admin";
+  this.user = "admin";
   this.password = null;
   this.error = "";
-  this.connecting = false;
 
-  this.connect = function() {
-    if (this.user && this.password) {
-      // do auth
-      session.connect(this.user, this.password)
-      .then(
-        function() {
-          $state.go('dashboard');
-        },
-        angular.bind(this, function(error) {
-          this.error = error;
-        }),
-        angular.bind(this, function(status) {
-            if (status == session.status.CONNECTING) {
-		this.connecting = true;
-	    } else {
-		this.connecting = false;		
-	    }
-        })
-      );
-    }
-    else {
-      this.error = "Missing user or password";
-    }
+  this.authenticate = function(user, pass) {
+    auth.authenticate(user, pass).then(angular.bind(this, function() {
+      this.error = "";
+      if ($state.is('login')) $state.go('dashboard');
+    }));
   };
 
-}])
-
-.controller('navCtrl', ['session', function(session) {
-
-  this.session = session;
+  $scope.$on(AUTH_EVENTS.loginFailed, angular.bind(this, function(msg) {
+    this.error = msg;
+  }));
 
 }]);

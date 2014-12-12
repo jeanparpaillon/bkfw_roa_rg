@@ -7,7 +7,7 @@
     <div class="block">
       <h2>Network</h2>
 
-      <form role="form" ng-submit="system.saveNetwork()">
+      <form role="form" ng-submit="system.network.$save()">
         <div class="form-group">
           <label>Configuration mode</label>
           <select ng-model="system.network.type" class="form-control">
@@ -43,7 +43,7 @@
       <form role="form" >
         <div class="form-group">
           <label>Firmware file</label>
-	  
+
           <input type="file" nv-file-select="" uploader="system.uploader" class="form-control"
 		 ng-show="!system.uploader.queue.length"/>
 
@@ -71,8 +71,8 @@
 	    </button>
 	    <button type="button" class="btn btn-danger btn-xs" ng-click="item.remove()">
 	      <span class="glyphicon glyphicon-trash"></span> Cancel
-	    </button>	      
-	  </div>   
+	    </button>
+	  </div>
         </div>
       </form>
     </div>

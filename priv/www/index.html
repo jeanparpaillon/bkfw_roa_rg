@@ -11,6 +11,9 @@
     <script type="text/javascript" src="bower_components/angular-ui-router/release/angular-ui-router.min.js"></script>
     <script type="text/javascript" src="bower_components/ui.bootstrap/src/modal/modal.js"></script>
     <script type="text/javascript" src="bower_components/angular-file-upload/angular-file-upload.min.js"></script>
+    <script type="text/javascript" src="bower_components/angular-base64/angular-base64.min.js"></script>
+    <script type="text/javascript" src="bower_components/angular-md5/angular-md5.min.js"></script>
+    <script type="text/javascript" src="bower_components/angular-http-auth/src/http-auth-interceptor.js"></script>
     <script type="text/javascript" src="js/utils.js"></script>
     <script type="text/javascript" src="js/ng/app.js"></script>
     <script type="text/javascript" src="js/ng/services.js"></script>
@@ -35,7 +38,7 @@
 
   </head>
   <body ng-controller="globalCtrl as global">
-    <nav class="navbar navbar-inverse top-nav" ng-controller="navCtrl as nav">
+    <nav class="navbar navbar-inverse top-nav">
       <div class="container-fluid">
         <div class="navbar-header">
           <a class="navbar-brand logo" ui-sref="dashboard">
@@ -43,14 +46,15 @@
           </a>
         </div>
         <ul class="nav navbar-nav navbar-right">
-          <li ng-hide="nav.session.connected"><a ui-sref="login">Login</a></li>
-          <li ng-show="nav.session.connected"><span class="navbar-text">{{ nav.session.user }}</span></li>
-          <li ng-show="nav.session.connected"><a ui-sref="logout">Logout</a></li>
+          <li ng-hide="global.session.user"><a ui-sref="login">Login</a></li>
+          <li ng-show="global.session.user"><span class="navbar-text">{{ global.session.user }}</span></li>
+          <li ng-show="global.session.user"><a ui-sref="logout">Logout</a></li>
         </ul>
       </div>
     </nav>
 
     <dialogs></dialogs>
+    <div login-dialog ng-if="!global.isLoginPage()"></div>
 
     <div class="container-fluid page">
       <div class="row">
