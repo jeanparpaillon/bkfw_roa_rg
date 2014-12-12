@@ -56,7 +56,9 @@ angular.module('bkfwApp.controllers', [])
             break;
         }
 
-        this.detail.$save(angular.bind(this, function(detail) {
+        this.detail.$save()
+
+        .then(angular.bind(this, function(detail) {
           dialogs.success("Operating mode set to " + mcu.modeID[this.controlMode].name);
         }));
 
@@ -65,7 +67,7 @@ angular.module('bkfwApp.controllers', [])
 
 }])
 
-.controller('systemCtrl', ['$state', 'sys', 'auth', 'FileUploader', function($state, sys, auth, FileUploader) {
+.controller('systemCtrl', ['$q', '$state', 'sys', 'auth', 'FileUploader', 'dialogs', function($q, $state, sys, auth, FileUploader, dialogs) {
 
   this.firmware = sys.firmware.get();
 
@@ -74,9 +76,38 @@ angular.module('bkfwApp.controllers', [])
   });
 
   this.network = sys.net.get();
-  this.password = "";
+
+  this.networkSave = function() {
+
+    this.network.$save()
+
+    .then(function() {
+      dialogs.success("Network settings saved");
+    });
+  };
+
+  this.newPassword = "";
+  this._password = sys.password.get();
   this.community = sys.community.get();
   this.protocol = sys.protocol.get();
+
+  this.securitySave = function() {
+
+    var actions = [
+      this.community.$save(),
+      this.protocol.$save()
+    ];
+
+    if (this.newPassword) {
+      // change password
+    }
+
+    $q.all(actions)
+    .then(function() {
+      dialogs.success("Security settings saved");
+    });
+  };
+
 
 }])
 

@@ -122,7 +122,9 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5'])
 
     protocol: $resource('/api/sys/protocol'),
 
-    firmware: $resource('/api/sys/firmware')
+    firmware: $resource('/api/sys/firmware'),
+
+    password: $resource('/api/sys/password')
 
   };
 

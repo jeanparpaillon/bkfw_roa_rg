@@ -7,7 +7,7 @@
     <div class="block">
       <h2>Network</h2>
 
-      <form role="form" ng-submit="system.network.$save()">
+      <form role="form" ng-submit="system.networkSave()">
         <div class="form-group">
           <label>Configuration mode</label>
           <select ng-model="system.network.type" class="form-control">
@@ -84,10 +84,10 @@
     <div class="block">
       <h2>Security</h2>
 
-      <form role="form" ng-submit="system.saveSecurity()">
+      <form role="form" ng-submit="system.securitySave()">
         <div class="form-group">
           <label>Password</label>
-          <input type="password" ng-model="system.password" class="form-control" />
+          <input type="password" ng-model="system.newPassword" class="form-control" />
           <p class="help-block">Admin and SNMPv3 (when enabled) password</p>
         </div>
 
