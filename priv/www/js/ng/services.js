@@ -60,17 +60,11 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
     authenticate: function(user, password) {
 
-      var hash;
-      if (password == "admin")
-        hash = "YWRtaW46ISMvKXpXpadDiUoOSoAfww==";
-      else
-        hash = "plop";
-
-      var req = {
+      var hash = $base64.encode(user + ':' + md5.createHash(password)),
+          req = {
         method: 'GET',
         url: '/api/sys/login',
         headers: {
-          //'Authorization': "x-basic " + $base64.encode(user + ':' + md5.createHash(password))
           'Authorization': "x-basic " + hash
         }
       };
