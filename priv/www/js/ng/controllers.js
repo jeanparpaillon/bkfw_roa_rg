@@ -65,20 +65,18 @@ angular.module('bkfwApp.controllers', [])
 
         this.detail.$save()
 
-        .then(
-          angular.bind(this, function() {
-            dialogs.success("Consign applied");
-          }),
-          angular.bind(this, function(response) {
-            dialogs.error("Failed to apply consign", response.data.join(', '));
-          })
-        );
+        .then(angular.bind(this, function() {
+          dialogs.success("Consign applied");
+        }));
     }));
   };
 
 }])
 
 .controller('systemCtrl', ['$q', '$http', '$state', 'sys', 'auth', 'FileUploader', 'dialogs', function($q, $http, $state, sys, auth, FileUploader, dialogs) {
+
+  function getError(response) {
+  }
 
   this.firmware = sys.firmware.get();
 
@@ -95,6 +93,7 @@ angular.module('bkfwApp.controllers', [])
     .then(function() {
       dialogs.success("Network settings saved");
     });
+
   };
 
   this.password = {password: "", confirm: ""};
@@ -104,8 +103,8 @@ angular.module('bkfwApp.controllers', [])
   this.securitySave = function() {
 
     var actions = [
-      [this.community.$save(), "Community settings saved", "Failed to save community settings"],
-      [this.protocol.$save(), "Protocol settings saved", "Failed to save protocol settings"],
+      [this.community.$save(), "Community settings saved"],
+      [this.protocol.$save(), "Protocol settings saved"],
     ];
 
     // check this.password.confirm because
@@ -114,7 +113,7 @@ angular.module('bkfwApp.controllers', [])
     if (this.password.confirm) {
       actions.push(
         [$http.post('/api/sys/password', {password: this.password.confirm}),
-         "New password set", "Failed to set password"]
+         "New password set"]
       );
     }
 
@@ -123,9 +122,6 @@ angular.module('bkfwApp.controllers', [])
       for (var i=0; i<actionsResults.length; i++) {
         if (actionsResults[i].$resolved === true) {
           dialogs.success(actions[i][1]);
-        }
-        else {
-          dialogs.error(actions[i][2]);
         }
       }
     });
@@ -141,13 +137,6 @@ angular.module('bkfwApp.controllers', [])
 
     .then(function() {
       dialogs.success("Device is rebooting");
-    })
-
-    .catch(function(response) {
-      var error = "";
-      if (response.data)
-        error =  response.data.join("<br/>");
-      dialogs.error("Failed to reboot device", error);
     });
 
   };
@@ -162,13 +151,6 @@ angular.module('bkfwApp.controllers', [])
 
     .then(function() {
       dialogs.success("Device reseted to factory defaults");
-    })
-
-    .catch(function(response) {
-      var error = "";
-      if (response.data)
-        error =  response.data.join("<br/>");
-      dialogs.error("Failed to reset to factory defaults", error);
     });
 
   };

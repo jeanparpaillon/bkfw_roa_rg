@@ -54,6 +54,25 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
   notAuthorized: 'event:auth-forbidden'
 })
 
+.factory('apiErrors', ['$q', 'dialogs', function($q, dialogs) {
+
+  return {
+    responseError: function(rejection) {
+      var errors = "";
+      if (rejection.data) {
+        errors = rejection.data.join("<br/>");
+      }
+      else if (rejection.statusText) {
+        errors = rejection.statusText;
+      }
+      dialogs.error("An error occured", errors);
+
+      return $q.reject(rejection);
+    }
+  };
+
+}])
+
 .factory('auth', ['$http', '$rootScope', 'authService', 'AUTH_EVENTS', 'session', '$base64', 'md5', function($http, $rootScope, authService, AUTH_EVENTS, session, $base64, md5) {
 
   return {
