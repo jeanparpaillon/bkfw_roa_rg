@@ -23,45 +23,57 @@ angular.module('bkfwApp.controllers', [])
 
   this.mode = mcu.mode;
   this.modeID = mcu.modeID;
+  this.label = mcu.label;
 
-  // default values
-  this.controlMode = mcu.mode.OFF;
   this.controlValue = null;
 
   this.detail = mcu.api.get({}, {index: $stateParams.mcuIndex},
                             angular.bind(this, function() {
                               // on get()
-                              this.controlMode = this.detail.operatingMode;
+                              this.controlValue = this.getControlValue();
                             }));
+
+  this.getControlValueName = function() {
+    switch (this.detail.operatingMode) {
+      case this.mode.PC:
+        return 'outputPowerConsign';
+      case this.mode.GC:
+        return 'gainConsign';
+      case this.mode.CC:
+        return 'ampConsign';
+    }
+    return null;
+  };
+
+  this.getControlValue = function() {
+    if (this.detail.operatingMode != mcu.mode.OFF) {
+      return this.detail[this.getControlValueName()];
+    }
+    return null;
+  };
+
+  this.showControlValue = function() {
+    this.controlValue = this.getControlValue();
+  };
 
   this.setOperatingMode = function() {
 
     dialogs.confirm("Are you sure ?")
 
     .then(angular.bind(this, function() {
-        console.debug("Setting operating mode " + this.controlMode);
-        this.detail.operatingMode = this.controlMode;
-
-        switch (this.controlMode) {
-          case mcu.mode.PC:
-            this.detail.outputPowerConsign = this.controlValue;
-            break;
-          case mcu.mode.GC:
-            this.detail.gainConsign = this.controlValue;
-            break;
-          case mcu.mode.CC:
-            this.detail.ampConsign = this.controlValue;
-            break;
-          default:
-            break;
-        }
+        console.debug("Setting operating mode " + this.detail.operatingMode);
 
         this.detail.$save()
 
-        .then(angular.bind(this, function(detail) {
-          dialogs.success("Operating mode set to " + mcu.modeID[this.controlMode].name);
-        }));
-
+        .then(
+          angular.bind(this, function(detail) {
+            dialogs.success("Consign applied.");
+          }),
+          angular.bind(this, function(detail) {
+            dialogs.error("Failed to apply consign.");
+            console.debug(detail);
+          })
+        );
     }));
   };
 

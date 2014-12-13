@@ -153,6 +153,30 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
   return {
 
+    label: {
+      ampConsign: "AMP consign",
+      gainConsign: "Gain consign",
+      outputPowerConsign: "Output power consign",
+      operatingMode: "Operating mode",
+      curLaserTemp: "Current laser temp",
+      curAmp: "Current AMP",
+      curInternalAmp: "Current internal AMP",
+      powerInput: "Power input",
+      powerOutput: "Power output",
+      powerSupply: "Power supply",
+      inputLossThreshold: "Input loss threshold",
+      outputLossThreshold: "Output loss threshold",
+      vendor: "Vendor",
+      moduleType: "Module type",
+      hwVer: "Hardware version",
+      hwRev: "Hardware revision",
+      swVer: "Software version",
+      fwVer: "Firmware version",
+      partNum: "Part. number",
+      serialNum: "Serial number",
+      productDate: "Product date"
+    },
+
     modeID: {
       1: {name: 'PC', valueType: 'dBm'},
       2: {name: 'GC', valueType: 'dB'},

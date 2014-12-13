@@ -46,6 +46,10 @@ angular.module('bkfwApp.utils', [])
       return this.show('info', 'success', title, body);
     },
 
+    error: function(title, body) {
+      return this.show('info', 'danger', title, body);
+    },
+
     close: function() {
       popups[popups.length -1].close(false);
     }

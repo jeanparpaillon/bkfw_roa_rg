@@ -10,32 +10,52 @@
           <table class="table table-hover">
             <tbody>
               <tr>
-                <td>Mode</td>
+                <td>{{ mcu.label.operatingMode }}</td>
                 <td>{{ mcu.detail.operatingMode | mcuMode }}</td>
               </tr>
               <tr>
-                <td>Laser T&#186; (&#186;C)</td>
+                <td>{{ mcu.label.ampConsign }}</td>
+                <td>{{ mcu.detail.ampConsign }}</td>
+              </tr>
+              <tr>
+                <td>{{ mcu.label.gainConsign }}</td>
+                <td>{{ mcu.detail.gainConsign }}</td>
+              </tr>
+              <tr>
+                <td>{{ mcu.label.outputPowerConsign }}</td>
+                <td>{{ mcu.detail.outputPowerConsign }}</td>
+              </tr>
+              <tr>
+                <td>{{ mcu.label.curLaserTemp }}</td>
                 <td>{{ mcu.detail.curLaserTemp }}</td>
               </tr>
               <tr>
-                <td>Laser current (A)</td>
+                <td>{{ mcu.label.curAmp }}</td>
                 <td>{{ mcu.detail.curAmp }}</td>
               </tr>
               <tr>
-                <td>Int. T&#186; (&#186;)</td>
+                <td>{{ mcu.label.curInternalAmp }}</td>
                 <td>{{ mcu.detail.curInternalAmp }}</td>
               </tr>
               <tr>
-                <td>Power level (dBm)</td>
+                <td>{{ mcu.label.powerInput }}</td>
                 <td>{{ mcu.detail.powerInput }}</td>
               </tr>
               <tr>
-                <td>Power level (dBm)</td>
+                <td>{{ mcu.label.powerOutput }}</td>
                 <td>{{ mcu.detail.powerOutput }}</td>
               </tr>
               <tr>
-                <td>PSU voltage (V)</td>
+                <td>{{ mcu.label.powerSupply }}</td>
                 <td>{{ mcu.detail.powerSupply }}</td>
+              </tr>
+              <tr>
+                <td>{{ mcu.label.inputLossThreshold }}</td>
+                <td>{{ mcu.detail.inputLossThreshold }}</td>
+              </tr>
+              <tr>
+                <td>{{ mcu.label.outputLossThreshold }}</td>
+                <td>{{ mcu.detail.outputLossThreshold }}</td>
               </tr>
             </tbody>
           </table>
@@ -52,13 +72,14 @@
 
           <div class="form-group">
             <label>Operating mode</label>
-            <select ng-model="mcu.controlMode" class="form-control">
+            <select ng-model="mcu.detail.operatingMode"
+                    ng-change="mcu.showControlValue()" class="form-control">
               <option ng-repeat="(id, info) in mcu.modeID" value="{{ id }}">{{ info.name }}</option>
             </select>
           </div>
 
-          <div class="form-group" ng-if="mcu.controlMode != mcu.mode.OFF">
-            <label>Value in {{ mcu.modeID[mcu.controlMode].valueType }}</label>
+          <div class="form-group" ng-if="mcu.detail.operatingMode != mcu.mode.OFF">
+            <label>Value in {{ mcu.modeID[mcu.detail.operatingMode].valueType }}</label>
             <input type="text" ng-model="mcu.controlValue" class="form-control" />
           </div>
 
@@ -84,23 +105,23 @@
               <table class="table table-hover">
                 <tbody>
                   <tr>
-                    <td>Vendor</td>
+                    <td>{{ mcu.label.vendor }}</td>
                     <td>{{ mcu.detail.vendor }}</td>
                   </tr>
                   <tr>
-                    <td>Module type</td>
+                    <td>{{ mcu.label.moduleType }}</td>
                     <td>{{ mcu.detail.moduleType }}</td>
                   </tr>
                   <tr>
-                    <td>Part num.</td>
+                    <td>{{ mcu.label.partNum }}</td>
                     <td>{{ mcu.detail.partNum }}</td>
                   </tr>
                   <tr>
-                    <td>Serial num.</td>
+                    <td>{{ mcu.label.serialNum }}</td>
                     <td>{{ mcu.detail.serialNum }}</td>
                   </tr>
                   <tr>
-                    <td>Product date</td>
+                    <td>{{ mcu.label.productDate }}</td>
                     <td>{{ mcu.detail.productDate }}</td>
                   </tr>
                 </tbody>
@@ -113,19 +134,19 @@
               <table class="table table-hover">
                 <tbody>
                   <tr>
-                    <td>Hardware version</td>
+                    <td>{{ mcu.label.hwVer }}</td>
                     <td>{{ mcu.detail.hwVer }}</td>
                   </tr>
                   <tr>
-                    <td>Hardware revision</td>
+                    <td>{{ mcu.label.hwRev }}</td>
                     <td>{{ mcu.detail.hwRev }}</td>
                   </tr>
                   <tr>
-                    <td>Software version</td>
+                    <td>{{ mcu.label.swVer }}</td>
                     <td>{{ mcu.detail.swVer }}</td>
                   </tr>
                   <tr>
-                    <td>Firmware version</td>
+                    <td>{{ mcu.label.fwVer }}</td>
                     <td>{{ mcu.detail.fwVer }}</td>
                   </tr>
                 </tbody>
