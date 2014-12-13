@@ -182,6 +182,7 @@ handle_call({set_kv, reset, Props}, _From, State) ->
 	true ->
 	    case file:write_file(?USER_CONF, <<"[].">>) of
 		ok ->
+		    set_network_dhcp(application:get_env(bkfw, netif, "eth0")),
 		    restart(),
 		    {reply, ok, State};
 		{error, eacces} ->
@@ -195,9 +196,16 @@ handle_call({set_kv, reset, Props}, _From, State) ->
 	    {reply, ok, State}
     end;
 handle_call({set_kv, reboot, Props}, _From, State) ->
-    ?debug("Reboot: ~p~n", [Props]),
-    {reply, ok, State};
-
+    case proplists:get_value(reboot, Props, false) of
+	true ->
+	    spawn(fun () ->
+			  timer:sleep(1000),
+			  cmd("reboot")
+		  end),
+	    {reply, ok, State};
+	false ->
+	    {reply, ok, State}
+    end;
 handle_call(_Req, _From, State) ->
     {reply, ok, State}.
 
@@ -293,6 +301,7 @@ hexstring(<<X:128/big-unsigned-integer>>) ->
 restart() ->
     spawn(fun () ->
 		  timer:sleep(1000),
+		  apply_network(),
 		  bkfw_sup:restart()
 	  end).
 
@@ -358,7 +367,7 @@ set_network_dhcp(Iface)  when is_list(Iface) ->
     NewConfig = os:cmd(Cmd), 
     case file:write_file(File, NewConfig) of
 	ok ->
-	    case script("commit_network.sh", []) of
+	    case apply_network() of
 		ok ->
 		    {ok, [{type, dhcp}]};
 		{error, Err} ->
@@ -382,7 +391,7 @@ set_network_static(Iface, Props) when is_list(Iface), is_list(Props) ->
 	    NewConfig = os:cmd(Cmd),
 	    case file:write_file(File, NewConfig) of
 		ok ->
-		    case script("commit_network.sh", []) of
+		    case apply_network() of
 			ok ->
 			    {ok, [{type, static},
 				  {ip, list_to_binary(inet:ntoa(Ip))},
@@ -396,6 +405,9 @@ set_network_static(Iface, Props) when is_list(Iface), is_list(Props) ->
 	{error, Err} ->
 	    {error, Err}
     end.
+
+apply_network() ->
+    script("commit_network.sh", []).
 
 clean(Text, Char) ->
     string:strip(string:strip(Text, right, Char), left, Char).
