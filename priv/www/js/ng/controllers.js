@@ -143,9 +143,6 @@ angular.module('bkfwApp.controllers', [])
     link: function(scope, element, attributes, ngModel) {
 
       ngModel.$validators.compareTo = function(modelValue) {
-        console.debug('========');
-        console.debug(scope.otherModelValue);
-        console.debug(modelValue);
         return modelValue == scope.otherModelValue;
       };
 
