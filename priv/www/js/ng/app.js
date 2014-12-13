@@ -64,13 +64,6 @@ angular.module('bkfwApp', [
     }]
 	});
 
-  //$httpProvider.interceptors.push([
-    //'$injector',
-    //function ($injector) {
-      //return $injector.get('authInterceptor');
-    //}
-  //]);
-
   $httpProvider.interceptors.push('apiErrors');
 
 });

@@ -3,6 +3,10 @@
   <h4>{{ dialog.title }}</h4>
   <p ng-show="dialog.body">{{ dialog.body }}</p>
   <br />
-  <button class="btn btn-{{ dialog.klass }}" type="button" ng-click="dialog.close(true)">Ok</button>
-  <button ng-show="dialog.type == 'confirm'" class="btn btn-default" type="button" ng-click="dialog.close(false)">Abort</button>
+  <button ng-show="dialog.type != 'modal'"
+          class="btn btn-{{ dialog.klass }}"
+          type="button" ng-click="dialog.close(true)">Ok</button>
+  <button ng-show="dialog.type == 'confirm'"
+          class="btn btn-default"
+          type="button" ng-click="dialog.close(false)">Abort</button>
 </div>
