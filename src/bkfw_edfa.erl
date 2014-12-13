@@ -46,7 +46,8 @@ get_kv() ->
      {fwVer,           get_ets_value(edfaFWVer, <<>>)},
      {partNum,         get_ets_value(edfaPartNum, <<>>)},
      {serialNum,       get_ets_value(edfaSerialNum, <<>>)},
-     {productDate,     get_ets_value(edfaProductDate, <<>>)}
+     {productDate,     get_ets_value(edfaProductDate, <<>>)},
+     {alarms,          []}
     ].
 
 %%% SNMP functions

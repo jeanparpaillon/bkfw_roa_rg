@@ -77,7 +77,8 @@ get_kv(#edfaMcuTable{}=T) ->
      {fwVer,               T#edfaMcuTable.fwVer},
      {partNum,             T#edfaMcuTable.partNum},
      {serialNum,           T#edfaMcuTable.serialNum},
-     {productDate,         T#edfaMcuTable.productDate}
+     {productDate,         T#edfaMcuTable.productDate},
+     {alarms,              [ ]}
     ].
 
 set_kv(Idx, Kv) ->
