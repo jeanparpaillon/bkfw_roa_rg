@@ -25,6 +25,9 @@
 -define(MAX_SIZE, 1024*1024*1024*50).
 -define(REALM, <<"bkfw">>).
 
+-define(set_error(E, Req), cowboy_req:set_resp_body(json_error([E]), Req)).
+-define(set_errors(E, Req), cowboy_req:set_resp_body(json_error(E), Req)).
+
 -record(state, {
 	  section   = undefined :: mcu | edfa | sys,
 	  index     = undefined :: integer() | undefined | badarg,
@@ -76,7 +79,14 @@ rest_init(Req, mcu) ->
 rest_init(Req, edfa) ->
     {ok, Req, #state{section=edfa}};
 rest_init(Req, sys) ->
-    {ok, Req, #state{section=sys}};
+    case cowboy_req:binding(name, Req) of
+	{<<"login">>, Req2} -> {ok, Req2, #state{section=sys, sys=login}};
+	{<<"net">>, Req2} -> {ok, Req2, #state{section=sys, sys=net}};
+	{<<"password">>, Req2} -> {ok, Req2, #state{section=sys, sys=password}};
+	{<<"community">>, Req2} -> {ok, Req2, #state{section=sys, sys=community}};
+	{<<"protocol">>, Req2} -> {ok, Req2, #state{section=sys, sys=protocol}};
+	{<<"firmware">>, Req2} -> {ok, Req2, #state{section=sys, sys=firmware}}
+    end;
 rest_init(Req, _Sec) ->
     {ok, Req, #state{section=undefined}}.
 
@@ -108,6 +118,8 @@ content_types_provided(Req, State) ->
      ], Req, State}.
 
 
+is_authorized(Req, #state{section=sys, sys=login}=State) ->
+    {true, Req, State};
 is_authorized(Req, #state{section=sys}=State) ->
     require_auth(Req, State);
 is_authorized(Req, State) ->
@@ -130,15 +142,15 @@ resource_exists(Req, #state{section=mcu, index=I}=S) ->
 	[Mcu] ->
 	    {true, Req, S#state{mcu=Mcu}}
     end;
+resource_exists(Req, #state{section=sys, sys=Sys}=S) when Sys =:= login;
+							  Sys =:= net;
+							  Sys =:= password;
+							  Sys =:= community;
+							  Sys =:= protocol;
+							  Sys =:= firmware ->
+    {true, Req, S};
 resource_exists(Req, #state{section=sys}=S) ->
-    case cowboy_req:binding(name, Req) of
-	{<<"login">>, Req2} -> {true, Req2, S#state{sys=login}};
-	{<<"net">>, Req2} -> {true, Req2, S#state{sys=net}};
-	{<<"password">>, Req2} -> {true, Req2, S#state{sys=password}};
-	{<<"community">>, Req2} -> {true, Req2, S#state{sys=community}};
-	{<<"protocol">>, Req2} -> {true, Req2, S#state{sys=protocol}};
-	{<<"firmware">>, Req2} -> {true, Req2, S#state{sys=firmware}}
-    end;
+    {false, Req, S};
 resource_exists(Req, #state{section=undefined}=S) ->
     {false, Req, S};
 resource_exists(Req, S) ->
@@ -182,32 +194,48 @@ to_json(Req, #state{section=sys, sys=firmware}=S) ->
 from_json(Req, #state{section=mcu, index=I}=S) ->
     case parse_body(Req) of
 	{error, invalid_body, Req2} ->
-	    {false, Req2, S};
+	    {false, ?set_error(invalid_body, Req2), S};
 	{error, Err, Req2} ->
 	    ?error("Internal error: ~p~n", [Err]),
-	    {halt, Req2, S};
+	    {halt, ?set_error(internal, Req2), S};
 	{ok, Json, Req2} ->
 	    case bkfw_mcu:set_kv(I, Json) of
 		ok ->
 		    {true, Req2, S};
 		{error, Err} ->
-		    ?error("Request error: ~p~n", [Err])
+		    ?error("Request error: ~p~n", [Err]),
+		    {false, ?set_error(Err, Req2), S}
+	    end
+    end;
+from_json(Req, #state{section=sys, sys=login}=S) ->
+    case parse_body(Req) of
+	{error, invalid_body, Req2} ->
+	    {false, ?set_error(invalid_body, Req2), S};
+	{error, Err, Req2} ->
+	    {false, ?set_error(Err, Req2), S};
+	{ok, Json, Req2} ->
+	    case auth_user(proplists:get_value(<<"login">>, Json),
+			   proplists:get_value(<<"password">>, Json)) of
+		true ->
+		    {true, Req2, S};
+		false ->
+		    {false, ?set_error(invalid_login, Req2), S}
 	    end
     end;
 from_json(Req, #state{section=sys, sys=Cat}=S) ->
     case parse_body(Req) of
 	{error, invalid_body, Req2} ->
-	    {false, Req2, S};
+	    {false, ?set_error(invalid_body, Req2), S};
 	{error, Err, Req2} ->
 	    ?error("Internal error: ~p~n", [Err]),
-	    {halt, Req2, S};
+	    {halt, ?set_error(internal, Req2), S};
 	{ok, Json, Req2} ->
 	    case bkfw_config:set_kv(Cat, Json) of
 		ok ->
 		    {true, Req2, S};
 		{error, Err} ->
 		    ?error("Request error: ~p~n", [Err]),
-		    {false, Req2, S}
+		    {false, ?set_error(Err, Req2), S}
 	    end
     end.
 
@@ -327,7 +355,9 @@ auth_user(<<"admin">>, Password) ->
 		Hash -> true;
 		_ -> false
 	    end
-    end.
+    end;
+auth_user(_, _) ->
+    false.
 
 get_password() ->
     case application:get_env(bkfw, password, undefined) of
@@ -397,3 +427,15 @@ to_lower(<< C, Rest/bits >>, Acc) ->
 	$Z -> to_lower(Rest, << Acc/binary, $z >>);
 	_ -> to_lower(Rest, << Acc/binary, C >>)
     end.
+
+json_error(Errors) ->
+    jsx:encode([ err_to_string(E) || E <- Errors ], ?JSX_OPTS).
+
+err_to_string(internal) -> <<"Internal error in backend">>;
+err_to_string(invalid_body) -> <<"JSON error">>;
+err_to_string(invalid_login) -> <<"Invalid login and/or password">>;
+err_to_string(missing_mode) -> <<"Missing value: operating mode">>;
+err_to_string(missing_consign) -> <<"Missing value: consign">>;
+err_to_string(Else) when is_atom(Else) -> atom_to_binary(Else, utf8);
+err_to_string(Else) when is_list(Else) -> list_to_binary(Else);
+err_to_string(Else) when is_binary(Else) -> Else.
