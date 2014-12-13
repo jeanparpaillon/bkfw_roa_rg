@@ -51,7 +51,7 @@ get_config() ->
 		{"/logo", cowboy_static, {file, Logo, [{mimetypes, cow_mimetypes, all}]}},
 		{"/[...]", cowboy_static, {dir, Dir, [{mimetypes, cow_mimetypes, all}]}}
 	       ],
-    Args = [http, 1, 
+    Args = [http, 1,
 	    [{port, proplists:get_value(port, Opts, ?PORT)}],
 	    [{env, [{dispatch, cowboy_router:compile([{'_', Handlers}])}]},
 	     {middlewares, [bkfw_index, cowboy_router, cowboy_handler]}]
@@ -129,7 +129,7 @@ is_authorized(Req, State) ->
 	{_, Req2} ->
 	    {true, Req2, State}
     end.
-		
+
 
 resource_exists(Req, #state{section=mcu, index=badarg}=S) ->
     {false, Req, S};
@@ -214,8 +214,8 @@ from_json(Req, #state{section=sys, sys=login}=S) ->
 	{error, Err, Req2} ->
 	    {false, ?set_error(Err, Req2), S};
 	{ok, Json, Req2} ->
-	    case auth_user(proplists:get_value(<<"login">>, Json),
-			   proplists:get_value(<<"password">>, Json)) of
+        case auth_user(proplists:get_value(login, Json),
+               proplists:get_value(password, Json)) of
 		true ->
 		    {true, Req2, S};
 		false ->
@@ -249,7 +249,7 @@ from_multipart(Req, #state{section=sys, sys=firmware, firmware=Path}=S) ->
 		{file, _Field, Filename, _ContentType, _Enc} ->
 		    Fullpath = filename:join(application:get_env(bkfw, upload_dir, ""), Filename),
 		    case stream_file(Fullpath, Req2) of
-			{ok, Req3} -> 
+			{ok, Req3} ->
 			    from_multipart(Req3, S#state{firmware=Fullpath});
 			{error, Err} ->
 			    ?error("Error streaming file: ~p~n", [Err]),
@@ -263,7 +263,7 @@ from_multipart(Req, #state{section=sys, sys=firmware, firmware=Path}=S) ->
 		{error, _Err} ->
 		    {false, Req2, S}
 	    end
-    end.	    
+    end.
 
 parse_body(Req) ->
     case cowboy_req:body(Req) of
