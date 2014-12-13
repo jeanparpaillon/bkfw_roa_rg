@@ -25,8 +25,8 @@
 -define(MAX_SIZE, 1024*1024*1024*50).
 -define(REALM, <<"bkfw">>).
 
--define(set_error(E, Req), cowboy_req:set_resp_body(json_error([E]), Req)).
--define(set_errors(E, Req), cowboy_req:set_resp_body(json_error(E), Req)).
+-define(set_error(E, Req), set_errors([E], Req)).
+-define(set_errors(E, Req), set_errors(E, Req)).
 
 -record(state, {
 	  section   = undefined :: mcu | edfa | sys,
@@ -439,3 +439,8 @@ err_to_string(missing_consign) -> <<"Missing value: consign">>;
 err_to_string(Else) when is_atom(Else) -> atom_to_binary(Else, utf8);
 err_to_string(Else) when is_list(Else) -> list_to_binary(Else);
 err_to_string(Else) when is_binary(Else) -> Else.
+
+set_errors(Errors, Req) ->
+    Req2 = cowboy_req:set_resp_body(json_error(Errors), Req),
+    cowboy_req:set_resp_header(<<"content-type">>, <<"application/json">>, Req2).
+
