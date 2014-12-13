@@ -53,7 +53,3 @@
 		       productDate        = ""                       :: string()
 		   }).
 -type edfaMcuTable() :: #edfaMcuTable{}.
-
-% HTTP
--record(session, {user      :: binary(),
-		  expires   :: erlang:timestamp()}).

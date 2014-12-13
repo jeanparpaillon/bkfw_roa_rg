@@ -52,6 +52,7 @@ erl -sname agent \
     -bkfw upload_dir "\"/tmp\"" \
     -bkfw system_cmd "false" \
     -bkfw logo "\"/home/jean/BA_Projets/erocci/doc/erocci-logo-only-128.png\"" \
+    -bkfw net "\"${BASEDIR}/priv/interfaces\"" \
     -config ${reldir}/files/sys \
     -s bkfw
 

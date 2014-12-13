@@ -27,10 +27,9 @@
 -define(SERVER, ?MODULE).
 -type category() :: net | community | protocol | firmware.
 -type net_opt() :: {type, static | dhcp} |
-		   {ifname, string()} |
-		   {ip, binary()} |
-		   {netmask, binary()} |
-		   {gateway, binary()}.
+		   {ip, string()} |
+		   {mask, string()} |
+		   {gateway, string()}.
 -type auth_opt() :: {password, binary()} |
 		    {comm_public, binary()} |
 		    {comm_restricted, binary()}.
@@ -38,13 +37,11 @@
 			{snmpv2, boolean()} |
 			{snmpv3, boolean()}.
 -type firmware_opt() :: {version, binary()}.
--type session_opt() :: #session{}.
 -record(state, {
 	  net           :: [net_opt()],
 	  auth          :: [auth_opt()],
 	  protocol      :: [protocol_opt()],
-	  firmware      :: [firmware_opt()],
-	  session       :: session_opt()
+	  firmware      :: [firmware_opt()]
 	 }).
 
 %%%===================================================================
@@ -98,9 +95,14 @@ encode_password(Passwd) when is_list(Passwd); is_binary(Passwd) ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    {ok, #state{net=application:get_env(bkfw, net, []),
-		firmware=load_resources(),
-		session=undefined}}.
+    Iface = application:get_env(bkfw, netif, ""),
+    NetConfig = case get_network_config(Iface) of
+		    {ok, Config}  -> Config;
+		    {error, _} ->
+			set_network_dhcp(Iface),
+			[{type, dhcp}]
+		end,
+    {ok, #state{net=NetConfig, firmware=load_resources()}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -117,21 +119,10 @@ init([]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call({get_kv, net}, _From, #state{net=Net}=State) ->
-    IfName = proplists:get_value(ifname, Net),
     Props = case proplists:get_value(type, Net) of
-		static ->
-		    [
-		     {type, static},
-		     {ip, proplists:get_value(ip, Net)},
-		     {netmask, proplists:get_value(netmask, Net)},
-		     {gateway, proplists:get_value(gateway, Net)}
-		    ];
+		static -> Net;
 		dhcp ->
-		    P = [{type, dhcp}],
-		    case get_if(IfName) of
-			undefined -> P;		    
-			NetIf -> get_if_infos(NetIf) ++ P
-		    end
+		    [ {type, dhcp} | get_if_infos(application:get_env(bkfw, net, "")) ]
 	    end,
     {reply, Props, State};
 
@@ -154,11 +145,40 @@ handle_call({get_kv, firmware}, _From, #state{firmware=FW}=S) ->
 	     {version, list_to_binary(proplists:get_value(vsn, FW, ""))}
 	    ], S};
 
-handle_call({get_kv, login}, _From, #state{session=#session{user=User}}=S) ->
-    {reply, [{user, User}], S};
+handle_call({set_kv, net, Props}, _From, State) ->
+    case proplists:get_value(type, Props) of
+	undefined ->
+	    {reply, {error, missing_net_type}, State};
+	<<"dhcp">> ->
+	    case set_network_dhcp(application:get_env_(bkfw, net, "")) of
+		ok ->
+		    {reply, ok, State};
+		{error, Err} ->
+		    {reply, {error, Err}, State}
+	    end;
+	<<"static">> ->
+	    case set_network_static(application:get_env(bkfw, net, ""), Props) of
+		ok ->
+		    {reply, ok, State};
+		{error, Err} ->
+		    {reply, {error, Err}, State}
+	    end
+    end;
+handle_call({set_kv, password, Props}, _From, State) ->
+    ?debug("Setting password options: ~p~n", [Props]),
+    {reply, ok, State};
 
-handle_call({get_kv, login}, _From, #state{session=undefined}=S) ->
-    {reply, [], S};
+handle_call({set_kv, community, Props}, _From, State) ->
+    ?debug("Setting community options: ~p~n", [Props]),
+    {reply, ok, State};
+
+handle_call({set_kv, protocol, Props}, _From, State) ->
+    ?debug("Setting protocol options: ~p~n", [Props]),
+    {reply, ok, State};
+
+handle_call({set_kv, reset, Props}, _From, State) ->
+    ?debug("Reset user options: ~p~n", [Props]),
+    {reply, ok, State};
 
 handle_call(_Req, _From, State) ->
     {reply, ok, State}.
@@ -217,32 +237,16 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-get_if(Name) ->
-    case inet:getifaddrs() of
-	{ok, List} ->
-	    filter_if(Name, List);
-	{error, Err} ->
-	    ?error("Error getting network interfaces: ~p~n", [Err]),
-	    undefined
-    end.
-
-filter_if(_, []) ->
-    undefined;
-filter_if(Name, [{Name, Props} | _]) ->
-    Props;
-filter_if(Name, [{_, _} | Tail]) ->
-    filter_if(Name, Tail).
-
 get_if_infos(NetIf) ->
     Addr = case proplists:get_value(addr, NetIf) of
 	       undefined -> <<>>;
-	       T1 -> list_to_binary(inet:ntoa(T1))
+	       T1 -> inet:ntoa(T1)
 	   end,
     Mask = case proplists:get_value(netmask, NetIf) of
 	       undefined -> <<>>;
-	       T2 -> list_to_binary(inet:ntoa(T2))
+	       T2 -> inet:ntoa(T2)
 	   end,
-    [{ip, Addr}, {netmask, Mask}].
+    [{ip, Addr}, {mask, Mask}].
 
 load_resources() ->
     case file:consult(filename:join(code:lib_dir(bkfw, ebin), "bkfw.app")) of
@@ -250,8 +254,11 @@ load_resources() ->
 	_ -> []
     end.
 
+get_script(Name) ->
+    filename:join([code:priv_dir(bkfw), "scripts", Name]).
+
 script(Cmd, Args) ->
-    cmd(filename:join([code:priv_dir(bkfw), "scripts", Cmd]) ++ " " ++ Args).
+    cmd(get_script(Cmd) ++ " " ++ Args).
 
 cmd(Cmd) ->
     case application:get_env(bkfw, system_cmd) of
@@ -274,3 +281,48 @@ cmd(Cmd) ->
 
 hexstring(<<X:128/big-unsigned-integer>>) ->
     lists:flatten(io_lib:format("~32.16.0b", [X])).
+
+%% Network related functions
+-spec get_network_config(string()) -> {ok, [net_opt()]} | {error, term()}.
+get_network_config(Iface) when is_list(Iface) ->
+    Cmd = get_script("readInterfaces.awk ") 
+	++ application:get_env(bkfw, net, "")
+	++ " device=" ++ Iface
+	++ Iface,
+    case os:cmd(Cmd) of
+	"dhcp\n" -> {ok, [{type, dhcp}]};
+	Str ->
+	    case string:tokens(Str, " ") of
+		[Ip, Mask] ->
+		    case valid_ip(Ip, Mask) of
+			{ok, _, _}  ->
+			    {ok, [{mode, static},
+				  {ip, Ip},
+				  {mask, Mask}]};
+			{error, Err} ->
+			    {error, Err}
+		    end;
+		_ -> {error, invalid_net_config}
+	    end
+    end.
+
+-spec valid_ip(list(), list()) -> {ok, inet:ip_address(), inet:ip_address()}.
+valid_ip(Addr, Mask) ->
+    case inet:parse_address(Addr) of
+	{ok, IpAddr} ->
+	    case inet:parse_address(Mask) of
+		{ok, IpMask} ->
+		    {ok, IpAddr, IpMask};
+		{error, einval} ->
+		    {error, invalid_net_mask}
+	    end;
+	{error, einval} ->
+	    {error, invalid_net_address}
+    end.
+
+
+set_network_dhcp(Iface)  when is_list(Iface) ->
+    ok.
+
+set_network_static(Iface, Props) when is_list(Iface), is_list(Props) ->
+    ok.

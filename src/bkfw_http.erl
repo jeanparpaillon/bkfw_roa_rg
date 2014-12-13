@@ -32,7 +32,7 @@
 	  section   = undefined :: mcu | edfa | sys,
 	  index     = undefined :: integer() | undefined | badarg,
 	  mcu       = undefined,
-	  sys       = undefined :: login | net | password | community | protocol | firmware,
+	  sys       = undefined :: login | net | password | community | protocol | firmware | reset | reboot,
 	  firmware  = undefined :: undefined | string()
 	 }).
 
@@ -81,11 +81,15 @@ rest_init(Req, edfa) ->
 rest_init(Req, sys) ->
     case cowboy_req:binding(name, Req) of
 	{<<"login">>, Req2} -> {ok, Req2, #state{section=sys, sys=login}};
+	{<<"reset">>, Req2} -> {ok, Req2, #state{section=sys, sys=reset}};
+	{<<"reboot">>, Req2} -> {ok, Req2, #state{section=sys, sys=reboot}};
 	{<<"net">>, Req2} -> {ok, Req2, #state{section=sys, sys=net}};
+	{<<"network">>, Req2} -> {ok, Req2, #state{section=sys, sys=net}};
 	{<<"password">>, Req2} -> {ok, Req2, #state{section=sys, sys=password}};
 	{<<"community">>, Req2} -> {ok, Req2, #state{section=sys, sys=community}};
 	{<<"protocol">>, Req2} -> {ok, Req2, #state{section=sys, sys=protocol}};
-	{<<"firmware">>, Req2} -> {ok, Req2, #state{section=sys, sys=firmware}}
+	{<<"firmware">>, Req2} -> {ok, Req2, #state{section=sys, sys=firmware}};
+	{_, Req2} -> {ok, Req2, #state{section=sys, sys=undefined}}
     end;
 rest_init(Req, _Sec) ->
     {ok, Req, #state{section=undefined}}.
@@ -144,6 +148,8 @@ resource_exists(Req, #state{section=mcu, index=I}=S) ->
     end;
 resource_exists(Req, #state{section=sys, sys=Sys}=S) when Sys =:= login;
 							  Sys =:= net;
+							  Sys =:= reset;
+							  Sys =:= reboot;
 							  Sys =:= password;
 							  Sys =:= community;
 							  Sys =:= protocol;
@@ -178,9 +184,6 @@ to_json(Req, #state{section=sys, sys=login}=S) ->
 to_json(Req, #state{section=sys, sys=net}=S) ->
     {jsx:encode(bkfw_config:get_kv(net), ?JSX_OPTS), Req, S};
 
-to_json(Req, #state{section=sys, sys=password}=S) ->
-    {<<>>, Req, S};
-
 to_json(Req, #state{section=sys, sys=community}=S) ->
     {jsx:encode(bkfw_config:get_kv(community), ?JSX_OPTS), Req, S};
 
@@ -188,7 +191,10 @@ to_json(Req, #state{section=sys, sys=protocol}=S) ->
     {jsx:encode(bkfw_config:get_kv(protocol), ?JSX_OPTS), Req, S};
 
 to_json(Req, #state{section=sys, sys=firmware}=S) ->
-    {jsx:encode(bkfw_config:get_kv(firmware), ?JSX_OPTS), Req, S}.
+    {jsx:encode(bkfw_config:get_kv(firmware), ?JSX_OPTS), Req, S};
+
+to_json(Req, #state{section=sys, sys=_}=S) ->
+    {<<"{}">>, Req, S}.
 
 
 from_json(Req, #state{section=mcu, index=I}=S) ->
@@ -436,6 +442,10 @@ err_to_string(invalid_body) -> <<"JSON error">>;
 err_to_string(invalid_login) -> <<"Invalid login and/or password">>;
 err_to_string(missing_mode) -> <<"Missing value: operating mode">>;
 err_to_string(missing_consign) -> <<"Missing value: consign">>;
+err_to_string(missing_net_type) -> <<"Missing value: network type">>;
+err_to_string(invalid_net_config) -> <<"Invalid network configuration">>;
+err_to_string(invalid_net_address) -> <<"Invalid value: network address">>;
+err_to_string(invalid_net_mask) -> <<"Invalid value: network mask">>;
 err_to_string(Else) when is_atom(Else) -> atom_to_binary(Else, utf8);
 err_to_string(Else) when is_list(Else) -> list_to_binary(Else);
 err_to_string(Else) when is_binary(Else) -> Else.
