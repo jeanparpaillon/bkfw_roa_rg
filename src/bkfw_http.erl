@@ -446,6 +446,7 @@ err_to_string(missing_net_type) -> <<"Missing value: network type">>;
 err_to_string(invalid_net_config) -> <<"Invalid network configuration">>;
 err_to_string(invalid_net_address) -> <<"Invalid value: network address">>;
 err_to_string(invalid_net_mask) -> <<"Invalid value: network mask">>;
+err_to_string({unexpected, _}) -> <<"Internal error in backend">>;
 err_to_string(Else) when is_atom(Else) -> atom_to_binary(Else, utf8);
 err_to_string(Else) when is_list(Else) -> list_to_binary(Else);
 err_to_string(Else) when is_binary(Else) -> Else.
