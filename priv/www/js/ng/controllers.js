@@ -66,12 +66,11 @@ angular.module('bkfwApp.controllers', [])
         this.detail.$save()
 
         .then(
-          angular.bind(this, function(detail) {
-            dialogs.success("Consign applied.");
+          angular.bind(this, function() {
+            dialogs.success("Consign applied");
           }),
-          angular.bind(this, function(detail) {
-            dialogs.error("Failed to apply consign.");
-            console.debug(detail);
+          angular.bind(this, function(response) {
+            dialogs.error("Failed to apply consign", response.data.join(', '));
           })
         );
     }));
