@@ -2,23 +2,45 @@
 
 'use strict';
 
-angular.module('bkfwApp.services', ['base64', 'angular-md5'])
+angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
-.factory('session', ['$http', function($http) {
+.factory('session', ['$http', '$sessionStorage', function($http, $sessionStorage) {
 
-  return {
+  function Session() {
+    this.user = $sessionStorage.user || null;
+    this.hash = $sessionStorage.hash || null;
+  }
+
+  Session.prototype = {
+
+    get hash() {
+      return this._hash;
+    },
+
+    set hash(value) {
+      this._hash = value;
+      if (value !== null) {
+        $http.defaults.headers.common.Authorization = "x-basic " + this._hash;
+      }
+      else {
+        delete $http.defaults.headers.common.Authorization;
+      }
+    },
 
     create: function(user, hash) {
-      this.user = user;
-      $http.defaults.headers.common.Authorization = "x-basic " + hash;
+      this.user = $sessionStorage.user = user;
+      this.hash = $sessionStorage.hash = hash;
     },
 
     destroy: function() {
       this.user = null;
-      delete $http.defaults.headers.common.Authorization;
+      this.hash = null;
+      $sessionStorage.$reset();
     }
 
   };
+
+  return new Session();
 
 }])
 
