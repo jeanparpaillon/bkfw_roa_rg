@@ -71,4 +71,6 @@ angular.module('bkfwApp', [
     //}
   //]);
 
+  $httpProvider.interceptors.push('apiErrors');
+
 });
