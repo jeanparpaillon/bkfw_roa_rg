@@ -136,7 +136,7 @@ angular.module('bkfwApp.controllers', [])
     }));
   };
 
-  $scope.$on(AUTH_EVENTS.loginFailed, angular.bind(this, function(msg) {
+  $scope.$on(AUTH_EVENTS.loginFailed, angular.bind(this, function(event, msg) {
     this.error = msg;
   }));
 

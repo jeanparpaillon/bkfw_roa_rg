@@ -60,18 +60,10 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
     authenticate: function(user, password) {
 
-      var hash = $base64.encode(user + ':' + md5.createHash(password)),
-          req = {
-        method: 'GET',
-        url: '/api/sys/login',
-        headers: {
-          'Authorization': "x-basic " + hash
-        }
-      };
-
-      return $http(req)
+      return $http.post('/api/sys/login', {login: user, password: md5.createHash(password)})
 
       .success(function() {
+        var hash = $base64.encode(user + ':' + md5.createHash(password));
         session.create(user, hash);
         console.debug('Auth confirmed, proceed..');
         // the login is successfull, fire buffered
@@ -79,9 +71,8 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
         authService.loginConfirmed(user + "logged in.");
       })
 
-      .error(function() {
-        console.debug('Login failed.');
-        $rootScope.$broadcast(AUTH_EVENTS.loginFailed, "Wrong username/password.");
+      .error(function(errors) {
+        $rootScope.$broadcast(AUTH_EVENTS.loginFailed, errors.join('. '));
       });
 
     },

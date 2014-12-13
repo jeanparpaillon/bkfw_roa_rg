@@ -41,7 +41,7 @@ angular.module('bkfwApp.directives', [])
 
     restrict: 'A',
 
-    template: '<div ng-if="visible"><div class="overlay" ng-click="cancel()"></div><div class="popup alert alert-danger" ng-include="\'partials/login-form.html\'"></div></div>',
+    template: '<div ng-if="visible"><div class="overlay" ng-click="cancel()"></div><div class="popup alert alert-warning" ng-include="\'partials/login-form.html\'"></div></div>',
 
     link: function (scope) {
 
