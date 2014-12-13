@@ -58,14 +58,17 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
   return {
     responseError: function(rejection) {
-      var errors = "";
-      if (rejection.data) {
-        errors = rejection.data.join("<br/>");
+      // don't handle 401
+      if (rejection.status !== 401) {
+        var errors = "";
+        if (rejection.data) {
+          errors = rejection.data.join("<br/>");
+        }
+        else if (rejection.statusText) {
+          errors = rejection.statusText;
+        }
+        dialogs.error("An error occured", errors);
       }
-      else if (rejection.statusText) {
-        errors = rejection.statusText;
-      }
-      dialogs.error("An error occured", errors);
 
       return $q.reject(rejection);
     }
