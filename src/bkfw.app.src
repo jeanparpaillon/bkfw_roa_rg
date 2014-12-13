@@ -38,6 +38,6 @@
 	 {http, [{port, 80}]},
 	 {upload_dir, "/var/lib/bkfw/upload"},
 	 {system_cmd, true},
-	 {password, {md5, "ISMvKXpXpadDiUoOSoAfww=="}}
+	 {password, {md5, "MjEyMzJmMjk3YTU3YTVhNzQzODk0YTBlNGE4MDFmYzM="}}
 	]}
  ]}.

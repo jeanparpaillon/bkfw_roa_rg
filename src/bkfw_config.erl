@@ -14,6 +14,7 @@
 
 %% API
 -export([start_link/0,
+	 encode_password/1,
 	 get_kv/1,
 	 set_kv/2]).
 
@@ -75,6 +76,11 @@ upgrade(Filename) ->
 	    script("upgrade.sh", Filename);
 	{error, Err} -> {error, Err}
     end.
+
+-spec encode_password(iolist()) -> string().
+encode_password(Passwd) when is_list(Passwd); is_binary(Passwd) ->
+    base64:encode(hexstring(crypto:hash(md5, Passwd))).
+    
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -265,3 +271,6 @@ cmd(Cmd) ->
 	    ?info("(fake) running: ~s~n", [iolist_to_binary(Cmd)]),
 	    ok
     end.
+
+hexstring(<<X:128/big-unsigned-integer>>) ->
+    lists:flatten(io_lib:format("~32.16.0b", [X])).
