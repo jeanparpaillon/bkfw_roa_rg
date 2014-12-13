@@ -152,3 +152,15 @@ List of MCU descriptions
 	version: (string)
 }
 ```
+
+# Alarms
+
+* pin: "Input power loss" (powerInput)
+* pout: "Output power loss" (powerOutput)
+* pump_temp: "Pump temperature alarm" (curLaserTemp)
+* pump_bias: "Laser current is over 95% of EOL" (curAmp)
+* edfa_temp: "Internal temperature alarm" (curInternalTemp)
+* edfa_psu: "Power Supply alarm" (powerSupply)
+* bref: "Back reflection alarm"
+* adi: "Shutdown input is active"
+* mute: "Mute input is active"
