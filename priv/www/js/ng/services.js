@@ -131,8 +131,6 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
     firmware: $resource('/api/sys/firmware'),
 
-    password: $resource('/api/sys/password')
-
   };
 
 }])

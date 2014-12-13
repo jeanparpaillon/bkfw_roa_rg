@@ -84,11 +84,19 @@
     <div class="block">
       <h2>Security</h2>
 
-      <form role="form" ng-submit="system.securitySave()">
+      <form name="security" role="form" ng-submit="system.securitySave()">
         <div class="form-group">
           <label>Password</label>
-          <input type="password" ng-model="system.newPassword" class="form-control" />
+          <input type="password" ng-model="system.password.password" name="password"
+                 class="form-control" autocomplete="off" />
           <p class="help-block">Admin and SNMPv3 (when enabled) password</p>
+        </div>
+        <div class="form-group" ng-class="{'has-error': security.confirm.$error.compareTo}">
+          <label>Confirm password</label>
+          <input type="password" name="confirm" ng-model="system.password.confirm"
+                 class="form-control" compare-to="system.password.password" />
+          <p>{{ system.password.confirm.$error }}</p>
+          <span class="text-danger" ng-show="security.confirm.$error.compareTo">Passwords don't match</span>
         </div>
 
         <div class="form-group">

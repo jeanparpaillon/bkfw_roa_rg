@@ -78,7 +78,7 @@ angular.module('bkfwApp.controllers', [])
 
 }])
 
-.controller('systemCtrl', ['$q', '$state', 'sys', 'auth', 'FileUploader', 'dialogs', function($q, $state, sys, auth, FileUploader, dialogs) {
+.controller('systemCtrl', ['$q', '$http', '$state', 'sys', 'auth', 'FileUploader', 'dialogs', function($q, $http, $state, sys, auth, FileUploader, dialogs) {
 
   this.firmware = sys.firmware.get();
 
@@ -97,30 +97,64 @@ angular.module('bkfwApp.controllers', [])
     });
   };
 
-  this.newPassword = "";
-  this._password = sys.password.get();
+  this.password = {password: "", confirm: ""};
   this.community = sys.community.get();
   this.protocol = sys.protocol.get();
 
   this.securitySave = function() {
 
     var actions = [
-      this.community.$save(),
-      this.protocol.$save()
+      [this.community.$save(), "Community settings saved", "Failed to save community settings"],
+      [this.protocol.$save(), "Protocol settings saved", "Failed to save protocol settings"],
     ];
 
-    if (this.newPassword) {
-      // change password
+    // check this.password.confirm because
+    // only this field is validated and it's
+    // empty if validation fails
+    if (this.password.confirm) {
+      actions.push(
+        [$http.post('/api/sys/password', {password: this.password.confirm}),
+         "New password set", "Failed to set password"]
+      );
     }
 
-    $q.all(actions)
-    .then(function() {
-      dialogs.success("Security settings saved");
+    $q.all(actions.map(function(a) { return a[0]; }))
+    .then(function(actionsResults) {
+      for (var i=0; i<actionsResults.length; i++) {
+        if (actionsResults[i].$resolved === true) {
+          dialogs.success(actions[i][1]);
+        }
+        else {
+          dialogs.error(actions[i][2]);
+        }
+      }
     });
   };
 
 
 }])
+
+.directive('compareTo', function() {
+  return {
+    require: "ngModel",
+    scope: {
+      otherModelValue: "=compareTo"
+    },
+    link: function(scope, element, attributes, ngModel) {
+
+      ngModel.$validators.compareTo = function(modelValue) {
+        console.debug('========');
+        console.debug(scope.otherModelValue);
+        console.debug(modelValue);
+        return modelValue == scope.otherModelValue;
+      };
+
+      scope.$watch("otherModelValue", function() {
+        ngModel.$validate();
+      });
+    }
+  };
+})
 
 .controller('loginCtrl', ['$scope', '$state', 'auth', 'AUTH_EVENTS', function($scope, $state, auth, AUTH_EVENTS) {
 
