@@ -10,8 +10,8 @@ if [ $# != 1 ]; then
     exit 2
 fi
 
-ifconfig $1 down > /dev/null 2>&1
-ifconfig $1 up > /dev/null 2>&1 \
+ifdown $1 > /dev/null 2>&1
+ifup $1 > /dev/null 2>&1 \
     && echo "ok" \
     || echo "err_network"
 
