@@ -131,6 +131,48 @@ angular.module('bkfwApp.controllers', [])
     });
   };
 
+  this.reboot = function() {
+
+    dialogs.confirm("The device will reboot")
+
+    .then(function() {
+      return $http.post('/api/sys/reboot', {reboot: true});
+    })
+
+    .then(function() {
+      dialogs.success("Device is rebooting");
+    })
+
+    .catch(function(response) {
+      var error = "";
+      if (response.data)
+        error =  response.data.join("<br/>");
+      dialogs.error("Failed to reboot device", error);
+    });
+
+  };
+
+  this.reset = function() {
+
+    dialogs.confirm("The device will be reset to factory defaults")
+
+    .then(function() {
+      return $http.post('/api/sys/reset', {reset: true});
+    })
+
+    .then(function() {
+      dialogs.success("Device reseted to factory defaults");
+    })
+
+    .catch(function(response) {
+      var error = "";
+      if (response.data)
+        error =  response.data.join("<br/>");
+      dialogs.error("Failed to reset to factory defaults", error);
+    });
+
+  };
+
 
 }])
 

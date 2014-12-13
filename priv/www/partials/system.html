@@ -120,9 +120,18 @@
     </div>
 
     <div class="block">
-      <br />
-      <button type="button" class="btn btn-warning btn-block" ng-click="system.reboot()">Reboot</button>
-      <br />
+      <div class="row">
+        <div class="col-sm-6">
+          <br />
+          <button type="button" class="btn btn-warning btn-block" ng-click="system.reset()">Reset to factory defaults</button>
+          <br />
+        </div>
+        <div class="col-sm-6">
+          <br />
+          <button type="button" class="btn btn-warning btn-block" ng-click="system.reboot()">Reboot</button>
+          <br />
+        </div>
+      </div>
     </div>
 
   </div>
