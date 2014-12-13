@@ -24,6 +24,8 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
+-define(USER_CONF, "/var/lib/bkfw/user.config").
+
 -define(SERVER, ?MODULE).
 -type category() :: net | community | protocol | firmware.
 -type net_opt() :: {type, static | dhcp} |
@@ -176,9 +178,22 @@ handle_call({set_kv, protocol, Props}, _From, State) ->
     {reply, ok, State};
 
 handle_call({set_kv, reset, Props}, _From, State) ->
-    ?debug("Reset user options: ~p~n", [Props]),
-    {reply, ok, State};
-
+    case proplists:get_value(reset, Props, false) of
+	true ->
+	    case file:write_file(?USER_CONF, <<"[].">>) of
+		ok ->
+		    restart(),
+		    {reply, ok, State};
+		{error, eacces} ->
+		    % For debugging purpose...
+		    restart(),
+		    {reply, ok, State};
+		{error, Err} ->
+		    {reply, {error, Err}, State}
+	    end;
+	false ->
+	    {reply, ok, State}
+    end;
 handle_call({set_kv, reboot, Props}, _From, State) ->
     ?debug("Reboot: ~p~n", [Props]),
     {reply, ok, State};
@@ -273,6 +288,13 @@ cmd(Cmd) ->
 
 hexstring(<<X:128/big-unsigned-integer>>) ->
     lists:flatten(io_lib:format("~32.16.0b", [X])).
+
+%% Misc commands
+restart() ->
+    spawn(fun () ->
+		  timer:sleep(1000),
+		  bkfw_sup:restart()
+	  end).
 
 %% Network related functions
 get_if_infos(NetIf) ->
