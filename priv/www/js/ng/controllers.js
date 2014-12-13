@@ -73,7 +73,7 @@ angular.module('bkfwApp.controllers', [])
 
 }])
 
-.controller('systemCtrl', ['$q', '$http', '$state', 'sys', 'auth', 'FileUploader', 'dialogs', function($q, $http, $state, sys, auth, FileUploader, dialogs) {
+.controller('systemCtrl', ['$q', '$http', '$timeout', '$state', 'sys', 'auth', 'FileUploader', 'dialogs', 'edfa', 'apiErrorsConfig', function($q, $http, $timeout, $state, sys, auth, FileUploader, dialogs, edfa, apiErrorsConfig) {
 
   function getError(response) {
   }
@@ -91,7 +91,7 @@ angular.module('bkfwApp.controllers', [])
     this.network.$save()
 
     .then(function() {
-      dialogs.success("Network settings saved");
+      dialogs.success("Network settings applied");
     });
 
   };
@@ -127,6 +127,24 @@ angular.module('bkfwApp.controllers', [])
     });
   };
 
+  var checkOnline = function() {
+
+    edfa.isOnline()
+
+    .then(function() {
+      dialogs.close();
+      dialogs.success("Device is online");
+      // get future errors
+      apiErrorsConfig.intercept = true;
+    })
+
+    .catch(function() {
+      // check again in 5 seconds
+      $timeout(checkOnline, 5000);
+    });
+
+  };
+
   this.reboot = function() {
 
     dialogs.confirm("The device will reboot")
@@ -136,7 +154,14 @@ angular.module('bkfwApp.controllers', [])
     })
 
     .then(function() {
-      dialogs.success("Device is rebooting");
+      dialogs.modal("Device is rebooting", "If the device isn't online in 10 minutes check if the device IP has changed.");
+    })
+
+    .then(function() {
+      // we don't want to catch API errors now
+      apiErrorsConfig.intercept = false;
+      // wait before checking
+      $timeout(checkOnline, 20000);
     });
 
   };
@@ -150,7 +175,7 @@ angular.module('bkfwApp.controllers', [])
     })
 
     .then(function() {
-      dialogs.success("Device reseted to factory defaults");
+      dialogs.modal("Device has beeing reseted", "If you can't contact the device check if its IP has changed.");
     });
 
   };

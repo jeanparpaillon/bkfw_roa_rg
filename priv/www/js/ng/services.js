@@ -54,12 +54,19 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
   notAuthorized: 'event:auth-forbidden'
 })
 
-.factory('apiErrors', ['$q', 'dialogs', function($q, dialogs) {
+.factory('apiErrorsConfig', function() {
+  return {
+    intercept: true
+  };
+})
+
+.factory('apiErrors', ['$q', 'apiErrorsConfig', 'dialogs', function($q, apiErrorsConfig, dialogs) {
 
   return {
+
     responseError: function(rejection) {
       // don't handle 401
-      if (rejection.status !== 401) {
+      if (rejection.status !== 401 && apiErrorsConfig.intercept) {
         var errors = "";
         if (rejection.data) {
           errors = rejection.data.join("<br/>");
@@ -69,7 +76,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
         }
         dialogs.error("An error occured", errors);
       }
-
+      // pass it through the chain
       return $q.reject(rejection);
     }
   };
@@ -117,11 +124,15 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
 }])
 
-.factory('edfa', ['$resource', function($resource) {
+.factory('edfa', ['$resource', '$q', function($resource, $q) {
 
   return {
 
     info: $resource('/api/edfa'),
+
+    isOnline: function() {
+      return this.info.get().$promise;
+    },
 
     label: {
       curInternalTemp: "Internal Temp",
@@ -211,17 +222,22 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
       if (delay)
         refreshDelay = delay;
       if (refreshId)
-        $timeout.cancel(refreshId);
+        this.stopRefresh();
 
       var list = this.api.query(angular.bind(this, function() {
         // avoid interface flickering
         this.list = list.sort(function(a, b) {
           return a.index > b.index;
         });
-        refreshId = $timeout(angular.bind(this, this.refreshList), refreshDelay);
       }));
 
+      refreshId = $timeout(angular.bind(this, this.refreshList), refreshDelay);
+
     },
+
+    stopRefresh: function() {
+        $timeout.cancel(refreshId);
+    }
 
   };
 
