@@ -135,10 +135,8 @@ angular.module('bkfwApp.controllers', [])
     })
 
     .then(function() {
-      dialogs.modal("Device is rebooting", "If the device isn't online in 10 minutes check if the device IP has changed.");
-    })
-
-    .then(function() {
+      dialogs.modal("Device is rebooting",
+                    "If the device isn't online in 10 minutes check if the device IP has changed.");
       // wait edfa to come back
       // start polling in 20 secs
       return edfa.waitUntilOnline(20000);
@@ -160,7 +158,8 @@ angular.module('bkfwApp.controllers', [])
     })
 
     .then(function() {
-      dialogs.modal("Device has beeing reseted", "If you can't contact the device check if its IP has changed.");
+      dialogs.success("Device has beeing reseted",
+                      "If you can't contact the device check if its IP has changed.");
     });
 
   };
