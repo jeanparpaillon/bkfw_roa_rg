@@ -154,20 +154,23 @@ read_it(S) ->
 	    S
     end.
 
-read_n(#state{n=N}=S) when N<5 ->
-    S#state{n=N+1};
-read_n(S) ->
+read_n(#state{n=0}=S) ->
     ets:insert(?TID, {edfaNumber, 0}),
     case bkfw_srv:command(0, rn, []) of
 	{ok, {0, n, [Mask]}} when is_integer(Mask) ->
-	    handle_slots(Mask, 0, S#state{n=0});
+	    handle_slots(Mask, 0, S#state{n=1});
 	{ok, _Ret} ->
 	    ?error("Unrecognized answer: ~p~n", [_Ret]),
 	    S#state{n=0};
 	{error, Err} ->
 	    ?error("Error monitoring EDFA: ~p~n", [Err]),
 	    S#state{n=0}
-    end.
+    end;
+read_n(#state{n=N}=S) when N<5 ->
+    S#state{n=N+1};
+read_n(#state{}=S) ->
+    S#state{n=0}.
+
 
 % loop over all bits of mask and compare with old slots,
 % start or kill bkfw_mon if necessary
