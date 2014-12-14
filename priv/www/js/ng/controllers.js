@@ -4,8 +4,8 @@
 
 angular.module('bkfwApp.controllers', [])
 
-    .controller('globalCtrl', ['$scope', '$state', 'AUTH_EVENTS', 'mcu', 'session', 'ws',
-	 function($scope, $state, AUTH_EVENTS, mcu, session, ws) {
+    .controller('globalCtrl', ['$scope', '$state', 'AUTH_EVENTS', 'mcu', 'session', 'ws', '$location',
+	function($scope, $state, AUTH_EVENTS, mcu, session, ws, $location) {
 	  
 	     this.mcu = mcu;
 	     this.session = session;
@@ -14,6 +14,7 @@ angular.module('bkfwApp.controllers', [])
 		 return $state.is('login');
 	     };
 
+	    this.alarms = ws.connect({url: 'ws://' + $location.host() + ':' + $location.port() + '/api/alarms'});
 	     ws.on('message', function(evt) {
 		 console.debug('New message: ' + evt.data);
 	     });

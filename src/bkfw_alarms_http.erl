@@ -14,7 +14,7 @@
 
 -record(state, {handler}).
 
-init(Handler) ->
+init([Handler]) ->
     ?debug("new http event listener: ~p~n", [Handler]),
     {ok, #state{handler=Handler}}.
 
