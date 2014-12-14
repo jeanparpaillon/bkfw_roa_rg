@@ -7,7 +7,10 @@
 %-include_lib("snmp/include/snmp_types.hrl").
 
 %% Application callbacks
--export([start/2, stop/1]).
+-export([start/2, 
+	 stop/1,
+	 restart/0,
+	 reboot/0]).
 
 %% ===================================================================
 %% Application callbacks
@@ -19,7 +22,6 @@ start(_StartType, _StartArgs) ->
     application:start(crypto),
     application:start(cowlib),
     application:start(cowboy),
-    application:start(bullet),
     application:start(snmp),
     load_mibs(snmp, ["SNMP-NOTIFICATION-MIB", "SNMP-TARGET-MIB"]),
     load_mibs(bkfw, ["BKTEL-PHOTONICS-SMI", "EDFA-MIB"]),
@@ -45,3 +47,9 @@ load_mibs(App, Mibs) ->
 			      Dir ++ Path
 		      end, Mibs),
     ok = snmpa:load_mibs(snmp_master_agent, Paths).
+
+restart() ->
+    init:restart().
+
+reboot() ->
+    init:reboot().

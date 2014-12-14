@@ -73,7 +73,8 @@ set_kv(Cat, Props) ->
 upgrade(Filename) ->
     case script("check_pkg.sh", Filename) of
 	ok ->
-	    script("upgrade.sh", Filename);
+	    script("upgrade.sh", Filename),
+	    bkfw_app:reboot();
 	{error, Err} -> {error, Err}
     end.
 
@@ -135,11 +136,11 @@ handle_call({get_kv, community}, _From, State) ->
 	    ], State};
 
 handle_call({get_kv, protocol}, _From, State) ->
-    {reply, [
-	     {snmpv1, true},
-	     {snmpv2, false},
-	     {snmpv3, false}
-	    ], State};
+    Protocols = proplists:get_value(versions, application:get_env(snmp, agent, []), []),
+    Kv = [{snmpv1, proplists:get_bool(v1, Protocols)},
+	  {snmpv2, proplists:get_bool(v2, Protocols)},
+	  {snmpv3, proplists:get_bool(v3, Protocols)}],	    
+    {reply, Kv, State};
 
 handle_call({get_kv, firmware}, _From, #state{firmware=FW}=S) ->
     {reply, [
@@ -179,8 +180,19 @@ handle_call({set_kv, community, Props}, _From, State) ->
     {reply, ok, State};
 
 handle_call({set_kv, protocol, Props}, _From, State) ->
-    ?debug("Setting protocol options: ~p~n", [Props]),
-    {reply, ok, State};
+    AgentEnv = application:get_env(snmp, agent, []),
+    Versions = lists:foldl(fun ({snmpv1, true}, Acc) ->
+				   [v1 | Acc];
+			       ({snmpv2, true}, Acc) ->
+				   [v2 | Acc];
+			       ({snmpv3, true}, Acc) ->
+				   [v3 | Acc];
+			       (_, Acc) ->
+				   Acc
+			   end, [], Props),
+    Ret = save_user_config(snmp, agent, lists:keystore(versions, 1, AgentEnv, {versions, Versions})),
+    bkfw_app:restart(),
+    {reply, Ret, State};
 
 handle_call({set_kv, reset, Props}, _From, State) ->
     case proplists:get_value(reset, Props, false) of
@@ -188,11 +200,11 @@ handle_call({set_kv, reset, Props}, _From, State) ->
 	    case file:write_file(?USER_CONF, <<"[].">>) of
 		ok ->
 		    set_network_dhcp(application:get_env(bkfw, netif, "eth0")),
-		    restart(),
+		    bkfw_app:restart(),
 		    {reply, ok, State};
 		{error, eacces} ->
 		    % For debugging purpose...
-		    restart(),
+		    bkfw_app:restart(),
 		    {reply, ok, State};
 		{error, Err} ->
 		    {reply, {error, Err}, State}
@@ -203,10 +215,7 @@ handle_call({set_kv, reset, Props}, _From, State) ->
 handle_call({set_kv, reboot, Props}, _From, State) ->
     case proplists:get_value(reboot, Props, false) of
 	true ->
-	    spawn(fun () ->
-			  timer:sleep(1000),
-			  cmd("reboot")
-		  end),
+	    bkfw_app:reboot(),
 	    {reply, ok, State};
 	false ->
 	    {reply, ok, State}
@@ -317,14 +326,6 @@ set_app_conf(App, Name, Value, Conf) ->
     lists:keystore(App, 1, Conf, 
 		   {App, lists:keystore(Name, 1, AppConf, {Name, Value})}).
 
-
-%% Misc commands
-restart() ->
-    spawn(fun () ->
-		  timer:sleep(1000),
-		  apply_network(),
-		  bkfw_sup:restart()
-	  end).
 
 %% Network related functions
 get_if_infos(NetIf) ->

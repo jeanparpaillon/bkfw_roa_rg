@@ -5,6 +5,8 @@ BASEDIR=$(cd $(dirname $0) && pwd)
 ebindir=${BASEDIR}/ebin
 depsdir=${BASEDIR}/deps/*/ebin
 reldir=${BASEDIR}/rel
+cmd="${BASEDIR}/$(basename $0) $*"
+
 
 USERCONF=/var/tmp/bkfw_user.conf
 
