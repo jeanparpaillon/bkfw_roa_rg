@@ -55,7 +55,9 @@ angular.module('bkfwApp.utils', [])
     },
 
     close: function() {
-      popups[popups.length -1].close(false);
+      var dialog = popups[popups.length - 1];
+      if (dialog.type != 'modal')
+        dialog.close(false);
     }
   };
 })
