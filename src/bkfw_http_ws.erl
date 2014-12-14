@@ -30,19 +30,14 @@ websocket_init(_TransportName, Req, _Opts) ->
     {ok, Req, #state{ref=Ref}}.
 
 
-websocket_handle({text, Msg}, Req, State) ->  
-    ?debug("Got Data: ~p", [Msg]),  
-    {reply, {text, << "responding to ", Msg/binary >>}, Req, State, hibernate};  
-
 websocket_handle(_Any, Req, State) ->  
-    {reply, {text, << "whut?">>}, Req, State, hibernate}.  
+    {reply, {text, <<"huh">>}, Req, State, hibernate}.  
 
 
 websocket_info({alarm, Alarm}, Req, State) -> 
     {reply, {text, jsx:encode(Alarm)}, Req, State};  
 
 websocket_info(_Info, Req, State) ->  
-    ?debug("unexpected: ~p~n", [_Info]),
     {ok, Req, State, hibernate}.  
 
 

@@ -15,14 +15,12 @@
 -record(state, {handler}).
 
 init([Handler]) ->
-    ?debug("new http event listener: ~p~n", [Handler]),
     {ok, #state{handler=Handler}}.
 
-handle_event(#edfaAlarm{index=Idx, name=Name, obj=Obj}, #state{handler=To}=S) ->
-    ?debug("Dispatch alarm to WS~n", []),
+handle_event(#edfaAlarm{index=Idx, name=Name}, #state{handler=To}=S) ->
     To ! {alarm, [{index, Idx},
 		  {name, Name},
-		  {msg, <<"alarm !">>}]},
+		  {var, alarm_to_var(Name)}]},
     {ok, S}.
 
 handle_call(_Call, State) ->
@@ -36,3 +34,17 @@ terminate(_Args, _State) ->
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
+
+%%%
+%%% Priv
+%%%
+alarm_to_var(pin) -> powerInput;
+alarm_to_var(pout) -> powerOutput;
+alarm_to_var(pump_temp) -> curLaserTemp;
+alarm_to_var(pump_bias) -> curAmp;
+alarm_to_var(edfa_temp) -> curInternalTemp;
+alarm_to_var(edfa_psu) -> powerSupply;
+alarm_to_var(bref) -> powerInput;
+alarm_to_var(adi) -> undefined;
+alarm_to_var(mute) -> undefined;
+alarm_to_var(_) -> undefined.

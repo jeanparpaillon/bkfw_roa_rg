@@ -19,7 +19,8 @@
 -export([init/1,
 	 read_it/1,
 	 read_v/1,
-	 read_n/1]).
+	 read_n/1,
+	 read_a/1]).
 
 -define(PERIOD, 1000).
 -define(SLOTS, 32).
@@ -27,12 +28,13 @@
 
 -define(FUNS, [fun read_it/1,
 	       fun read_v/1,
-	       fun read_n/1]).
+	       fun read_n/1,
+	       fun read_a/1]).
 
 -record(state, {
 	  slots                    :: tuple(),
-	  curInternalTemp,
-	  powerSupply,
+	  curInternalTemp = 0.0,
+	  powerSupply = 0.0,
 	  n=0
 	 }).
 
@@ -130,7 +132,7 @@ read_v(S) ->
     case bkfw_srv:command(0, rv, []) of
 	{ok, {0, v, [V, v]}} when is_float(V); is_integer(V) ->
 	    ets:insert(?TID, {edfaPowerSupply, V}),
-	    S;
+	    S#state{powerSupply=V};
 	{ok, _Ret} ->
 	    ?error("[0] RV invalid answer: ~p~n", [_Ret]),
 	    S;
@@ -143,7 +145,7 @@ read_it(S) ->
     case bkfw_srv:command(0, rit, []) of
 	{ok, {0, it, [T, <<"C">>]}} when is_float(T); is_integer(T) ->
 	    ets:insert(?TID, {edfaCurInternalTemp, T}),
-	    S;
+	    S#state{curInternalTemp=T};
 	{ok, _Ret} ->
 	    ?error("[0] RIT invalid answer: ~p~n", [_Ret]),
 	    S;
@@ -197,6 +199,25 @@ handle_slots(Mask, Idx, #state{slots=Slots}=S) when
     % slot is occupied, slot was occupied
     ets:insert(?TID, {edfaNumber, ets:lookup_element(?TID, edfaNumber, 2)+1}),
     handle_slots(Mask, Idx+1, S).
+
+
+read_a(S) ->
+    case bkfw_srv:command(0, ra, []) of
+	{ok, {0, alarms, Alarms}} ->
+	    handle_alarms(Alarms, S);
+	{ok, _Ret} ->
+	    ?error("[~p] RA invalid answer: ~p~n", [0, _Ret]),
+	    S;
+	{error, Err} ->
+	    ?error("[~p] Error monitoring MCU: ~p~n", [0, Err]),
+	    S
+    end.
+
+handle_alarms([], S) -> S;
+handle_alarms([Name  | Tail], #state{curInternalTemp=IT, powerSupply=PS}=S) -> 
+    gen_event:notify(bkfw_alarms, #edfaAlarm{index=0, name=Name, obj={IT, PS}}),
+    handle_alarms(Tail, S).
+
 
 get_ets_value(Key, Default) ->
     case ets:lookup(?TID, Key) of

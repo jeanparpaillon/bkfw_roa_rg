@@ -417,22 +417,20 @@ edfaPumpBiasTrap NOTIFICATION-TYPE
 
 edfaInternalTempTrap NOTIFICATION-TYPE
     OBJECTS {
-        edfaMcuIndex,
-	edfaMcuCurInternalTemp
+	edfaCurInternalTemp
     }
     STATUS current
     DESCRIPTION
-	"Internal temperature alarm"
+	"EDFA Internal temperature alarm"
     ::= { edfaMIBTraps 5 }
 
 edfaPowerSupplyTrap NOTIFICATION-TYPE
     OBJECTS {
-        edfaMcuIndex,
-	edfaMcuPowerSupply
+	edfaPowerSupply
     }
     STATUS current
     DESCRIPTION
-	"Power supply alarm"
+	"EDFA Power supply alarm"
     ::= { edfaMIBTraps 6 }
 
 edfaBrefTrap NOTIFICATION-TYPE
