@@ -15,6 +15,7 @@
 %% API
 -export([start_link/0,
 	 encode_password/1,
+	 set_app_conf/4,
 	 get_kv/1,
 	 set_kv/2]).
 
@@ -78,7 +79,7 @@ upgrade(Filename) ->
 
 -spec encode_password(iolist()) -> string().
 encode_password(Passwd) when is_list(Passwd); is_binary(Passwd) ->
-    base64:encode(hexstring(crypto:hash(md5, Passwd))).
+    binary_to_list(base64:encode(hexstring(crypto:hash(md5, Passwd)))).
     
 
 %%%===================================================================
@@ -166,9 +167,13 @@ handle_call({set_kv, net, Props}, _From, State) ->
 	    end
     end;
 handle_call({set_kv, password, Props}, _From, State) ->
-    ?debug("Setting password options: ~p~n", [Props]),
-    {reply, ok, State};
-
+    case proplists:get_value(password, Props) of
+	undefined ->
+	    {reply, {error, empty_password}, State};
+	P ->
+	    Ret = save_user_config(bkfw, password, {md5, encode_password(P)}),
+	    {reply, Ret, State}
+    end;
 handle_call({set_kv, community, Props}, _From, State) ->
     ?debug("Setting community options: ~p~n", [Props]),
     {reply, ok, State};
@@ -296,6 +301,22 @@ cmd(Cmd) ->
 
 hexstring(<<X:128/big-unsigned-integer>>) ->
     lists:flatten(io_lib:format("~32.16.0b", [X])).
+
+save_user_config(App, Name, Value) ->
+    case file:consult(?USER_CONF) of
+	{ok, [Conf]} ->
+	    Conf2 = set_app_conf(App, Name, Value, Conf),
+	    file:write_file(?USER_CONF, [io_lib:print(Conf2), ".\n"]);
+	{error, Err} ->
+	    {error, Err}
+    end.
+
+set_app_conf(App, Name, Value, Conf) ->
+    application:set_env(App, Name, Value),
+    AppConf = proplists:get_value(App, Conf, []),
+    lists:keystore(App, 1, Conf, 
+		   {App, lists:keystore(Name, 1, AppConf, {Name, Value})}).
+
 
 %% Misc commands
 restart() ->
