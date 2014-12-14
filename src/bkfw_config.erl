@@ -130,10 +130,14 @@ handle_call({get_kv, net}, _From, #state{net=Net}=State) ->
     {reply, Props, State};
 
 handle_call({get_kv, community}, _From, State) ->
-    {reply, [
-	     {public, <<"public">>},
-	     {restricted, <<"private">>}
-	    ], State};
+    case snmpa_conf:read_community_config(get_snmp_configdir()) of
+	{ok, Com} ->
+	    Ret = [{public, list_to_binary(element(2, lists:keyfind("public", 1, Com)))},
+		   {restricted, list_to_binary(element(2, lists:keyfind("private", 1, Com)))}],
+	    {reply, Ret, State};
+	{error, Err} ->
+	    {reply, {error, Err}, State}
+    end;
 
 handle_call({get_kv, protocol}, _From, State) ->
     Protocols = proplists:get_value(versions, application:get_env(snmp, agent, []), []),
@@ -176,8 +180,22 @@ handle_call({set_kv, password, Props}, _From, State) ->
 	    {reply, Ret, State}
     end;
 handle_call({set_kv, community, Props}, _From, State) ->
-    ?debug("Setting community options: ~p~n", [Props]),
-    {reply, ok, State};
+    Dir = get_snmp_configdir(),
+    case snmpa_conf:read_community_config(Dir) of
+	{ok, Com} ->
+	    case get_communities(Props) of
+		{ok, Pub, Priv} ->
+		    Com2 = set_community("public", Pub, Com),
+		    Com3 = set_community("private", Priv, Com2),
+		    ok = snmpa_conf:write_community_config(Dir, Com3),
+		    snmp_community_mib:reconfigure(Dir),
+		    {reply, ok, State};
+		{error, Err} ->
+		    {reply, {error, Err}, State}
+	    end;
+	{error, Err} ->
+	    {reply, {error, Err}, State}
+    end;
 
 handle_call({set_kv, protocol, Props}, _From, State) ->
     AgentEnv = application:get_env(snmp, agent, []),
@@ -433,3 +451,26 @@ apply_network() ->
 
 clean(Text, Char) ->
     string:strip(string:strip(Text, right, Char), left, Char).
+
+get_snmp_configdir() ->
+    Props = application:get_env(snmp, agent, []),
+    [{dir, Dir}] = proplists:get_value(config, Props, [{dir, ""}]),
+    Dir.
+
+get_communities(Props) ->
+    case proplists:get_value(public, Props) of
+	undefined ->
+	    {error, invalid_community};
+	Pub ->
+	    case proplists:get_value(restricted, Props) of
+		undefined ->
+		    {error, invalid_community};
+		Priv ->
+		    {ok, binary_to_list(Pub), binary_to_list(Priv)}
+	    end
+    end.
+
+set_community(Index, Name, Conf) ->
+    Com = lists:keyfind(Index, 1, Conf),
+    lists:keystore(Index, 1, Conf, setelement(2, Com, Name)).
+
