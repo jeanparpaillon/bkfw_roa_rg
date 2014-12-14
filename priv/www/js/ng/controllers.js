@@ -81,7 +81,8 @@ angular.module('bkfwApp.controllers', [])
   this.firmware = sys.firmware.get();
 
   this.uploader = new FileUploader({
-    url: '/api/sys/firmware'
+    url: '/api/sys/firmware',
+    headers: $http.defaults.headers.common
   });
 
   this.network = sys.net.get();
