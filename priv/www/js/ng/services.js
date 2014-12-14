@@ -128,7 +128,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
 }])
 
-.factory('edfa', ['$resource', '$q', function($resource, $q) {
+.factory('edfa', ['$resource', '$q', '$timeout', 'apiErrorsConfig', function($resource, $q, $timeout, apiErrorsConfig) {
 
   return {
 
@@ -136,6 +136,28 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
     isOnline: function() {
       return this.info.get().$promise;
+    },
+
+    checkOnline: function() {
+      return $timeout(angular.bind(this, this.isOnline), 2000)
+
+      .then(angular.bind(this, function() {
+        return true;
+      }))
+
+      .catch(angular.bind(this, this.checkOnline));
+    },
+
+    waitUntilOnline: function(initialDelay) {
+      // we don't wan't to display API errors now
+      apiErrorsConfig.intercept = false;
+
+      return $timeout(angular.bind(this, this.checkOnline), initialDelay)
+
+      .then(function() {
+        apiErrorsConfig.intercept = true;
+        return true;
+      });
     },
 
     label: {

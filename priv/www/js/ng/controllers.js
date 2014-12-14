@@ -126,24 +126,6 @@ angular.module('bkfwApp.controllers', [])
     }));
   };
 
-  var checkOnline = function() {
-
-    edfa.isOnline()
-
-    .then(function() {
-      dialogs.close();
-      dialogs.success("Device is online");
-      // get future errors
-      apiErrorsConfig.intercept = true;
-    })
-
-    .catch(function() {
-      // check again in 5 seconds
-      $timeout(checkOnline, 5000);
-    });
-
-  };
-
   this.reboot = function() {
 
     dialogs.confirm("The device will reboot")
@@ -157,10 +139,14 @@ angular.module('bkfwApp.controllers', [])
     })
 
     .then(function() {
-      // we don't want to catch API errors now
-      apiErrorsConfig.intercept = false;
-      // wait before checking
-      $timeout(checkOnline, 20000);
+      // wait edfa to come back
+      // start polling in 20 secs
+      return edfa.waitUntilOnline(20000);
+    })
+
+    .then(function() {
+      dialogs.close(true);
+      dialogs.success("Device is online");
     });
 
   };

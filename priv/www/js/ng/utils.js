@@ -54,9 +54,9 @@ angular.module('bkfwApp.utils', [])
       return this.show('modal', 'info', title, body);
     },
 
-    close: function() {
+    close: function(force) {
       var dialog = popups[popups.length - 1];
-      if (dialog.type != 'modal')
+      if (dialog.type != 'modal' || force === true)
         dialog.close(false);
     }
   };
