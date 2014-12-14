@@ -82,7 +82,20 @@ angular.module('bkfwApp.controllers', [])
 
   this.uploader = new FileUploader({
     url: '/api/sys/firmware',
-    headers: $http.defaults.headers.common
+    headers: $http.defaults.headers.common,
+    removeAfterUpload: true,
+    onBeforeUploadItem: function() {
+      dialogs.modal("Firmare is upgrading",
+                    "Device should be online is a few minutes");
+    },
+    onCompleteAll: angular.bind(this, function() {
+      edfa.waitUntilOnline(10000)
+
+      .then(function() {
+        dialogs.close(true);
+        dialogs.success("Firmware updated");
+      });
+    })
   });
 
   this.network = sys.net.get();
