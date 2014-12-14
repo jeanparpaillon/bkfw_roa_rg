@@ -44,13 +44,11 @@ get_config() ->
     Dir = filename:join(code:priv_dir(bkfw), "www"),
     DftLogo = filename:join(code:priv_dir(bkfw), "logo.png"),
     Logo = application:get_env(bkfw, logo, DftLogo),
-    Bullet = filename:join(code:priv_dir(bullet), "bullet.js"),
     Handlers = [
 		{"/api/mcu/[:index]", bkfw_http, mcu},
 		{"/api/edfa",         bkfw_http, edfa},
-		{"/api/alarms",       bullet_handler, [{handler, bkfw_http_ws}]},
+		{"/api/alarms",       bkfw_http_ws, []},
 		{"/api/sys/:name",    bkfw_http, sys},
-		{"/js/bullet.js",     cowboy_static, {file, Bullet, [{mimetypes, cow_mimetypes, all}]}},
 		{"/logo",             cowboy_static, {file, Logo, [{mimetypes, cow_mimetypes, all}]}},
 		{"/[...]",            cowboy_static, {dir, Dir, [{mimetypes, cow_mimetypes, all}]}}
 	       ],

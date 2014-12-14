@@ -15,12 +15,10 @@
 init(_Args) ->
     {ok, []}.
 
-handle_event(#edfaAlarm{index=Idx, name=Name, vars=Vars}, S) -> 
+handle_event(#edfaAlarm{name=Name, obj=#edfaMcuTable{}=Mcu}, S) -> 
     ?debug("Dispatch alarm to SNMP~n", []),
-    Varbinds = lists:map(fun ({N, Value}) ->
-				 {N, [Idx], Value}
-			 end, Vars),
-    snmpa:send_notification2(snmp_master_agent, alarm_to_trap(Name), [{varbinds, Varbinds}]),
+    snmpa:send_notification2(snmp_master_agent, alarm_to_trap(Name), 
+			     [{varbinds, alarm_to_vars(Name, Mcu)}]),
     {ok, S}.
 
 handle_call(_Call, State) ->
@@ -48,3 +46,19 @@ alarm_to_trap(bref) -> edfaBrefTrap;
 alarm_to_trap(adi) -> edfaAdiTrap;
 alarm_to_trap(mute) -> edfaMuteTrap;
 alarm_to_trap(_) -> undefined.
+
+alarm_to_vars(pin, E) ->       [{edfaMcuPowerPd1, E#edfaMcuTable.index, 
+				 round(E#edfaMcuTable.powerPd1)}];
+alarm_to_vars(pout, E) ->      [{edfaMcuPowerPd2, E#edfaMcuTable.index, 
+				 round(E#edfaMcuTable.powerPd2)}];
+alarm_to_vars(pump_temp, E) -> [{edfaMcuCurLaserTemp, E#edfaMcuTable.index, 
+				 round(E#edfaMcuTable.curLaserTemp)}];
+alarm_to_vars(pump_bias, E) -> [{edfaMcuCurAmp, E#edfaMcuTable.index, 
+				 round(E#edfaMcuTable.curAmp)}];
+alarm_to_vars(edfa_temp, E) -> [{edfaMcuCurInternalTemp, E#edfaMcuTable.index,
+				 round(E#edfaMcuTable.curInternalTemp)}];
+alarm_to_vars(edfa_psu, E) ->  [{edfaMcuPowerSupply, E#edfaMcuTable.index,
+				 round(E#edfaMcuTable.powerSupply)}];
+alarm_to_vars(bref, _E) ->     [];
+alarm_to_vars(adi, _E) ->      [];
+alarm_to_vars(mute, _E) ->     [].

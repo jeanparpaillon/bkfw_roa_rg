@@ -4,19 +4,23 @@
 
 angular.module('bkfwApp.controllers', [])
 
-.controller('globalCtrl', ['$scope', '$state', 'AUTH_EVENTS', 'mcu', 'session', function($scope, $state, AUTH_EVENTS, mcu, session) {
+    .controller('globalCtrl', ['$scope', '$state', 'AUTH_EVENTS', 'mcu', 'session', 'ws',
+	 function($scope, $state, AUTH_EVENTS, mcu, session, ws) {
+	  
+	     this.mcu = mcu;
+	     this.session = session;
+	     
+	     this.isLoginPage = function() {
+		 return $state.is('login');
+	     };
 
-  this.mcu = mcu;
-  this.session = session;
-
-  this.isLoginPage = function() {
-    return $state.is('login');
-  };
-
-  $scope.$on(AUTH_EVENTS.logoutSuccess, function() {
-    $state.go('dashboard');
-  });
-
+	     ws.on('message', function(evt) {
+		 console.debug('New message: ' + evt.data);
+	     });
+	     
+	     $scope.$on(AUTH_EVENTS.logoutSuccess, function() {
+		 $state.go('dashboard');
+	     });
 }])
 
 .controller('mcuCtrl', ['$scope', '$stateParams', 'mcu', 'dialogs', function($scope, $stateParams, mcu, dialogs) {

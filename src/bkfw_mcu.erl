@@ -306,8 +306,8 @@ read_pm(#state{idx=Idx, entry=E}=S) ->
 			 E#edfaMcuTable.powerPd3 },
 	    {Pd1, Pd2, Pd3} = parse_pd(Lines, Defaults),
 	    S#state{entry=E#edfaMcuTable{powerPd1=Pd1,
-				      powerPd2=Pd2,
-				      powerPd3=Pd3}};
+					 powerPd2=Pd2,
+					 powerPd3=Pd3}};
 	{ok, _Ret} ->
 	    ?error("[~p] RPM invalid answer: ~p~n", [Idx, _Ret]),
 	    S;
@@ -379,18 +379,8 @@ handle_alarms([], S) -> S;
 handle_alarms([Name  | Tail], #state{entry=E}=S) -> 
     gen_event:notify(bkfw_alarms, #edfaAlarm{index=E#edfaMcuTable.index,
 					     name=Name,
-					     vars=alarms_to_vars(Name, E)}),
+					     obj=E}),
     handle_alarms(Tail, S).
-
-alarms_to_vars(pin, E) -> [{edfaInputLossTh, E#edfaMcuTable.inputLossThreshold}];
-alarms_to_vars(pout, E) -> [{edfaOutpputLossTh, E#edfaMcuTable.outputLossThreshold}];
-alarms_to_vars(pump_temp, E) -> [{edfaCurLaserTemp, E#edfaMcuTable.curLaserTemp}];
-alarms_to_vars(pump_bias, E) -> [{edfaCurAmp, E#edfaMcuTable.curAmp}];
-alarms_to_vars(edfa_temp, E) -> [{edfaCurInternalTemp, E#edfaMcuTable.curInternalTemp}];
-alarms_to_vars(edfa_psu, E) -> [{edfaPowerSupply, E#edfaMcuTable.powerSupply}];
-alarms_to_vars(bref, _E) -> [];
-alarms_to_vars(adi, _E) -> [];
-alarms_to_vars(mute, _E) -> [].
 
 get_consign(Name, Kv) ->
     case proplists:get_value(Name, Kv) of

@@ -57,5 +57,5 @@
 -type edfaAlarmName() :: pin | pout | pump_temp | pump_bias | edfa_temp | edfa_psu | bref | adi | mute.
 -record(edfaAlarm, {index                       :: integer(),
 		    name                        :: edfaAlarmName(),
-		    vars                        :: list()}).
+		    obj                         :: term()}).
 -type edfaAlarm() :: #edfaAlarm{}.

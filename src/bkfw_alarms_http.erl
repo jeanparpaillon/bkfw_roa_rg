@@ -15,10 +15,14 @@
 -record(state, {handler}).
 
 init(Handler) ->
+    ?debug("new http event listener: ~p~n", [Handler]),
     {ok, #state{handler=Handler}}.
 
-handle_event(#edfaAlarm{index=Idx, name=Name, vars=Vars}, #state{handler=To}=S) ->
+handle_event(#edfaAlarm{index=Idx, name=Name, obj=Obj}, #state{handler=To}=S) ->
     ?debug("Dispatch alarm to WS~n", []),
+    To ! {alarm, [{index, Idx},
+		  {name, Name},
+		  {msg, <<"alarm !">>}]},
     {ok, S}.
 
 handle_call(_Call, State) ->
