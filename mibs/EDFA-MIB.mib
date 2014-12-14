@@ -14,7 +14,7 @@ IMPORTS
 	FROM BKTEL-PHOTONICS-SMI;
 
 edfaModule MODULE-IDENTITY
-    LAST-UPDATED "201410170000Z"
+    LAST-UPDATED "201412140000Z"
     ORGANIZATION "BKtel Photonics"
     CONTACT-INFO
             "   BKtel Photonics
@@ -25,7 +25,10 @@ edfaModule MODULE-IDENTITY
 
     REVISION      "201410170000Z"
     DESCRIPTION
-		"Initial revision."
+	"Initial revision."
+    REVISION	"201412140000Z"
+    DESCRIPTION
+	"Update traps definitions."
     ::= { bktelPhotonics 1 }
 
 edfaMIB	OBJECT IDENTIFIER ::= { edfaModule 1 }
@@ -375,7 +378,7 @@ edfaMcuProductDate	OBJECT-TYPE
 edfaInputPowerTrap NOTIFICATION-TYPE
     OBJECTS {
     	edfaMcuIndex,
-	edfaMcuInputLossTh
+	edfaMcuPowerPd1
     }
     STATUS current
     DESCRIPTION
@@ -385,7 +388,7 @@ edfaInputPowerTrap NOTIFICATION-TYPE
 edfaOutputPowerTrap NOTIFICATION-TYPE
     OBJECTS {
         edfaMcuIndex,
-	edfaMcuOutputLossTh
+	edfaMcuPowerPd2
     }
     STATUS current
     DESCRIPTION
@@ -434,7 +437,9 @@ edfaPowerSupplyTrap NOTIFICATION-TYPE
 
 edfaBrefTrap NOTIFICATION-TYPE
     OBJECTS {
-        edfaMcuIndex
+        edfaMcuIndex,
+	edfaMcuPowerPd2,
+	edfaMcuPowerPd3
     }
     STATUS current
     DESCRIPTION
