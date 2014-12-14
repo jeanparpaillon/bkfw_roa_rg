@@ -105,7 +105,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
       })
 
       .error(function(errors) {
-        $rootScope.$broadcast(AUTH_EVENTS.loginFailed, errors.join('. '));
+        $rootScope.$broadcast(AUTH_EVENTS.loginFailed, errors.join('<br/>'));
       });
 
     },
@@ -124,6 +124,61 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
       session.destroy();
       $rootScope.$broadcast(AUTH_EVENTS.logoutSuccess);
     }
+  };
+
+}])
+
+.factory('poll', ['$resource', '$timeout', function($resource, $timeout) {
+
+  var pollers = {};
+
+  function Poller(url, delay, onSuccess, onError) {
+    this.started = false;
+    this.resource = $resource(url);
+    this.delay = delay;
+    this.successCallback = onSuccess;
+    this.errorCallback = onError;
+    this.timeout = null;
+  }
+
+  Poller.prototype = {
+
+    get: function() {
+      this.resource.query(
+        {},
+        angular.bind(this, this.successCallback),
+        angular.bind(this, this.errorCallback)
+      );
+    },
+
+    poll: function() {
+      // start immediately on the first call
+      var delay = this.started ? this.delay : 0;
+      this.started = true;
+      this.timeout = $timeout(angular.bind(this, this.get), delay)
+      .finally(angular.bind(this, this.poll));
+    },
+
+    stop: function() {
+      this.timeout.cancel();
+    }
+
+  };
+
+  return {
+
+      start: function(url, delaySeconds, onSuccess, onError) {
+        if (!pollers[url]) {
+          pollers[url] = new Poller(url, (delaySeconds * 1000), onSuccess, onError);
+          pollers[url].poll();
+        }
+      },
+
+      stop: function(url) {
+        pollers[url].stop();
+        delete pollers[url];
+      }
+
   };
 
 }])
@@ -194,10 +249,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
 }])
 
-.factory('mcu', ['$resource', '$timeout', function($resource, $timeout) {
-
-  var refreshId,
-      refreshDelay;
+.factory('mcu', ['$resource', '$timeout', 'poll', function($resource, $timeout, poll) {
 
   return {
 
@@ -245,24 +297,15 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
     refreshList: function(delay) {
 
-      if (delay)
-        refreshDelay = delay;
-      if (refreshId)
-        this.stopRefresh();
+      poll.start('/api/mcu', delay,
+                 angular.bind(this, function(list) {
+                  this.list = list.sort(function(a, b) {
+                    return a.index > b.index;
+                  });
+                 }));
 
-      var list = this.api.query(angular.bind(this, function() {
-        // avoid interface flickering
-        this.list = list.sort(function(a, b) {
-          return a.index > b.index;
-        });
-      }));
+      return true;
 
-      refreshId = $timeout(angular.bind(this, this.refreshList), refreshDelay);
-
-    },
-
-    stopRefresh: function() {
-        $timeout.cancel(refreshId);
     }
 
   };

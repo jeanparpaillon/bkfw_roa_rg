@@ -15,7 +15,7 @@ angular.module('bkfwApp', [
 
 .run(['$rootScope', 'AUTH_EVENTS', 'auth', 'mcu', function($rootScope, AUTH_EVENTS, auth, mcu) {
 
-  mcu.refreshList(3000);
+  mcu.refreshList(3);
 
   $rootScope.$on('$stateChangeStart', function (event, next) {
       var needAuth = next.auth || false;
