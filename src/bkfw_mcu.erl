@@ -385,6 +385,10 @@ handle_alarms([Name  | Tail], #state{entry=E}=S) ->
 get_consign(Name, Kv) ->
     case proplists:get_value(Name, Kv) of
 	undefined -> undefined;
+	F when is_float(F) -> 
+	    F;
+	I when is_integer(I) ->
+	    I + 0.0;
 	Bin ->
 	    try binary_to_integer(Bin) of
 		I -> I + 0.0
