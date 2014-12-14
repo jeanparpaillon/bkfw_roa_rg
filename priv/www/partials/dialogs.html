@@ -2,11 +2,13 @@
 <div class="popup alert alert-{{ dialog.klass }} popup-{{ dialog.type }}" ng-repeat="dialog in dialogs.all()" ng-switch="dialog.type">
   <h4>{{ dialog.title }}</h4>
   <p ng-show="dialog.body">{{ dialog.body }}</p>
-  <br />
-  <button ng-show="dialog.type != 'modal'"
-          class="btn btn-{{ dialog.klass }}"
-          type="button" ng-click="dialog.close(true)">Ok</button>
-  <button ng-show="dialog.type == 'confirm'"
-          class="btn btn-default"
-          type="button" ng-click="dialog.close(false)">Abort</button>
+  <div ng-show="dialog.canConfirm() || dialog.canAbort()">
+    <br />
+    <button ng-show="dialog.canConfirm()"
+            class="btn btn-{{ dialog.klass }}"
+            type="button" ng-click="dialog.close(true)">Ok</button>
+    <button ng-show="dialog.canAbort()"
+            class="btn btn-default"
+            type="button" ng-click="dialog.close(false)">Abort</button>
+  </div>
 </div>

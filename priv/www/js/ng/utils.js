@@ -20,6 +20,14 @@ angular.module('bkfwApp.utils', [])
         this.result.resolve(value);
       else
         this.result.reject(value);
+    },
+
+    canConfirm: function() {
+      return ["confirm", "success", "error"].indexOf(this.type) !== -1;
+    },
+
+    canAbort: function() {
+      return ["confirm"].indexOf(this.type) !== -1;
     }
   };
 
