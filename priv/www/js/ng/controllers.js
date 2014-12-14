@@ -118,14 +118,12 @@ angular.module('bkfwApp.controllers', [])
       );
     }
 
-    $q.all(actions.map(function(a) { return a[0]; }))
-    .then(function(actionsResults) {
-      for (var i=0; i<actionsResults.length; i++) {
-        if (actionsResults[i].$resolved === true) {
-          dialogs.success(actions[i][1]);
-        }
-      }
-    });
+    $q.all(actions.map(function(a) {
+      return a[0]
+      .then(function() {
+        dialogs.success(a[1]);
+      });
+    }));
   };
 
   var checkOnline = function() {
