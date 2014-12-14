@@ -23,7 +23,7 @@ angular.module('bkfwApp.utils', [])
     },
 
     canConfirm: function() {
-      return ["confirm", "success", "error"].indexOf(this.type) !== -1;
+      return ["confirm", "info"].indexOf(this.type) !== -1;
     },
 
     canAbort: function() {
