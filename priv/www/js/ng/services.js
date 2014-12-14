@@ -74,6 +74,10 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
         else if (rejection.statusText) {
           errors = rejection.statusText;
         }
+        else {
+          errors = "Connection lost with the API";
+        }
+
         dialogs.error("An error occured", errors);
       }
       // pass it through the chain
