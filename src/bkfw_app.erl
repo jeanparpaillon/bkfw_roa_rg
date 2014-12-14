@@ -19,6 +19,7 @@ start(_StartType, _StartArgs) ->
     application:start(crypto),
     application:start(cowlib),
     application:start(cowboy),
+    application:start(bullet),
     application:start(snmp),
     load_mibs(snmp, ["SNMP-NOTIFICATION-MIB", "SNMP-TARGET-MIB"]),
     load_mibs(bkfw, ["BKTEL-PHOTONICS-SMI", "EDFA-MIB"]),

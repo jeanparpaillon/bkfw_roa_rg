@@ -37,4 +37,5 @@ terminate_mcu(Pid) ->
 %%% Private
 %%%
 init([]) ->
+    gen_event:add_handler(bkfw_alarms, bkfw_alarms_snmp, []),
     {ok, { {simple_one_for_one, 5, 10}, [?CHILD(bkfw_mcu, worker)]}}.

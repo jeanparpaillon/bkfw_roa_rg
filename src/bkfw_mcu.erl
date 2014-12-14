@@ -77,8 +77,7 @@ get_kv(#edfaMcuTable{}=T) ->
      {fwVer,               T#edfaMcuTable.fwVer},
      {partNum,             T#edfaMcuTable.partNum},
      {serialNum,           T#edfaMcuTable.serialNum},
-     {productDate,         T#edfaMcuTable.productDate},
-     {alarms,              [ ]}
+     {productDate,         T#edfaMcuTable.productDate}
     ].
 
 set_kv(Idx, Kv) ->
@@ -226,8 +225,7 @@ read_mode(#state{idx=Idx, entry=E}=S) ->
 read_a(#state{idx=Idx}=S) ->
     case bkfw_srv:command(Idx, ra, []) of
 	{ok, {Idx, alarms, Alarms}} ->
-	    %handle_alarms(Alarms, S);
-	    S;
+	    handle_alarms(Alarms, S);
 	{ok, _Ret} ->
 	    ?error("[~p] RA invalid answer: ~p~n", [Idx, _Ret]),
 	    S;
@@ -378,51 +376,21 @@ get_info(Key, Infos, Default) ->
 
 
 handle_alarms([], S) -> S;
-
-handle_alarms([pin  | Tail], #state{entry=E}=S) -> 
-    Varbinds = [{edfaInputLossTh, [E#edfaMcuTable.index], E#edfaMcuTable.inputLossThreshold}],
-    snmpa:send_notification2(snmp_master_agent, edfaInputPowerTrap, [{varbinds, Varbinds}]),
-    handle_alarms(Tail, S);
-
-handle_alarms([pout  | Tail], #state{entry=E}=S) -> 
-    Varbinds = [{edfaOutputLossTh, [E#edfaMcuTable.index], E#edfaMcuTable.outputLossThreshold}],
-    snmpa:send_notification2(snmp_master_agent, edfaOutputPowerTrap, [{varbinds, Varbinds}]),
-    handle_alarms(Tail, S);
-
-handle_alarms(['pump_temp'  | Tail], #state{entry=E}=S) -> 
-    Varbinds = [{edfaCurLaserTemp, [E#edfaMcuTable.index], E#edfaMcuTable.curLaserTemp}],
-    snmpa:send_notification2(snmp_master_agent, edfaPumpTempTrap, [{varbinds, Varbinds}]),
-    handle_alarms(Tail, S);
-
-handle_alarms(['pump_bias'  | Tail], #state{entry=E}=S) -> 
-    Varbinds = [{edfaCurAmp, [E#edfaMcuTable.index], E#edfaMcuTable.curAmp}],
-    snmpa:send_notification2(snmp_master_agent, edfaPumpBiasTrap, [{varbinds, Varbinds}]),
-    handle_alarms(Tail, S);
-
-handle_alarms(['edfa_temp'  | Tail], #state{entry=E}=S) -> 
-    Varbinds = [{edfaCurInternalTemp, [E#edfaMcuTable.index], E#edfaMcuTable.curInternalTemp}],
-    snmpa:send_notification2(snmp_master_agent, edfaInternalTempTrap, [{varbinds, Varbinds}]),
-    handle_alarms(Tail, S);
-
-handle_alarms(['edfa_psu'  | Tail], #state{entry=E}=S) -> 
-    Varbinds = [{edfaPowerSupply, [E#edfaMcuTable.index], E#edfaMcuTable.powerSupply}],
-    snmpa:send_notification2(snmp_master_agent, edfaPowerSupplyTrap, [{varbinds, Varbinds}]),
-    handle_alarms(Tail, S);
-
-handle_alarms([bref  | Tail], #state{entry=E}=S) -> 
-    Varbinds = [{edfaIndex, E#edfaMcuTable.index}],
-    snmpa:send_notification2(snmp_master_agent, edfaBrefTrap, [{varbinds, Varbinds}]),
-    handle_alarms(Tail, S);
-
-handle_alarms([adi  | Tail], #state{entry=E}=S) -> 
-    Varbinds = [{edfaIndex, E#edfaMcuTable.index}],
-    snmpa:send_notification2(snmp_master_agent, edfaAdiTrap, [{varbinds, Varbinds}]),
-    handle_alarms(Tail, S);
-
-handle_alarms([mute  | Tail], #state{entry=E}=S) -> 
-    Varbinds = [{edfaIndex, E#edfaMcuTable.index}],
-    snmpa:send_notification2(snmp_master_agent, edfaMuteTrap, [{varbinds, Varbinds}]),
+handle_alarms([Name  | Tail], #state{entry=E}=S) -> 
+    gen_event:notify(bkfw_alarms, #edfaAlarm{index=E#edfaMcuTable.index,
+					     name=Name,
+					     vars=alarms_to_vars(Name, E)}),
     handle_alarms(Tail, S).
+
+alarms_to_vars(pin, E) -> [{edfaInputLossTh, E#edfaMcuTable.inputLossThreshold}];
+alarms_to_vars(pout, E) -> [{edfaOutpputLossTh, E#edfaMcuTable.outputLossThreshold}];
+alarms_to_vars(pump_temp, E) -> [{edfaCurLaserTemp, E#edfaMcuTable.curLaserTemp}];
+alarms_to_vars(pump_bias, E) -> [{edfaCurAmp, E#edfaMcuTable.curAmp}];
+alarms_to_vars(edfa_temp, E) -> [{edfaCurInternalTemp, E#edfaMcuTable.curInternalTemp}];
+alarms_to_vars(edfa_psu, E) -> [{edfaPowerSupply, E#edfaMcuTable.powerSupply}];
+alarms_to_vars(bref, _E) -> [];
+alarms_to_vars(adi, _E) -> [];
+alarms_to_vars(mute, _E) -> [].
 
 get_consign(Name, Kv) ->
     case proplists:get_value(Name, Kv) of

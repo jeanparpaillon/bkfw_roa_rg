@@ -29,19 +29,19 @@
 -include("EDFA-MIB.hrl").
 
 -record(edfaMcuTable, {index                                         :: integer(),
-		       ampConsign         = 0                        :: integer(),
-		       gainConsign        = 0                        :: integer(),
-		       outputPowerConsign = 0                        :: integer(),
+		       ampConsign         = 0                        :: float(),
+		       gainConsign        = 0                        :: float(),
+		       outputPowerConsign = 0                        :: float(),
 		       operatingMode      = ?edfaMcuOperatingMode_off:: integer(),
-		       curLaserTemp       = 0                        :: integer(),
-		       curAmp             = 0                        :: integer(),
-		       curInternalTemp    = 0                        :: integer(),
-		       powerPd1           = 0                        :: integer(),
-		       powerPd2           = 0                        :: integer(),
-		       powerPd3           = 0                        :: integer(),
-		       powerSupply        = 0                        :: integer(),
-		       inputLossThreshold = 0                        :: integer(),
-		       outputLossThreshold= 0                        :: integer(),
+		       curLaserTemp       = 0                        :: float(),
+		       curAmp             = 0                        :: float(),
+		       curInternalTemp    = 0                        :: float(),
+		       powerPd1           = 0                        :: float(),
+		       powerPd2           = 0                        :: float(),
+		       powerPd3           = 0                        :: float(),
+		       powerSupply        = 0                        :: float(),
+		       inputLossThreshold = 0                        :: float(),
+		       outputLossThreshold= 0                        :: float(),
 		       vendor             = ""                       :: string(),
 		       moduleType         = ""                       :: string(),
 		       hwVer              = ""                       :: string(),
@@ -53,3 +53,9 @@
 		       productDate        = ""                       :: string()
 		   }).
 -type edfaMcuTable() :: #edfaMcuTable{}.
+
+-type edfaAlarmName() :: pin | pout | pump_temp | pump_bias | edfa_temp | edfa_psu | bref | adi | mute.
+-record(edfaAlarm, {index                       :: integer(),
+		    name                        :: edfaAlarmName(),
+		    vars                        :: list()}).
+-type edfaAlarm() :: #edfaAlarm{}.
