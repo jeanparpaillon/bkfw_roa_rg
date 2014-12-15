@@ -158,7 +158,7 @@ elif [ "$RUNNER_SCRIPT_DATA" = "slim" ]; then
     unset SYSTEM_HOME_BIN
 
     LOCAL_ERTS_PATH=$RUNNER_BASE_DIR/erts-$ERTS_VSN/bin
-    NODETOOL="$ERTS_PATH/escript $RUNNER_BASE_DIR/releases/$APP_VSN/nodetool $NAME_ARG $COOKIE_ARG"
+    NODETOOL="/usr/bin/escript $RUNNER_BASE_DIR/releases/$APP_VSN/nodetool $NAME_ARG $COOKIE_ARG"
     unset LOCAL_ERL_PATH
 
     # Setup additional arguments for slim release
@@ -169,7 +169,7 @@ else
 fi
 
 # Setup remote shell command to control node
-REMSH="$ERTS_PATH/erl -hidden $REMSH_NAME_ARG $REMSH_REMSH_ARG $COOKIE_ARG"
+REMSH="/usr/bin/erl -hidden $REMSH_NAME_ARG $REMSH_REMSH_ARG $COOKIE_ARG"
 
 # Common functions
 
