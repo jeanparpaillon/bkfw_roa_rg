@@ -38,7 +38,7 @@
                     class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
                     aria-hidden="true">
                   </span>
-                  {{ mcu.detail.curLaserTemp }}
+                  {{ mcu.detail.curLaserTemp | numeraljs:'0.00' }}
                 </td>
               </tr>
               <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('curAmp')}">
@@ -49,7 +49,7 @@
                     class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
                     aria-hidden="true">
                   </span>
-                  {{ mcu.detail.curAmp }}
+                  {{ mcu.detail.curAmp | numeraljs:'0.00' }}
                 </td>
               </tr>
               <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('curInternalAmp')}">
@@ -60,7 +60,7 @@
                     class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
                     aria-hidden="true">
                   </span>
-                  {{ mcu.detail.curInternalAmp }}
+                  {{ mcu.detail.curInternalAmp | numeraljs:'0.00' }}
                 </td>
               </tr>
               <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('powerInput')}">
@@ -71,18 +71,18 @@
                     class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
                     aria-hidden="true">
                   </span>
-                  {{ mcu.detail.powerInput }}
+                  {{ mcu.detail.powerInput | numeraljs:'0.00' }}
                 </td>
               </tr>
-              <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('powerInput')}">
-                <td>{{ mcu.label.powerInput }}</td>
+              <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('powerOutput')}">
+                <td>{{ mcu.label.powerOutput }}</td>
                 <td>
                   <span
-                    ng-show="mcu.detail.hasAlarmOn('powerInput')"
+                    ng-show="mcu.detail.hasAlarmOn('powerOutput')"
                     class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
                     aria-hidden="true">
                   </span>
-                  {{ mcu.detail.powerInput }}
+                  {{ mcu.detail.powerOutput | numeraljs:'0.00'}}
                 </td>
               </tr>
               <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('powerSupply')}">
@@ -93,7 +93,7 @@
                     class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
                     aria-hidden="true">
                   </span>
-                  {{ mcu.detail.powerSupply }}
+                  {{ mcu.detail.powerSupply | numeraljs:'0.00' }}
                 </td>
               </tr>
               <tr>

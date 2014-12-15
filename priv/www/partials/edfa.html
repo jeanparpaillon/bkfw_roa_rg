@@ -13,7 +13,7 @@
           class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
           aria-hidden="true">
         </span>
-        {{ info.curInternalTemp }}
+        {{ info.curInternalTemp | numeraljs:'0.00' }}
       </td>
 
       <td><strong>{{ label.hwVer }}</strong></td>
@@ -29,7 +29,7 @@
           class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
           aria-hidden="true">
         </span>
-        {{ info.powerSupply }}
+        {{ info.powerSupply | numeraljs:'0.00' }}
       </td>
 
       <td><strong>{{ label.hwRev }}</strong></td>

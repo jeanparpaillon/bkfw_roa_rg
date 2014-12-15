@@ -11,7 +11,8 @@ angular.module('bkfwApp', [
     'angularFileUpload',
     'ngResource',
     'ui.router',
-    'ws'
+    'ws',
+    'ngNumeraljs'
 ])
 
 .run(['$rootScope', 'AUTH_EVENTS', 'auth', 'mcu', 'alarms', function($rootScope, AUTH_EVENTS, auth, mcu, alarms) {
@@ -66,4 +67,5 @@ angular.module('bkfwApp', [
   });
 
   $httpProvider.interceptors.push('apiErrors');
+
 }]);
