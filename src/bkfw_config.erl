@@ -519,9 +519,9 @@ get_targets_conf([{Prefix, Addr} | Tail], Acc) ->
 
 add_targets(Prefix, Ip, Port, Acc) ->
     [ 
-      {Prefix ++ "_v1", Ip, Port, 1500, 3, "", "target_v1", "", [], 2048},
-      {Prefix ++ "_v2", Ip, Port, 1500, 3, "", "target_v2", "", [], 2048},
-      {Prefix ++ "_v3", Ip, Port, 1500, 3, "", "target_v3", "", [], 2048}
+      {Prefix ++ "_v1", Ip, Port, 1500, 3, "bkfw", "target_v1", "bkfw_master_agent", [], 2048},
+      {Prefix ++ "_v2", Ip, Port, 1500, 3, "bkfw", "target_v2", "bkfw_master_agent", [], 2048},
+      {Prefix ++ "_v3", Ip, Port, 1500, 3, "bkfw", "target_v3", "bkfw_master_agent", [], 2048}
       | Acc].
 
 parse_target(<<>>) ->
