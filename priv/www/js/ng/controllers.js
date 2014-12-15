@@ -19,49 +19,34 @@ angular.module('bkfwApp.controllers', [])
 
 }])
 
-.controller('mcuCtrl', ['$scope', '$stateParams', 'mcu', 'dialogs', 'alarms', function($scope, $stateParams, mcu, dialogs, alarms) {
+.controller('mcuCtrl', ['$scope', '$stateParams', 'mcu', 'dialogs', function($scope, $stateParams, mcu, dialogs) {
 
-  this.mcuIndex = $stateParams.mcuIndex;
   this.mode = mcu.mode;
   this.modeID = mcu.modeID;
   this.label = mcu.label;
-  this.alarms = alarms;
 
+  this.detail = {};
+  this.controlMode = null;
   this.controlValue = null;
 
-  this.detail = mcu.api.get({}, {index: this.mcuIndex},
-                            angular.bind(this, function() {
-                              // on get()
-                              this.controlValue = this.getControlValue();
-                            }));
+  $scope.$watch(
+    function() {
+      return mcu.get($stateParams.mcuIndex);
+    },
+    angular.bind(this, function(newVal) {
+      if (newVal) {
+        this.detail = newVal;
+        // setup initial values
+        if (this.controlMode === null)
+          this.controlMode = this.detail.operatingMode;
+        if (this.controlValue === null)
+          this.controlValue = mcu.getControlValue(this.detail, this.controlMode);
+      }
+    })
+  );
 
-  this.hasAlarmOn = function(fieldName) {
-    return alarms.forIndex(this.mcuIndex).filter(function(alarm) {
-      return alarm.data.field == fieldName;
-    }).length > 0;
-  };
-
-  this.getControlValueName = function() {
-    switch (this.detail.operatingMode) {
-      case this.mode.PC:
-        return 'outputPowerConsign';
-      case this.mode.GC:
-        return 'gainConsign';
-      case this.mode.CC:
-        return 'ampConsign';
-    }
-    return null;
-  };
-
-  this.getControlValue = function() {
-    if (this.detail.operatingMode != mcu.mode.OFF) {
-      return this.detail[this.getControlValueName()];
-    }
-    return null;
-  };
-
-  this.showControlValue = function() {
-    this.controlValue = this.getControlValue();
+  this.updateControlValue = function() {
+    this.controlValue = mcu.getControlValue(this.detail, this.controlMode);
   };
 
   this.setOperatingMode = function() {
@@ -69,11 +54,21 @@ angular.module('bkfwApp.controllers', [])
     dialogs.confirm("Are you sure ?")
 
     .then(angular.bind(this, function() {
-      console.debug("Setting operating mode " + this.detail.operatingMode);
+      console.debug("Setting operating mode to " + this.controlMode);
 
-      this.detail.$save()
+      var newMcu  = angular.copy(this.detail);
+      newMcu.operatingMode = this.controlMode;
+      newMcu[mcu.getControlValueName(this.controlMode)] = this.controlValue;
+
+      console.debug("Save mcu " + JSON.stringify(newMcu));
+
+      mcu.save(newMcu)
 
       .then(angular.bind(this, function() {
+
+        this.controlMode = null;
+        this.controlValue = null;
+
         dialogs.success("Consign applied");
       }));
     }));
@@ -107,7 +102,18 @@ angular.module('bkfwApp.controllers', [])
         dialogs.close(true);
         dialogs.success("Firmware updated");
       });
-    })
+    }),
+    filters: [{
+      name: 'checkFileName',
+      fn: function(item) {
+        if (item.name.match(/^bkfw.*\.deb$/) === null) {
+          dialogs.error("Invalid file name",
+                        "Firmware file must be a .deb file named bkfw");
+          return false;
+        }
+        return true;
+      }
+    }]
   });
 
   this.network = sys.net.get();
@@ -125,14 +131,6 @@ angular.module('bkfwApp.controllers', [])
   this.password = {password: "", confirm: ""};
   this.community = sys.community.get();
   this.protocol = sys.protocol.get();
-  this.targets = sys.targets.get();
-
-  this.targetsSave = function() {
-      this.targets.$save()
-	  .then(function() {
-	      dialogs.success("SNMP targets settings applied");
-	  });
-  };
 
   this.securitySave = function() {
 

@@ -346,7 +346,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
 }])
 
-.factory('mcu', ['$resource', '$timeout', 'poll', 'alarms', function($resource, $timeout, poll, alarms) {
+.factory('mcu', ['$resource', '$http', '$timeout', 'poll', 'alarms', function($resource, $http, $timeout, poll, alarms) {
 
   return {
 
@@ -388,21 +388,57 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
       OFF: '4'
     },
 
+    getControlValueName: function(operatingMode) {
+      switch (operatingMode) {
+        case this.mode.PC:
+          return 'outputPowerConsign';
+        case this.mode.GC:
+          return 'gainConsign';
+        case this.mode.CC:
+          return 'ampConsign';
+      }
+      return null;
+    },
+
+    getControlValue: function(mcu, operatingMode) {
+      if (operatingMode != this.mode.OFF) {
+        return mcu[this.getControlValueName(operatingMode)];
+      }
+      return null;
+    },
+
     api: $resource('/api/mcu/:mcuIndex', {mcuIndex: '@index'}),
 
     list: [],
+
+    get: function(index) {
+      return this.list.filter(function(mcu) {
+        return mcu.index == index;
+      })[0] || null;
+    },
+
+    save: function(mcu) {
+      return $http.post('/api/mcu/' + mcu.index, mcu);
+    },
 
     onList: function(list) {
       this.list = list.sort(function(a, b) {
         return a.index > b.index;
       });
-      this.list.map(function(mcu) {
+      this.list.map(angular.bind(this, function(mcu) {
+        // inject methods to get alarms info for each mcu
         mcu.hasAlarmOn = angular.bind(mcu, function(fieldName) {
           return alarms.forIndex(this.index).filter(function(alarm) {
             return alarm.data.field == fieldName;
           }).length > 0;
         });
-      });
+        mcu.alarms = angular.bind(mcu, function() {
+          return alarms.forIndex(this.index);
+        });
+        mcu.hasAlarms = angular.bind(mcu, function() {
+          return this.alarms().length > 0;
+        });
+      }));
     },
 
     refreshList: function(delay) {

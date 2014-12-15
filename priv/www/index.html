@@ -79,8 +79,15 @@
                 <li ui-sref-active="active"><a ui-sref="system">System</a></li>
                 <hr class="hidden-xs" />
                 <li ng-repeat="mcu in global.mcu.list" ui-sref-active="active"
-                  class="hidden-xs">
-                  <a ui-sref="mcu({mcuIndex: mcu.index})">MCU #{{ mcu.index }}</a>
+                    class="hidden-xs">
+                  <a ng-class="{'bg-danger text-danger': mcu.hasAlarms()}"
+                     ui-sref="mcu({mcuIndex: mcu.index})">
+                     <span class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
+                           ng-show="mcu.hasAlarms()"
+                           aria-hidden="true">
+                     </span>
+                     MCU #{{ mcu.index }}
+                  </a>
                 </li>
               </ul>
             </div>
