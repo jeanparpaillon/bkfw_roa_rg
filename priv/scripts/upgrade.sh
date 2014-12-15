@@ -16,8 +16,10 @@ if [ ! -e $1 ]; then
 fi
 
 dpkg -i --force-overwrite $1 > /dev/null \
-    && echo "ok"
+    && echo "ok" \
     || echo "err_dpkg"
+
+rm -f /var/lib/bkfw/upload/*
 
 exit 0
 
