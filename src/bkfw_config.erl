@@ -73,8 +73,9 @@ set_kv(Cat, Props) ->
 upgrade(Filename) ->
     case script("check_pkg.sh", Filename) of
 	ok ->
-	    script("upgrade.sh", Filename),
-	    bkfw_app:reboot();
+	    Ret = script("upgrade.sh", Filename),
+	    bkfw_app:reboot(),
+	    Ret;
 	{error, Err} -> {error, Err}
     end.
 
