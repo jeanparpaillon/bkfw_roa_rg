@@ -1,8 +1,8 @@
-bkfw (0.2.4) UNRELEASED; urgency=medium
+bkfw (0.2.5) wheezy; urgency=medium
 
   * New fix release
 
- -- Jean Parpaillon <jean.parpaillon@free.fr>  Mon, 15 Dec 2014 16:56:52 +0100
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Mon, 15 Dec 2014 17:28:18 +0100
 
 bkfw (0.2.3) wheezy; urgency=medium
 
