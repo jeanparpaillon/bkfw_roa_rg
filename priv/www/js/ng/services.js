@@ -183,6 +183,102 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
 }])
 
+.factory('alarms', ['$timeout', '$location', '$rootScope', 'ws', function($timeout, $location, $rootScope, ws) {
+
+  function Alarm(data) {
+    // data = {"index":12,"name":"pump_temp","msg":"Pump temperature alarm","field": "curLaserTemp"}
+    this.data = data;
+    this.timeout();
+  }
+
+  Alarm.prototype = {
+    timeout: function() {
+      $timeout(angular.bind(this, function() {
+        $rootScope.$broadcast('alarm-expired', this);
+      }), 3000);
+    }
+  };
+
+  var conn = ws.connect({
+    url: 'ws://' + $location.host() + ':' + $location.port() + '/api/alarms'
+  });
+
+  var alarms = {
+    type: {
+      pin: {
+        msg: "Input power loss",
+        field: "powerInput"
+      },
+      pout: {
+        msg: "Output power loss",
+        field: "powerOutput"
+      },
+      pump_temp: {
+        msg: "Pump temperature alarm",
+        field: "curLaserTemp"
+      },
+      pump_bias: {
+        msg: "Laser current is over 95% of EOL",
+        field: "curAmp"
+      },
+      edfa_temp: {
+        msg: "Internal temperature alarm",
+        field: "curInternalTemp"
+      },
+      edfa_psu: {
+        msg: "Power Supply alarm",
+        field: "powerSupply"
+      },
+      bref: {
+        msg: "Back reflection alarm"
+      },
+      adi: {
+        msg: "Shutdown input is active"
+      },
+      mute: {
+        msg: "Mute input is active"
+      }
+    },
+
+    list: [],
+
+    forIndex: function(index) {
+      var names = [];
+      return this.list.filter(function(alarm) {
+        if (alarm.data.index == index && names.indexOf(alarm.data.name) === -1) {
+          names.push(alarm.data.name);
+          return true;
+        }
+        return false;
+      });
+    }
+  };
+
+  var showAlarms = function() {
+    //console.debug(JSON.stringify(alarms.list));
+    console.debug(JSON.stringify(alarms.forIndex(7)));
+    $timeout(showAlarms, 3000);
+  };
+  //showAlarms();
+
+  ws.on('message', function(event) {
+    var data = JSON.parse(event.data);
+    data.msg = alarms.type[data.name].msg;
+    data.field = alarms.type[data.name].field;
+    alarms.list.push(new Alarm(data));
+  });
+
+  $rootScope.$on('alarm-expired', function(event, alarm) {
+    var index = alarms.list.findIndex(function(elem) {
+      return elem == alarm;
+    });
+    alarms.list.splice(index, 1);
+  });
+
+  return alarms;
+
+}])
+
 .factory('edfa', ['$resource', '$q', '$timeout', 'apiErrorsConfig', function($resource, $q, $timeout, apiErrorsConfig) {
 
   return {
@@ -250,7 +346,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
 }])
 
-.factory('mcu', ['$resource', '$timeout', 'poll', function($resource, $timeout, poll) {
+.factory('mcu', ['$resource', '$timeout', 'poll', 'alarms', function($resource, $timeout, poll, alarms) {
 
   return {
 
@@ -296,17 +392,22 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
     list: [],
 
+    onList: function(list) {
+      this.list = list.sort(function(a, b) {
+        return a.index > b.index;
+      });
+      this.list.map(function(mcu) {
+        mcu.hasAlarmOn = angular.bind(mcu, function(fieldName) {
+          return alarms.forIndex(this.index).filter(function(alarm) {
+            return alarm.data.field == fieldName;
+          }).length > 0;
+        });
+      });
+    },
+
     refreshList: function(delay) {
-
-      poll.start('/api/mcu', delay,
-                 angular.bind(this, function(list) {
-                  this.list = list.sort(function(a, b) {
-                    return a.index > b.index;
-                  });
-                 }));
-
+      poll.start('/api/mcu', delay, angular.bind(this, this.onList));
       return true;
-
     }
 
   };

@@ -4,39 +4,42 @@
 
 angular.module('bkfwApp.controllers', [])
 
-    .controller('globalCtrl', ['$scope', '$state', 'AUTH_EVENTS', 'mcu', 'session', 'ws', '$location',
-	function($scope, $state, AUTH_EVENTS, mcu, session, ws, $location) {
-	  
-	     this.mcu = mcu;
-	     this.session = session;
-	     
-	     this.isLoginPage = function() {
-		 return $state.is('login');
-	     };
+.controller('globalCtrl', ['$scope', '$state', 'AUTH_EVENTS', 'mcu', 'session', function($scope, $state, AUTH_EVENTS, mcu, session) {
 
-	    this.alarms = ws.connect({url: 'ws://' + $location.host() + ':' + $location.port() + '/api/alarms'});
-	     ws.on('message', function(evt) {
-		 console.debug('New message: ' + evt.data);
-	     });
-	     
-	     $scope.$on(AUTH_EVENTS.logoutSuccess, function() {
-		 $state.go('dashboard');
-	     });
+  this.mcu = mcu;
+  this.session = session;
+
+  this.isLoginPage = function() {
+    return $state.is('login');
+  };
+
+  $scope.$on(AUTH_EVENTS.logoutSuccess, function() {
+    $state.go('dashboard');
+  });
+
 }])
 
-.controller('mcuCtrl', ['$scope', '$stateParams', 'mcu', 'dialogs', function($scope, $stateParams, mcu, dialogs) {
+.controller('mcuCtrl', ['$scope', '$stateParams', 'mcu', 'dialogs', 'alarms', function($scope, $stateParams, mcu, dialogs, alarms) {
 
+  this.mcuIndex = $stateParams.mcuIndex;
   this.mode = mcu.mode;
   this.modeID = mcu.modeID;
   this.label = mcu.label;
+  this.alarms = alarms;
 
   this.controlValue = null;
 
-  this.detail = mcu.api.get({}, {index: $stateParams.mcuIndex},
+  this.detail = mcu.api.get({}, {index: this.mcuIndex},
                             angular.bind(this, function() {
                               // on get()
                               this.controlValue = this.getControlValue();
                             }));
+
+  this.hasAlarmOn = function(fieldName) {
+    return alarms.forIndex(this.mcuIndex).filter(function(alarm) {
+      return alarm.data.field == fieldName;
+    }).length > 0;
+  };
 
   this.getControlValueName = function() {
     switch (this.detail.operatingMode) {
@@ -66,13 +69,13 @@ angular.module('bkfwApp.controllers', [])
     dialogs.confirm("Are you sure ?")
 
     .then(angular.bind(this, function() {
-        console.debug("Setting operating mode " + this.detail.operatingMode);
+      console.debug("Setting operating mode " + this.detail.operatingMode);
 
-        this.detail.$save()
+      this.detail.$save()
 
-        .then(angular.bind(this, function() {
-          dialogs.success("Consign applied");
-        }));
+      .then(angular.bind(this, function() {
+        dialogs.success("Consign applied");
+      }));
     }));
   };
 

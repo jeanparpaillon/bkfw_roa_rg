@@ -24,12 +24,47 @@
           <tr class="dashboard-row" ng-repeat="mcu in global.mcu.list" ui-sref="mcu({mcuIndex: mcu.index})">
             <td>{{ mcu.index }}</td>
             <td>{{ mcu.operatingMode | mcuMode }}</td>
-            <td>{{ mcu.curLaserTemp }}</td>
-            <td>{{ mcu.curAmp }}</td>
+            <td ng-class="{'danger text-danger': mcu.hasAlarmOn('curLaserTemp')}">
+              {{ mcu.curLaserTemp }}
+              <span
+                ng-show="mcu.hasAlarmOn('curLaserTemp')"
+                class="glyphicon glyphicon-exclamation-sign text-danger"
+                aria-hidden="true">
+              </span>
+            </td>
+            <td ng-class="{'danger text-danger': mcu.hasAlarmOn('curAmp')}">
+              {{ mcu.curAmp }}
+              <span
+                ng-show="mcu.hasAlarmOn('curAmp')"
+                class="glyphicon glyphicon-exclamation-sign text-danger"
+                aria-hidden="true">
+              </span>
+            </td>
             <td>{{ mcu.curInternalAmp }}</td>
-            <td>{{ mcu.powerInput }}</td>
-            <td>{{ mcu.powerOutput }}</td>
-            <td>{{ mcu.powerSupply }}</td>
+            <td ng-class="{'danger text-danger': mcu.hasAlarmOn('powerInput')}">
+              {{ mcu.powerInput }}
+              <span
+                ng-show="mcu.hasAlarmOn('powerInput')"
+                class="glyphicon glyphicon-exclamation-sign text-danger"
+                aria-hidden="true">
+              </span>
+            </td>
+            <td ng-class="{'danger text-danger': mcu.hasAlarmOn('powerOutput')}">
+              {{ mcu.powerOutput }}
+              <span
+                ng-show="mcu.hasAlarmOn('powerOutput')"
+                class="glyphicon glyphicon-exclamation-sign text-danger"
+                aria-hidden="true">
+              </span>
+            </td>
+            <td ng-class="{'danger text-danger': mcu.hasAlarmOn('powerSupply')}">
+              {{ mcu.powerSupply }}
+              <span
+                ng-show="mcu.hasAlarmOn('powerSupply')"
+                class="glyphicon glyphicon-exclamation-sign text-danger"
+                aria-hidden="true">
+              </span>
+            </td>
           </tr>
         </tbody>
       </table>

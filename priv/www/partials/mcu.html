@@ -9,6 +9,11 @@
         <div class="table-responsive">
           <table class="table table-hover">
             <tbody>
+              <tr class="danger text-danger" ng-repeat="alarm in mcu.alarms.forIndex(mcu.mcuIndex)">
+                <td colspan="2">{{ alarm.data.msg }}
+                  <span class="glyphicon glyphicon-exclamation-sign text-danger"></span>
+                </td>
+              </tr>
               <tr>
                 <td>{{ mcu.label.operatingMode }}</td>
                 <td>{{ mcu.detail.operatingMode | mcuMode }}</td>
@@ -25,29 +30,71 @@
                 <td>{{ mcu.label.outputPowerConsign }}</td>
                 <td>{{ mcu.detail.outputPowerConsign }}</td>
               </tr>
-              <tr>
+              <tr ng-class="{'danger text-danger': mcu.hasAlarmOn('curLaserTemp')}">
                 <td>{{ mcu.label.curLaserTemp }}</td>
-                <td>{{ mcu.detail.curLaserTemp }}</td>
+                <td>
+                  {{ mcu.detail.curLaserTemp }}
+                  <span
+                    ng-show="mcu.hasAlarmOn('curLaserTemp')"
+                    class="glyphicon glyphicon-exclamation-sign text-danger"
+                    aria-hidden="true">
+                  </span>
+                </td>
               </tr>
-              <tr>
+              <tr ng-class="{'danger text-danger': mcu.hasAlarmOn('curAmp')}">
                 <td>{{ mcu.label.curAmp }}</td>
-                <td>{{ mcu.detail.curAmp }}</td>
+                <td>
+                  {{ mcu.detail.curAmp }}
+                  <span
+                    ng-show="mcu.hasAlarmOn('curAmp')"
+                    class="glyphicon glyphicon-exclamation-sign text-danger"
+                    aria-hidden="true">
+                  </span>
+                </td>
               </tr>
-              <tr>
+              <tr ng-class="{'danger text-danger': mcu.hasAlarmOn('curInternalAmp')}">
                 <td>{{ mcu.label.curInternalAmp }}</td>
-                <td>{{ mcu.detail.curInternalAmp }}</td>
+                <td>
+                  {{ mcu.detail.curInternalAmp }}
+                  <span
+                    ng-show="mcu.hasAlarmOn('curInternalAmp')"
+                    class="glyphicon glyphicon-exclamation-sign text-danger"
+                    aria-hidden="true">
+                  </span>
+                </td>
               </tr>
-              <tr>
+              <tr ng-class="{'danger text-danger': mcu.hasAlarmOn('powerInput')}">
                 <td>{{ mcu.label.powerInput }}</td>
-                <td>{{ mcu.detail.powerInput }}</td>
+                <td>
+                  {{ mcu.detail.powerInput }}
+                  <span
+                    ng-show="mcu.hasAlarmOn('powerInput')"
+                    class="glyphicon glyphicon-exclamation-sign text-danger"
+                    aria-hidden="true">
+                  </span>
+                </td>
               </tr>
-              <tr>
-                <td>{{ mcu.label.powerOutput }}</td>
-                <td>{{ mcu.detail.powerOutput }}</td>
+              <tr ng-class="{'danger text-danger': mcu.hasAlarmOn('powerInput')}">
+                <td>{{ mcu.label.powerInput }}</td>
+                <td>
+                  {{ mcu.detail.powerInput }}
+                  <span
+                    ng-show="mcu.hasAlarmOn('powerInput')"
+                    class="glyphicon glyphicon-exclamation-sign text-danger"
+                    aria-hidden="true">
+                  </span>
+                </td>
               </tr>
-              <tr>
+              <tr ng-class="{'danger text-danger': mcu.hasAlarmOn('powerSupply')}">
                 <td>{{ mcu.label.powerSupply }}</td>
-                <td>{{ mcu.detail.powerSupply }}</td>
+                <td>
+                  {{ mcu.detail.powerSupply }}
+                  <span
+                    ng-show="mcu.hasAlarmOn('powerSupply')"
+                    class="glyphicon glyphicon-exclamation-sign text-danger"
+                    aria-hidden="true">
+                  </span>
+                </td>
               </tr>
               <tr>
                 <td>{{ mcu.label.inputLossThreshold }}</td>
