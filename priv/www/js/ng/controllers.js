@@ -120,6 +120,14 @@ angular.module('bkfwApp.controllers', [])
   this.password = {password: "", confirm: ""};
   this.community = sys.community.get();
   this.protocol = sys.protocol.get();
+  this.targets  = sys.targets.get();
+
+  this.targetsSave = function() {
+      this.targets.$save()
+	  .then(function() {
+	      dialogs.success("SNMP targets saved");
+	  });
+  };
 
   this.securitySave = function() {
 

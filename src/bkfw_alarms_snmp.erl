@@ -24,6 +24,9 @@ handle_event(#edfaAlarm{name=Name, obj=Obj}, S) ->
 handle_call(_Call, State) ->
     {ok, State}.
 
+
+handle_info({snmp_targets, {notify, _Trap}, _Vars}, State) ->
+    {ok, State};
 handle_info(_Info, State) ->
     {ok, State}.
 
@@ -36,11 +39,14 @@ code_change(_OldVsn, State, _Extra) ->
 %%%
 %%% Priv
 %%%
-send_trap(Trap, Varbinds) ->
-    ?debug("Sending trap: ~p(~p)~n", [Trap, Varbinds]),
-    case snmpa:send_notification(snmp_master_agent, Trap, no_receiver, "", "bkfw", Varbinds) of
-	{error, Err} ->
-	    ?debug("Trap error: ~p~n", [Err]),
+%send_trap(Trap, Varbinds) ->
+send_trap(_, _) ->
+    Trap = edfaGenericTrap,
+    Varbinds = [],
+    %Recv = {{notify, Trap}, self()},
+    Recv = no_receiver,
+    case snmpa:send_notification(snmp_master_agent, Trap, Recv, "", "", Varbinds) of
+	{error, _Err} ->
 	    ok;
 	ok ->
 	    ok

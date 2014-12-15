@@ -462,6 +462,12 @@ edfaMuteTrap NOTIFICATION-TYPE
 	"Mute input is active"
     ::= { edfaMIBTraps 9 }
 
+edfaGenericTrap NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+	"Generic EDFA trap (for testing purpose mainly)"
+    ::= { edfaMIBTraps 10 }
+
 edfaMIBTrapGroups OBJECT IDENTIFIER ::= { edfaMIBConformance 1 }
 
 edfaMIBTrapGroup NOTIFICATION-GROUP
@@ -474,7 +480,8 @@ edfaMIBTrapGroup NOTIFICATION-GROUP
 	edfaPowerSupplyTrap,
 	edfaBrefTrap,
 	edfaAdiTrap,
-	edfaMuteTrap
+	edfaMuteTrap,
+	edfaGenericTrap
     }
     STATUS current
     DESCRIPTION
