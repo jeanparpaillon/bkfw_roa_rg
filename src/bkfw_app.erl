@@ -49,7 +49,13 @@ load_mibs(App, Mibs) ->
     ok = snmpa:load_mibs(snmp_master_agent, Paths).
 
 restart() ->
-    init:restart().
+    spawn(fun() ->
+		  timer:sleep(1000),
+		  init:restart()
+	  end).
 
 reboot() ->
-    init:reboot().
+    spawn(fun() ->
+		  timer:sleep(1000),
+		  init:reboot()
+	  end).
