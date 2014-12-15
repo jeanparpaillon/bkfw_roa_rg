@@ -1,3 +1,9 @@
+bkfw (0.2.6) UNRELEASED; urgency=medium
+
+  * New release: allow snmpset
+
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Mon, 15 Dec 2014 18:02:28 +0100
+
 bkfw (0.2.5) wheezy; urgency=medium
 
   * New fix release
