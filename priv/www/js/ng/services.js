@@ -186,7 +186,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 .factory('alarms', ['$timeout', '$location', '$rootScope', 'ws', function($timeout, $location, $rootScope, ws) {
 
   function Alarm(data) {
-    // data = {"index":12,"name":"pump_temp","msg":"Pump temperature alarm","field": "curLaserTemp"}
+    // data = {"index":12,"name":"pump_temp","msg":"Pump temperature alarm","var": "curLaserTemp"}
     this.data = data;
     this.timeout();
   }
@@ -264,7 +264,6 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
   ws.on('message', function(event) {
     var data = JSON.parse(event.data);
     data.msg = alarms.type[data.name].msg;
-    data.field = alarms.type[data.name].field;
     alarms.list.push(new Alarm(data));
   });
 
@@ -445,7 +444,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
         // inject methods to get alarms info for each mcu
         mcu.hasAlarmOn = angular.bind(mcu, function(fieldName) {
           return alarms.forIndex(this.index).filter(function(alarm) {
-            return alarm.data.field == fieldName;
+            return alarm.data.var == fieldName;
           }).length > 0;
         });
         mcu.alarms = angular.bind(mcu, function() {
