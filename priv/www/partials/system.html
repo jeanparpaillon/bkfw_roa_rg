@@ -72,6 +72,25 @@
       </form>
     </div>
 
+    <div class="block">
+      <h2>SNMP trap targets</h2>
+
+      <form name="targets" role="form" ng-submit="system.targetsSave()">
+        <div class="form-group">
+          <label>Target 1 (IP address or FQDN)</label>
+          <input type="text" ng-model="system.targets.target1" class="form-control" />
+
+          <label>Target 2 (IP address or FQDN)</label>
+          <input type="text" ng-model="system.targets.target2" class="form-control" />
+
+          <label>Target 3 (IP address or FQDN)</label>
+          <input type="text" ng-model="system.targets.target3" class="form-control" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Apply</button>
+      </form>
+    </div>
+
   </div>
 
   <div class="col-md-6">

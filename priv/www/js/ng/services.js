@@ -245,6 +245,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
     firmware: $resource('/api/sys/firmware'),
 
+    targets: $resource('/api/sys/targets')
   };
 
 }])

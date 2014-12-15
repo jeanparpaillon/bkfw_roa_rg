@@ -32,7 +32,8 @@
 	  section   = undefined :: mcu | edfa | sys,
 	  index     = undefined :: integer() | undefined | badarg,
 	  mcu       = undefined,
-	  sys       = undefined :: login | net | password | community | protocol | firmware | reset | reboot,
+	  sys       = undefined :: login | net | password | community | protocol | 
+				   firmware | reset | reboot | targets,
 	  firmware  = undefined :: undefined | string()
 	 }).
 
@@ -88,6 +89,7 @@ rest_init(Req, sys) ->
 	{<<"network">>, Req2} -> {ok, Req2, #state{section=sys, sys=net}};
 	{<<"password">>, Req2} -> {ok, Req2, #state{section=sys, sys=password}};
 	{<<"community">>, Req2} -> {ok, Req2, #state{section=sys, sys=community}};
+	{<<"targets">>, Req2} -> {ok, Req2, #state{section=sys, sys=targets}};
 	{<<"protocol">>, Req2} -> {ok, Req2, #state{section=sys, sys=protocol}};
 	{<<"firmware">>, Req2} -> {ok, Req2, #state{section=sys, sys=firmware}};
 	{_, Req2} -> {ok, Req2, #state{section=sys, sys=undefined}}
@@ -154,7 +156,8 @@ resource_exists(Req, #state{section=sys, sys=Sys}=S) when Sys =:= login;
 							  Sys =:= password;
 							  Sys =:= community;
 							  Sys =:= protocol;
-							  Sys =:= firmware ->
+							  Sys =:= firmware;
+							  Sys =:= targets ->
     {true, Req, S};
 resource_exists(Req, #state{section=sys}=S) ->
     {false, Req, S};
@@ -179,20 +182,13 @@ to_json(Req, #state{section=mcu, mcu=Mcu}=S) ->
 to_json(Req, #state{section=edfa}=S) ->
     {jsx:encode(bkfw_edfa:get_kv(), ?JSX_OPTS), Req, S};
 
-to_json(Req, #state{section=sys, sys=login}=S) ->
-    {jsx:encode(bkfw_config:get_kv(login)), Req, S};
-
-to_json(Req, #state{section=sys, sys=net}=S) ->
-    {jsx:encode(bkfw_config:get_kv(net), ?JSX_OPTS), Req, S};
-
-to_json(Req, #state{section=sys, sys=community}=S) ->
-    {jsx:encode(bkfw_config:get_kv(community), ?JSX_OPTS), Req, S};
-
-to_json(Req, #state{section=sys, sys=protocol}=S) ->
-    {jsx:encode(bkfw_config:get_kv(protocol), ?JSX_OPTS), Req, S};
-
-to_json(Req, #state{section=sys, sys=firmware}=S) ->
-    {jsx:encode(bkfw_config:get_kv(firmware), ?JSX_OPTS), Req, S};
+to_json(Req, #state{section=sys, sys=Cat}=S) when Cat =:= login;
+						    Cat =:= net;
+						    Cat =:= community;
+						    Cat =:= protocol;
+						    Cat =:= targets;
+						    Cat =:= firmware ->
+    {jsx:encode(bkfw_config:get_kv(Cat)), Req, S};
 
 to_json(Req, #state{section=sys, sys=_}=S) ->
     {<<"{}">>, Req, S}.
@@ -448,6 +444,7 @@ err_to_string(invalid_net_config) -> <<"Invalid network configuration">>;
 err_to_string(invalid_net_address) -> <<"Invalid value: network address">>;
 err_to_string(invalid_net_mask) -> <<"Invalid value: network mask">>;
 err_to_string(invalid_community) -> <<"Invalid value: community name">>;
+err_to_string(invalid_target) -> <<"Invalid value: target address">>;
 err_to_string(empty_password) -> <<"Invalid value: empty password">>;
 err_to_string({unexpected, _}) -> <<"Internal error in backend">>;
 err_to_string(Else) when is_atom(Else) -> atom_to_binary(Else, utf8);

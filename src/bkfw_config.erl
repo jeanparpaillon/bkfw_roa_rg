@@ -146,6 +146,17 @@ handle_call({get_kv, protocol}, _From, State) ->
 	  {snmpv3, proplists:get_bool(v3, Protocols)}],	    
     {reply, Kv, State};
 
+handle_call({get_kv, targets}, _From, State) ->
+    case snmpa_conf:read_target_addr_config(get_snmp_configdir()) of
+	{ok, Addrs} ->
+	    Ret = [{target1, get_target_addr("target1_v1", Addrs)},
+		   {target2, get_target_addr("target2_v1", Addrs)},
+		   {target3, get_target_addr("target3_v1", Addrs)}],
+	    {reply, Ret, State};
+	{error, Err} ->
+	    {reply, {error, Err}, State}
+    end;
+
 handle_call({get_kv, firmware}, _From, #state{firmware=FW}=S) ->
     {reply, [
 	     {id, list_to_binary(proplists:get_value(description, FW, ""))},
@@ -211,6 +222,17 @@ handle_call({set_kv, protocol, Props}, _From, State) ->
     Ret = save_user_config(snmp, agent, lists:keystore(versions, 1, AgentEnv, {versions, Versions})),
     bkfw_app:restart(),
     {reply, Ret, State};
+
+handle_call({set_kv, targets, Props}, _From, State) ->
+    Dir = get_snmp_configdir(),
+    case get_targets_conf(Props, []) of
+	{ok, Conf} ->
+	    ok = snmpa_conf:write_target_addr_config(Dir, Conf),
+	    snmp_target_mib:reconfigure(Dir),
+	    {reply, ok, State};
+	{error, Err} ->
+	    {reply, {error, Err}, State}
+    end;
 
 handle_call({set_kv, reset, Props}, _From, State) ->
     case proplists:get_value(reset, Props, false) of
@@ -474,3 +496,54 @@ set_community(Index, Name, Conf) ->
     Com = lists:keyfind(Index, 1, Conf),
     lists:keystore(Index, 1, Conf, setelement(2, Com, Name)).
 
+
+get_target_addr(_Name, []) ->
+    <<>>;
+get_target_addr(Name, [{Name, _, Addr, Port, _, _, _, _, _, _, _} | _]) ->
+    iolist_to_binary([inet:ntoa(list_to_tuple(Addr)), $:, io_lib:format("~b", [Port])]);
+get_target_addr(Name, [ _ | Tail ]) ->
+    get_target_addr(Name, Tail).
+
+
+get_targets_conf([], Acc) ->
+    {ok, Acc};
+get_targets_conf([{Prefix, Addr} | Tail], Acc) ->
+    case parse_target(Addr) of
+	{ok, Ip, Port} ->
+	    get_targets_conf(Tail, add_targets(atom_to_list(Prefix), Ip, Port, Acc));
+	undefined ->
+	    get_targets_conf(Tail, Acc);
+	{error, Err} ->
+	    {error, Err}
+    end.
+
+add_targets(Prefix, Ip, Port, Acc) ->
+    [ 
+      {Prefix ++ "_v1", Ip, Port, 1500, 3, "", "target_v1", "", [], 2048},
+      {Prefix ++ "_v2", Ip, Port, 1500, 3, "", "target_v2", "", [], 2048},
+      {Prefix ++ "_v3", Ip, Port, 1500, 3, "", "target_v3", "", [], 2048}
+      | Acc].
+
+parse_target(<<>>) ->
+    undefined;
+parse_target(Addr) ->
+    case binary:split(Addr, [<<":">>]) of
+	[BinIP, BinPort] ->
+	    parse_ip_port(BinIP, BinPort);
+	[BinIP] ->
+	    parse_ip_port(BinIP, <<"162">>)
+    end.
+
+parse_ip_port(BinIP, BinPort) ->
+    case inet:parse_address(binary_to_list(BinIP)) of
+	{ok, IP} ->
+	    try binary_to_integer(BinPort) of
+		Port ->
+		    {ok, tuple_to_list(IP), Port}
+	    catch 
+		error:badarg ->
+		    {error, invalid_target}
+	    end;
+	{error, einval} ->
+	    {error, invalid_target}
+    end.

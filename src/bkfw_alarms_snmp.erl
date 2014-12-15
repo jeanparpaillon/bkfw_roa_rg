@@ -16,12 +16,12 @@ init(_Args) ->
     {ok, []}.
 
 handle_event(#edfaAlarm{name=Name, obj=#edfaMcuTable{}=Mcu}, S) -> 
-    snmpa:send_notification2(snmp_master_agent, alarm_to_trap(Name), 
-			     [{varbinds, alarm_to_vars(Name, Mcu)}]),
+    snmpa:send_notification(snmp_master_agent, alarm_to_trap(Name), no_receiver, "", "", 
+			    [{varbinds, alarm_to_vars(Name, Mcu)}]),
     {ok, S};
 handle_event(#edfaAlarm{name=Name, obj=Obj}, S) -> 
-    snmpa:send_notification2(snmp_master_agent, alarm_to_trap(Name), 
-			     [{varbinds, alarm_to_vars(Name, Obj)}]),
+    snmpa:send_notification(snmp_master_agent, alarm_to_trap(Name), no_receiver, "", "",
+			    [{varbinds, alarm_to_vars(Name, Obj)}]),
     {ok, S}.
 
 handle_call(_Call, State) ->
