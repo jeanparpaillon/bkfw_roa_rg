@@ -102,18 +102,7 @@ angular.module('bkfwApp.controllers', [])
         dialogs.close(true);
         dialogs.success("Firmware updated");
       });
-    }),
-    filters: [{
-      name: 'checkFileName',
-      fn: function(item) {
-        if (item.name.match(/^bkfw.*\.deb$/) === null) {
-          dialogs.error("Invalid file name",
-                        "Firmware file must be a .deb file named bkfw");
-          return false;
-        }
-        return true;
-      }
-    }]
+    })
   });
 
   this.network = sys.net.get();
