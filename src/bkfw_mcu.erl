@@ -355,11 +355,10 @@ read_lo(#state{idx=Idx, entry=E}=S) ->
 %%%
 %%% Convenience functions
 %%%
-parse_mode(<<"PC">>, _) -> ?edfaMcuOperatingMode_pc;
-parse_mode(<<"GC">>, _) -> ?edfaMcuOperatingMode_gc;
-parse_mode(<<"CC">>, _) -> ?edfaMcuOperatingMode_cc;
-parse_mode(<<"OFF">>, _) -> ?edfaMcuOperatingMode_off;
-parse_mode(_, Dft) -> Dft.
+parse_mode(pc, _) -> ?edfaMcuOperatingMode_pc;
+parse_mode(gc, _) -> ?edfaMcuOperatingMode_gc;
+parse_mode(cc, _) -> ?edfaMcuOperatingMode_cc;
+parse_mode(off, _) -> ?edfaMcuOperatingMode_off.
 
 parse_pd([], Acc) -> Acc;
 parse_pd([ [1, P, <<"dBm">>] | Tail], {_, Pd2, Pd3}) -> parse_pd(Tail, {P, Pd2, Pd3});
