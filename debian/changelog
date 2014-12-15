@@ -1,8 +1,9 @@
-bkfw (0.2) UNRELEASED; urgency=medium
+bkfw (0.2.1) whezy; urgency=medium
 
   * New release
+  * SNMP traps ok
 
- -- Jean Parpaillon <jean.parpaillon@free.fr>  Mon, 15 Dec 2014 01:12:38 +0100
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Mon, 15 Dec 2014 16:37:15 +0100
 
 bkfw (0.1) wheezy; urgency=medium
 
