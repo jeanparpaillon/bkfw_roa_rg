@@ -390,10 +390,10 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
     },
 
     modeID: {
-      1: {name: 'PC', valueType: 'dBm'},
-      2: {name: 'GC', valueType: 'dB'},
-      3: {name: 'CC', valueType: 'mA'},
-      4: {name: 'OFF', valueType: null},
+      '1': {name: 'PC', valueType: 'dBm'},
+      '2': {name: 'GC', valueType: 'dB'},
+      '3': {name: 'CC', valueType: 'mA'},
+      '4': {name: 'OFF', valueType: null},
     },
 
     mode: {

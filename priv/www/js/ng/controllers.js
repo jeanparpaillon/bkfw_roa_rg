@@ -37,10 +37,14 @@ angular.module('bkfwApp.controllers', [])
       if (newVal) {
         this.detail = newVal;
         // setup initial values
-        if (this.controlMode === null)
-          this.controlMode = this.detail.operatingMode;
-        if (this.controlValue === null)
+        if (this.controlMode === null) {
+          this.controlMode = this.detail.operatingMode.toString();
+          console.debug("Current control mode is " + this.controlMode);
+        }
+        if (this.controlValue === null) {
           this.controlValue = mcu.getControlValue(this.detail, this.controlMode);
+          console.debug("Control value is " + this.controlValue);
+        }
       }
     })
   );
