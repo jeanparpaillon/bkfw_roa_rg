@@ -126,8 +126,14 @@ table_func(delete, NameDb) ->
 table_func(is_set_ok, RowIndex, Cols, NameDb) ->
     snmp_generic:table_func(is_set_ok, RowIndex, Cols, NameDb);
 
-table_func(set, RowIndex, Cols, NameDb) ->
-    snmp_generic:table_func(set, RowIndex, Cols, NameDb);
+table_func(set, [RowIndex], Cols, NameDb) ->
+    ?debug("set table var  row=~p  cols=~p~n", [RowIndex, Cols]),
+    case set_from_snmp(RowIndex, Cols) of
+	ok ->
+	    snmp_generic:table_func(set, [RowIndex], Cols, NameDb);
+	{error, Col} ->
+	    {error, Col}
+    end;
 
 table_func(get, RowIndex, Cols, NameDb) ->
     Vars = snmp_generic:table_func(get, RowIndex, Cols, NameDb),
@@ -401,3 +407,35 @@ get_consign(Name, Kv) ->
 		    end
 	    end
     end.
+
+set_from_snmp(_, []) ->
+    ok;
+set_from_snmp(Idx, [{?edfaMcuAmpConsign, Val} | Tail]) when is_integer(Val) ->
+    bkfw_srv:command(Idx, scc, [<<"1 ">>, io_lib:format("~b.0", [Val])]),
+    set_from_snmp(Idx, Tail);
+set_from_snmp(Idx, [{?edfaMcuGainConsign, Val} | Tail]) when is_integer(Val) ->
+    bkfw_srv:command(Idx, sgc, [io_lib:format("~b.0", [Val])]),
+    set_from_snmp(Idx, Tail);
+set_from_snmp(Idx, [{?edfaMcuOutputPowerConsign, Val} | Tail]) when is_integer(Val) ->
+    bkfw_srv:command(Idx, spc, [io_lib:format("~b.0", [Val])]),
+    set_from_snmp(Idx, Tail);
+set_from_snmp(Idx, [{?edfaMcuOperatingMode, Val} | Tail]) ->
+    case Val of
+	?edfaMcuOperatingMode_off -> 
+	    bkfw_srv:command(Idx, smode, [<<"OFF">>]),
+	    set_from_snmp(Idx, Tail);
+	?edfaMcuOperatingMode_cc -> 
+	    bkfw_srv:command(Idx, smode, [<<"CC">>]),
+	    set_from_snmp(Idx, Tail);
+	?edfaMcuOperatingMode_gc -> 
+	    bkfw_srv:command(Idx, smode, [<<"GC">>]),
+	    set_from_snmp(Idx, Tail);
+	?edfaMcuOperatingMode_pc -> 
+	    bkfw_srv:command(Idx, smode, [<<"PC">>]),
+	    set_from_snmp(Idx, Tail);
+	_ -> 
+	    {error, ?edfaMcuOperatingMode}
+    end;
+set_from_snmp(_, [{Col, _} | _]) ->
+    {error, Col}.
+
