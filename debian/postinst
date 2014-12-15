@@ -15,4 +15,8 @@ fi
 )
 cp /var/lib/bkfw/cereal/priv/cereal.so `find /opt/bkfw/lib -name cereal.so`
 
+if [ -x "/etc/init.d/bkfw" ]; then
+        invoke-rc.d bkfw start || true
+fi
+
 exit 0
