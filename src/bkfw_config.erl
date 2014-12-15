@@ -20,7 +20,8 @@
 	 set_kv/2]).
 
 -export([upgrade/1,
-	 cmd/1]).
+	 cmd/1,
+	 script/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,

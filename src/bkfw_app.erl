@@ -57,5 +57,5 @@ restart() ->
 reboot() ->
     spawn(fun() ->
 		  timer:sleep(1000),
-		  bkfw_config:cmd("/etc/init.d/bkfw restart")
+		  bkfw_config:script("restart.sh", [])
 	  end).
