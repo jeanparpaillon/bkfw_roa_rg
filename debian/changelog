@@ -1,4 +1,10 @@
-bkfw (0.1) UNRELEASED; urgency=medium
+bkfw (0.2) UNRELEASED; urgency=medium
+
+  * New release
+
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Mon, 15 Dec 2014 01:12:38 +0100
+
+bkfw (0.1) wheezy; urgency=medium
 
   * Initial release.
 
