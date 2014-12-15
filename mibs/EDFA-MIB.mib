@@ -188,7 +188,7 @@ EdfaMcuEntry ::=
 
 edfaMcuIndex OBJECT-TYPE
     SYNTAX    	INTEGER
-    MAX-ACCESS	not-accessible
+    MAX-ACCESS	read-only
     STATUS	current
     DESCRIPTION
 	"A unique value, greater than zero, for each MCU."

@@ -130,14 +130,14 @@ table_func(set, RowIndex, Cols, NameDb) ->
     snmp_generic:table_func(set, RowIndex, Cols, NameDb);
 
 table_func(get, RowIndex, Cols, NameDb) ->
-    case snmp_generic:table_func(get, RowIndex, Cols, NameDb) of
-	{value, V} when is_float(V) -> 
-	    {value, round(V)};
-	{value, V} when is_binary(V) ->
-	    {value, binary_to_list(V)};
-	Else -> 
-	    Else
-    end;
+    Vars = snmp_generic:table_func(get, RowIndex, Cols, NameDb),
+    lists:map(fun ({value, V}) when is_float(V) ->
+		      {value, round(V)};
+		  ({value, V}) when is_binary(V) ->
+		      {value, binary_to_list(V)};
+		  ({value, V}) ->
+		      {value, V}
+	      end, Vars);
 
 table_func(get_next, RowIndex, Cols, NameDb) ->
     case snmp_generic:table_func(get_next, RowIndex, Cols, NameDb) of
