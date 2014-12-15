@@ -127,7 +127,6 @@ table_func(is_set_ok, RowIndex, Cols, NameDb) ->
     snmp_generic:table_func(is_set_ok, RowIndex, Cols, NameDb);
 
 table_func(set, [RowIndex], Cols, NameDb) ->
-    ?debug("set table var  row=~p  cols=~p~n", [RowIndex, Cols]),
     case set_from_snmp(RowIndex, Cols) of
 	ok ->
 	    snmp_generic:table_func(set, [RowIndex], Cols, NameDb);
