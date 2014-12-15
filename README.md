@@ -37,6 +37,12 @@ Syntax is (don't forget brackets and final dot !):
 * `system_cmd` (true | false): if false, does not really execute system commands (reboot, etc.): for debugging purpose
 * `password` ({md5, hash_value}, default pasword: 'admin'): default admin password. hash_value is base64 encoded value of the hash, using md5 algorithm. eg: {md5, "0DPiKuNIrrVmD8IUCuw1hQxNqZc="}
 
+# Default values
+
+* SNMP communities (v1 + v2): public (read-only), private (read-write)
+* HTTP login/password: admin / admin
+* SNMP v3: 
+
 # HTTP Authentication
 
 HTTP authentication uses Basic mechanism with a special name, to avoid internal browser mechanism.
