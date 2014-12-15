@@ -25,45 +25,45 @@
             <td>{{ mcu.index }}</td>
             <td>{{ mcu.operatingMode | mcuMode }}</td>
             <td ng-class="{'danger text-danger': mcu.hasAlarmOn('curLaserTemp')}">
-              {{ mcu.curLaserTemp }}
               <span
                 ng-show="mcu.hasAlarmOn('curLaserTemp')"
-                class="glyphicon glyphicon-exclamation-sign text-danger"
+                class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
                 aria-hidden="true">
               </span>
+              {{ mcu.curLaserTemp }}
             </td>
             <td ng-class="{'danger text-danger': mcu.hasAlarmOn('curAmp')}">
-              {{ mcu.curAmp }}
               <span
                 ng-show="mcu.hasAlarmOn('curAmp')"
-                class="glyphicon glyphicon-exclamation-sign text-danger"
+                class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
                 aria-hidden="true">
               </span>
+              {{ mcu.curAmp }}
             </td>
             <td>{{ mcu.curInternalAmp }}</td>
             <td ng-class="{'danger text-danger': mcu.hasAlarmOn('powerInput')}">
-              {{ mcu.powerInput }}
               <span
                 ng-show="mcu.hasAlarmOn('powerInput')"
-                class="glyphicon glyphicon-exclamation-sign text-danger"
+                class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
                 aria-hidden="true">
               </span>
+              {{ mcu.powerInput }}
             </td>
             <td ng-class="{'danger text-danger': mcu.hasAlarmOn('powerOutput')}">
-              {{ mcu.powerOutput }}
               <span
                 ng-show="mcu.hasAlarmOn('powerOutput')"
-                class="glyphicon glyphicon-exclamation-sign text-danger"
+                class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
                 aria-hidden="true">
               </span>
+              {{ mcu.powerOutput }}
             </td>
             <td ng-class="{'danger text-danger': mcu.hasAlarmOn('powerSupply')}">
-              {{ mcu.powerSupply }}
               <span
                 ng-show="mcu.hasAlarmOn('powerSupply')"
-                class="glyphicon glyphicon-exclamation-sign text-danger"
+                class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
                 aria-hidden="true">
               </span>
+              {{ mcu.powerSupply }}
             </td>
           </tr>
         </tbody>

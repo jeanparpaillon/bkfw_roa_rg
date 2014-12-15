@@ -24,11 +24,8 @@ angular.module('bkfwApp.directives', [])
     templateUrl: 'partials/edfa.html',
 
     controller: ['$scope', 'edfa', function($scope, edfa) {
-      $scope.infos = [];
-      $scope.info = edfa.info.get(function() {
-        $scope.infos = splitObject($scope.info);
-      });
       $scope.label = edfa.label;
+      $scope.info = edfa.get();
     }]
 
   };

@@ -256,7 +256,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
   var showAlarms = function() {
     //console.debug(JSON.stringify(alarms.list));
-    console.debug(JSON.stringify(alarms.forIndex(7)));
+    console.debug(JSON.stringify(alarms.forIndex(0)));
     $timeout(showAlarms, 3000);
   };
   //showAlarms();
@@ -279,11 +279,27 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
 }])
 
-.factory('edfa', ['$resource', '$q', '$timeout', 'apiErrorsConfig', function($resource, $q, $timeout, apiErrorsConfig) {
+.factory('edfa', ['$resource', '$q', '$timeout', 'apiErrorsConfig', 'alarms', function($resource, $q, $timeout, apiErrorsConfig, alarms) {
+
+  var resource = $resource('/api/edfa', {});
 
   return {
 
-    info: $resource('/api/edfa'),
+    get: function() {
+      return resource.get(function(edfa) {
+        edfa.hasAlarmOn = angular.bind(edfa, function(fieldName) {
+          return alarms.forIndex(0).filter(function(alarm) {
+            return alarm.data.var == fieldName;
+          }).length > 0;
+        });
+        edfa.alarms = angular.bind(edfa, function() {
+          return alarms.forIndex(0);
+        });
+        edfa.hasAlarms = angular.bind(edfa, function() {
+          return this.alarms().length > 0;
+        });
+      });
+    },
 
     isOnline: function() {
       return this.info.get().$promise;

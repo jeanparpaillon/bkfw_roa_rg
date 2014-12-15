@@ -1,16 +1,65 @@
-<div class="block edfa">
+<div class="block">
 
   <h2>EDFA info</h2>
 
-  <div class="row">
-    <div class="col-md-6" ng-repeat="info in infos">
-      <table class="table table-hover">
-        <tr ng-repeat="(key, val) in info">
-          <td><strong>{{ label[key] }}</strong></td>
-          <td>{{ val }}</td>
-        </tr>
-      </table>
-    </div>
-  </div>
+  <table class="table table-hover">
+    <tr>
+      <td ng-class="{'danger text-danger': info.hasAlarmOn('curInternalTemp')}">
+        <strong>{{ label.curInternalTemp }}</strong>
+      </td>
+      <td ng-class="{'danger text-danger': info.hasAlarmOn('curInternalTemp')}">
+        <span
+          ng-show="info.hasAlarmOn('curInternalTemp')"
+          class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
+          aria-hidden="true">
+        </span>
+        {{ info.curInternalTemp }}
+      </td>
+
+      <td><strong>{{ label.hwVer }}</strong></td>
+      <td>{{ info.hwVer }}</td>
+    </tr>
+    <tr>
+      <td ng-class="{'danger text-danger': info.hasAlarmOn('powerSupply')}">
+        <strong>{{ label.powerSupply }}</strong>
+      </td>
+      <td ng-class="{'danger text-danger': info.hasAlarmOn('powerSupply')}">
+        <span
+          ng-show="info.hasAlarmOn('powerSupply')"
+          class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
+          aria-hidden="true">
+        </span>
+        {{ info.powerSupply }}
+      </td>
+
+      <td><strong>{{ label.hwRev }}</strong></td>
+      <td>{{ info.hwRev }}</td>
+    </tr>
+    <tr>
+      <td><strong>{{ label.vendor }}</strong></td>
+      <td>{{ info.vendor }}</td>
+
+      <td><strong>{{ label.swVer }}</strong></td>
+      <td>{{ info.swVer }}</td>
+    </tr>
+    <tr>
+      <td><strong>{{ label.moduleType }}</strong></td>
+      <td>{{ info.moduleType }}</td>
+
+      <td><strong>{{ label.fwVer }}</strong></td>
+      <td>{{ info.fwVer }}</td>
+    </tr>
+    <tr>
+      <td><strong>{{ label.partNum }}</strong></td>
+      <td>{{ info.partNum }}</td>
+
+      <td><strong>{{ label.serialNum }}</strong></td>
+      <td>{{ info.serialNum }}</td>
+    </tr>
+    <tr>
+      <td><strong>{{ label.productDate }}</strong></td>
+      <td colspan="3">{{ info.productDate }}</td>
+    </tr>
+  </table>
 
 </div>
