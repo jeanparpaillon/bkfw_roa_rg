@@ -48,6 +48,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
   // event:auth-* are used by angular-http-auth
   loginSuccess: 'event:auth-loginConfirmed',
   loginFailed: 'auth-login-failed',
+  loginCancelled: 'event:auth-loginCancelled',
   logoutSuccess: 'auth-logout-success',
   sessionTimeout: 'auth-session-timeout',
   notAuthenticated: 'event:auth-loginRequired',
@@ -113,6 +114,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
     cancelAuthenticate: function() {
       // when the user cancel the authentication
       // process we need to clear buffered requests
+      // or routes
       authService.loginCancelled();
     },
 
@@ -132,10 +134,11 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
   var pollers = {};
 
-  function Poller(url, delay, onSuccess, onError) {
+  function Poller(url, isArray, delay, onSuccess, onError) {
     this.started = false;
     this.resource = $resource(url);
     this.delay = delay;
+    this.isArray = isArray || false;
     this.successCallback = onSuccess;
     this.errorCallback = onError;
     this.timeout = null;
@@ -144,7 +147,8 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
   Poller.prototype = {
 
     get: function() {
-      this.resource.query(
+      var method = this.isArray ? 'query' : 'get';
+      this.resource[method](
         {},
         angular.bind(this, this.successCallback),
         angular.bind(this, this.errorCallback)
@@ -167,9 +171,9 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
   return {
 
-      start: function(url, delaySeconds, onSuccess, onError) {
+      start: function(url, isArray, delaySeconds, onSuccess, onError) {
         if (!pollers[url]) {
-          pollers[url] = new Poller(url, (delaySeconds * 1000), onSuccess, onError);
+          pollers[url] = new Poller(url, isArray, (delaySeconds * 1000), onSuccess, onError);
           pollers[url].poll();
         }
       },
@@ -278,26 +282,36 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
 }])
 
-.factory('edfa', ['$resource', '$q', '$timeout', 'apiErrorsConfig', 'alarms', function($resource, $q, $timeout, apiErrorsConfig, alarms) {
+.factory('edfa', ['$resource', '$q', '$timeout', 'apiErrorsConfig', 'poll', 'alarms', function($resource, $q, $timeout, apiErrorsConfig, poll, alarms) {
 
   var resource = $resource('/api/edfa', {});
 
+  function EdfaInfo() {}
+  EdfaInfo.prototype = {
+      alarms: function() {
+        return alarms.forIndex(0);
+      },
+      hasAlarmOn: function(fieldName) {
+        return this.alarms().filter(function(alarm) {
+          return alarm.data.var == fieldName;
+        }).length > 0;
+      },
+      hasAlarms: function() {
+        return this.alarms().length > 0;
+      }
+  };
+
   return {
 
-    get: function() {
-      return resource.get(function(edfa) {
-        edfa.hasAlarmOn = angular.bind(edfa, function(fieldName) {
-          return alarms.forIndex(0).filter(function(alarm) {
-            return alarm.data.var == fieldName;
-          }).length > 0;
-        });
-        edfa.alarms = angular.bind(edfa, function() {
-          return alarms.forIndex(0);
-        });
-        edfa.hasAlarms = angular.bind(edfa, function() {
-          return this.alarms().length > 0;
-        });
-      });
+    info: new EdfaInfo(),
+
+    onInfo: function(info) {
+      // update edfa info
+      angular.extend(this.info, info);
+    },
+
+    refreshInfo: function(delaySeconds) {
+      poll.start('/api/edfa', false, delaySeconds, angular.bind(this, this.onInfo));
     },
 
     isOnline: function() {
@@ -457,7 +471,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
     },
 
     refreshList: function(delay) {
-      poll.start('/api/mcu', delay, angular.bind(this, this.onList));
+      poll.start('/api/mcu', true, delay, angular.bind(this, this.onList));
       return true;
     }
 

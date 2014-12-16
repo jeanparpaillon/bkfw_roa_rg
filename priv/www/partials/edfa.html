@@ -4,61 +4,61 @@
 
   <table class="table table-hover">
     <tr>
-      <td ng-class="{'danger text-danger': info.hasAlarmOn('curInternalTemp')}">
-        <strong>{{ label.curInternalTemp }}</strong>
+      <td ng-class="{'danger text-danger': edfa.info.hasAlarmOn('curInternalTemp')}">
+        <strong>{{ edfa.label.curInternalTemp }}</strong>
       </td>
-      <td ng-class="{'danger text-danger': info.hasAlarmOn('curInternalTemp')}">
+      <td ng-class="{'danger text-danger': edfa.info.hasAlarmOn('curInternalTemp')}">
         <span
-          ng-show="info.hasAlarmOn('curInternalTemp')"
+          ng-show="edfa.info.hasAlarmOn('curInternalTemp')"
           class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
           aria-hidden="true">
         </span>
-        {{ info.curInternalTemp | numeraljs:'0.00' }}
+        {{ edfa.info.curInternalTemp | numeraljs:'0.00' }}
       </td>
 
-      <td><strong>{{ label.hwVer }}</strong></td>
-      <td>{{ info.hwVer }}</td>
+      <td><strong>{{ edfa.label.hwVer }}</strong></td>
+      <td>{{ edfa.info.hwVer }}</td>
     </tr>
     <tr>
-      <td ng-class="{'danger text-danger': info.hasAlarmOn('powerSupply')}">
-        <strong>{{ label.powerSupply }}</strong>
+      <td ng-class="{'danger text-danger': edfa.info.hasAlarmOn('powerSupply')}">
+        <strong>{{ edfa.label.powerSupply }}</strong>
       </td>
-      <td ng-class="{'danger text-danger': info.hasAlarmOn('powerSupply')}">
+      <td ng-class="{'danger text-danger': edfa.info.hasAlarmOn('powerSupply')}">
         <span
-          ng-show="info.hasAlarmOn('powerSupply')"
+          ng-show="edfa.info.hasAlarmOn('powerSupply')"
           class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
           aria-hidden="true">
         </span>
-        {{ info.powerSupply | numeraljs:'0.00' }}
+        {{ edfa.info.powerSupply | numeraljs:'0.00' }}
       </td>
 
-      <td><strong>{{ label.hwRev }}</strong></td>
-      <td>{{ info.hwRev }}</td>
+      <td><strong>{{ edfa.label.hwRev }}</strong></td>
+      <td>{{ edfa.info.hwRev }}</td>
     </tr>
     <tr>
-      <td><strong>{{ label.vendor }}</strong></td>
-      <td>{{ info.vendor }}</td>
+      <td><strong>{{ edfa.label.vendor }}</strong></td>
+      <td>{{ edfa.info.vendor }}</td>
 
-      <td><strong>{{ label.swVer }}</strong></td>
-      <td>{{ info.swVer }}</td>
+      <td><strong>{{ edfa.label.swVer }}</strong></td>
+      <td>{{ edfa.info.swVer }}</td>
     </tr>
     <tr>
-      <td><strong>{{ label.moduleType }}</strong></td>
-      <td>{{ info.moduleType }}</td>
+      <td><strong>{{ edfa.label.moduleType }}</strong></td>
+      <td>{{ edfa.info.moduleType }}</td>
 
-      <td><strong>{{ label.fwVer }}</strong></td>
-      <td>{{ info.fwVer }}</td>
+      <td><strong>{{ edfa.label.fwVer }}</strong></td>
+      <td>{{ edfa.info.fwVer }}</td>
     </tr>
     <tr>
-      <td><strong>{{ label.partNum }}</strong></td>
-      <td>{{ info.partNum }}</td>
+      <td><strong>{{ edfa.label.partNum }}</strong></td>
+      <td>{{ edfa.info.partNum }}</td>
 
-      <td><strong>{{ label.serialNum }}</strong></td>
-      <td>{{ info.serialNum }}</td>
+      <td><strong>{{ edfa.label.serialNum }}</strong></td>
+      <td>{{ edfa.info.serialNum }}</td>
     </tr>
     <tr>
-      <td><strong>{{ label.productDate }}</strong></td>
-      <td colspan="3">{{ info.productDate }}</td>
+      <td><strong>{{ edfa.label.productDate }}</strong></td>
+      <td colspan="3">{{ edfa.info.productDate }}</td>
     </tr>
   </table>
 
