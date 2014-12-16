@@ -100,3 +100,20 @@ distclean: clean
 	#- rm -rvf $(CURDIR)/deps
 
 rebuild: distclean deps compile escript dialyzer test
+
+RELNAME=bkfw
+RELVERSION=$(shell ./version.sh)
+RELDIR=$(RELNAME)-$(RELVERSION)
+RELBIN=$(RELNAME)_$(RELVERSION).bin
+release:
+	rm -rf $(RELDIR)
+	rm -f $(RELDIR).zip
+	mkdir -p $(RELDIR)
+	dpkg-buildpackage -b
+	cp ../bkfw_$(RELVERSION)_all.deb $(RELDIR)/$(RELBIN)
+	cp README.md $(RELDIR)/README.md
+	cp CHANGES.md $(RELDIR)/CHANGES.md
+	mkdir -p $(RELDIR)/mibs
+	cp mibs/*.mib $(RELDIR)/mibs
+	cp /usr/share/mibs/ietf/SNMPv2-MIB $(RELDIR)/mibs
+	zip -r $(RELDIR).zip $(RELDIR)
