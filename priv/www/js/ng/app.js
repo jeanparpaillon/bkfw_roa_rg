@@ -15,8 +15,11 @@ angular.module('bkfwApp', [
     'ngNumeraljs'
 ])
 
-.run(['$rootScope', 'AUTH_EVENTS', 'auth', 'mcu', 'alarms', function($rootScope, AUTH_EVENTS, auth, mcu, alarms) {
+.run(['$rootScope', '$state', 'AUTH_EVENTS', 'auth', 'mcu', 'alarms', function($rootScope, $state, AUTH_EVENTS, auth, mcu, alarms) {
 
+  var routeBuffer = "";
+
+  // refresh mcu list every 5 seconds
   mcu.refreshList(5);
 
   $rootScope.$on('$stateChangeStart', function (event, next) {
@@ -24,8 +27,23 @@ angular.module('bkfwApp', [
     if (needAuth && !auth.isAuthenticated()) {
       console.debug("need auth");
       event.preventDefault();
-      $rootScope.$broadcast(AUTH_EVENTS.notAuthenticated);
+      $rootScope.$broadcast(AUTH_EVENTS.notAuthenticated, next);
     }
+  });
+
+  $rootScope.$on(AUTH_EVENTS.notAuthenticated, function(event, next) {
+    if (next) {
+      routeBuffer = next.name;
+    }
+  });
+
+  $rootScope.$on(AUTH_EVENTS.loginCancelled, function() {
+    routeBuffer = "";
+  });
+
+  $rootScope.$on(AUTH_EVENTS.loginSuccess, function() {
+    if (routeBuffer)
+      $state.go(routeBuffer);
   });
 
 }])

@@ -48,6 +48,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
   // event:auth-* are used by angular-http-auth
   loginSuccess: 'event:auth-loginConfirmed',
   loginFailed: 'auth-login-failed',
+  loginCancelled: 'event:auth-loginCancelled',
   logoutSuccess: 'auth-logout-success',
   sessionTimeout: 'auth-session-timeout',
   notAuthenticated: 'event:auth-loginRequired',
@@ -113,6 +114,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
     cancelAuthenticate: function() {
       // when the user cancel the authentication
       // process we need to clear buffered requests
+      // or routes
       authService.loginCancelled();
     },
 
