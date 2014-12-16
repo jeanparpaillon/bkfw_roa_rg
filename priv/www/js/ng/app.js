@@ -15,12 +15,14 @@ angular.module('bkfwApp', [
     'ngNumeraljs'
 ])
 
-.run(['$rootScope', '$state', 'AUTH_EVENTS', 'auth', 'mcu', 'alarms', function($rootScope, $state, AUTH_EVENTS, auth, mcu, alarms) {
+.run(['$rootScope', '$state', 'AUTH_EVENTS', 'auth', 'mcu', 'edfa', function($rootScope, $state, AUTH_EVENTS, auth, mcu, edfa) {
 
   var routeBuffer = "";
 
   // refresh mcu list every 5 seconds
   mcu.refreshList(5);
+  // refresh edfa info every 6 seconds
+  edfa.refreshInfo(6);
 
   $rootScope.$on('$stateChangeStart', function (event, next) {
     var needAuth = next.auth || false;
