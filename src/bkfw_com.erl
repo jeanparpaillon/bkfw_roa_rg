@@ -82,7 +82,7 @@ init(Owner) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call({To, Msg}, {Pid, _Tag}, #state{owner=Pid, port=Port}=S) ->
-    Bin = ["0x", io_lib:format("~2.16.0b", [To]), " ", Msg, 13, 10],
+    Bin = ["0x", io_lib:format("~2.16.0b", [To]), " ", Msg, "\r\n"],
     Port ! {self(), {command, iolist_to_binary(Bin)}},
     {reply, ok, S};
 
