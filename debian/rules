@@ -10,8 +10,13 @@ override_dh_clean:
 
 override_dh_auto_install:
 	dh_auto_install
+	-rm -rf rel/bkfw/erts-6.1/*
+	mkdir -p rel/bkfw/erts-6.1
+	ln -s /usr/lib/erlang/erts-6.1/bin rel/bkfw/erts-6.1/
 	mkdir -p debian/cereal
 	tar -cf - -C deps/cereal \
 	  --exclude '.git' --exclude '.gitignore' --exclude '.rebar' ./ | \
 	  tar xfC - debian/cereal
 	cd debian/cereal && rebar clean
+	# Temporary
+	cp /usr/lib/erlang/erts-6.1/bin/erl debian/

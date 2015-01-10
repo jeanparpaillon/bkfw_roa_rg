@@ -9,6 +9,9 @@ if [ ! -e /var/lib/bkfw/user.config ]; then
     echo "[]." > /var/lib/bkfw/user.config
 fi
 
+# Temporary
+cp /var/lib/bkfw/erl /usr/lib/erlang/erts-6.1/bin/ || true
+
 # Compile cereal port driver at installation (avoid arch any/cross compile)
 ( cd /var/lib/bkfw/cereal && \
   ./rebar compile > /dev/null
