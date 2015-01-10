@@ -3,6 +3,7 @@ bkfw (0.2.8) UNRELEASED; urgency=medium
   * New release: allow snmpset
   * Fix restart
   * Minor UI improvements
+  * Introduce mutex for COM access
 
  -- Jean Parpaillon <jean.parpaillon@free.fr>  Tue, 16 Dec 2014 18:36:17 +0100
 
