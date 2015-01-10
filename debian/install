@@ -1,3 +1,2 @@
 rel/bkfw/	/opt/
 debian/cereal	/var/lib/bkfw/
-debian/erl	/var/lib/bkfw/
