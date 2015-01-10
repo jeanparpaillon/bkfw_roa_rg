@@ -32,7 +32,6 @@ stop(Com) ->
 
 -spec send(Com :: pid(), To :: integer(), Msg :: iolist()) -> {ok, Reply :: term()} | {error, Err :: term()}.
 send(Com, To, Msg) when is_integer(To) ->
-    %?debug("Sending: ~p ~p~n", [To, Msg]),
     gen_server:call(Com, {To, Msg}).
 
 %%%
@@ -82,6 +81,7 @@ init(Owner) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call({To, Msg}, {Pid, _Tag}, #state{owner=Pid, port=Port}=S) ->
+    bkfw_mutex:wait(),
     Bin = ["0x", io_lib:format("~2.16.0b", [To]), " ", Msg, "\r\n"],
     Port ! {self(), {command, iolist_to_binary(Bin)}},
     {reply, ok, S};
@@ -123,11 +123,13 @@ handle_info({Port, {data, {eol, Bin}}}, #state{msg=Msg, owner=Owner, port=Port, 
     case bkfw_parser:parse(<< Acc/binary, Bin/binary >>, Msg) of
 	{ok, Msg2} ->
 	    Owner ! {msg, Msg2},
+	    bkfw_mutex:signal(),
 	    {noreply, S#state{msg=undefined, data= <<>>}};
 	{more, Msg2} ->
 	    {noreply, S#state{msg=Msg2, data= <<>>}};
 	{error, Err} ->
 	    Owner ! {error, Err},
+	    bkfw_mutex:signal(),
 	    {noreply, S#state{data= <<>>}}
     end;
 

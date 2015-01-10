@@ -40,9 +40,10 @@ restart() ->
 
 init([]) ->
     Config = ?CHILD(bkfw_config, worker),
+    Mutex = ?CHILD(bkfw_mutex, worker),
     Srv = ?CHILD(bkfw_srv, worker),
     EdfaMon = ?CHILD(bkfw_edfa, worker),
     McuSup = ?CHILD(bkfw_mcus_sup, supervisor),
     Http = bkfw_http:get_config(),
     Alarms = {bkfw_alarms, {gen_event, start_link, [{local, bkfw_alarms}]}, permanent, 5000, worker, [gen_event]},
-    {ok, { {one_for_one, 5, 10}, [Config, Alarms, Srv, EdfaMon, McuSup, Http]} }.
+    {ok, { {one_for_one, 5, 10}, [Config, Mutex, Alarms, Srv, EdfaMon, McuSup, Http]} }.

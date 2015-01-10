@@ -16,7 +16,8 @@
 	     bkfw_parser,
 	     bkfw_scanner,
 	     bkfw_srv,
-	     bkfw_sup
+	     bkfw_sup,
+	     bkfw_mutex
 	    ]},
   {registered, [
 		bkfw_config,
@@ -24,7 +25,8 @@
 		bkfw_srv,
 		bkfw_sup,
 		bkfw_alarms,
-		bkfw_http
+		bkfw_http,
+		bkfw_mutex
 	       ]},
   {applications, [
                   kernel,
