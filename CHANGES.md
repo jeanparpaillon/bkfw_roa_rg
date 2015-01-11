@@ -11,6 +11,8 @@
 
 # 0.2.8 (broken release)
 
+* Improve concurrent access to COM port:
+  block until an answer has been received
 * Add mutex for COM access
 
 # 0.2.9

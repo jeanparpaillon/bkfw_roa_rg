@@ -100,12 +100,16 @@
     <div class="block">
       <h2>Security</h2>
 
-      <form name="security" role="form" ng-submit="system.securitySave()">
+      <form name="security" role="form" ng-submit="system.securitySave()" class="form-horizontal">
         <div class="form-group">
+	  <label>Login</label>
+	  <input type="text" disabled value="admin" class="form-control"></input>
+
+	  <br/>
+	  
           <label>Password</label>
           <input type="password" ng-model="system.password.password" name="password"
                  class="form-control" autocomplete="off" />
-          <p class="help-block">Admin and SNMPv3 (when enabled) password</p>
         </div>
         <div class="form-group" ng-class="{'has-error': security.confirm.$error.compareTo}">
           <label>Confirm password</label>
@@ -115,21 +119,59 @@
           <span class="text-danger" ng-show="security.confirm.$error.compareTo">Passwords don't match</span>
         </div>
 
-        <div class="form-group">
-          <label>Public community (read-only)</label>
-          <input type="text" ng-model="system.community.public" class="form-control" />
-        </div>
-
-        <div class="form-group">
-          <label>Private community (read-write)</label>
-          <input type="text" ng-model="system.community.restricted" class="form-control" />
-        </div>
-
         <div class="checkbox">
           <label ng-repeat="(protocol, enabled) in system.protocol">
             <input type="checkbox" ng-model="system.protocol[protocol]" /> {{ protocol }}
           </label>
         </div>
+
+	<div class="block" ng-if="system.protocol['snmpv1'] || system.protocol['snmpv2']">
+	  <h4>SNMP v1/v2c security </h4>
+
+          <div class="form-group">
+            <label>Public community (read-only)</label>
+            <input type="text" ng-model="system.community.public" class="form-control" />
+          </div>
+	  
+          <div class="form-group">
+            <label>Private community (read-write)</label>
+            <input type="text" ng-model="system.community.restricted" class="form-control" />
+          </div>
+	</div>
+
+	<div class="block" ng-if="system.protocol['snmpv3']">
+	  <h4>SNMPv3 Security</h4>
+
+	  <div class="form-group">
+	    <label>Security Name</label>
+	    <input type="text" disabled value="admin"></input>
+	  </div>
+
+	  <div class="form-group">
+	    <label>Security Context</label>
+	    <input type="text" disabled value="admin"></input>
+	  </div>
+
+	  <div class="form-group">
+	    <label>Security level</label>
+	    <input type="radio" ng-model="system.community.v3.level" value="noauthnopriv">NoAuthNoPriv</input>
+	    <input type="radio" ng-model="system.community.v3.level" value="authnopriv">AuthNoPriv</input>
+	    <input type="radio" ng-model="system.community.v3.level" value="authpriv">AuthPriv</input>
+	  </div>
+
+	  <dic class="form-group" ng-if="system.community.v3.level != 'noauthnopriv">
+	    <label>Authentication Protocol</label>
+	    <input type="text">
+
+	  <div class="form-group">
+	    <label>Authentication</label>
+	    <input type="radio" ng-model="system.community.v3.auth" value="noauth">NoAuth</input>
+	    <input type="radio" ng-model="system.community.v3.auth" value="hmacmd5">HMAC MD5</input>
+	    <input type="radio" ng-model="system.community.v3.auth" value="hmacsha">HMAC SHA</input>
+	  </div>
+
+	  <div class="form-group" ng-if="system.community.v3.auth != 'hmac">
+	</div>
 
         <button type="submit" class="btn btn-primary">Apply</button>
       </form>
