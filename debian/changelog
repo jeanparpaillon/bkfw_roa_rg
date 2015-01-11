@@ -1,8 +1,14 @@
-bkfw (0.2.9) UNRELEASED; urgency=medium
+bkfw (0.2.10) UNRELEASED; urgency=medium
+
+  * Add preinst script for fixing previous broken install
+
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Sun, 11 Jan 2015 18:50:36 +0100
+
+bkfw (0.2.9) wheezy; urgency=medium
 
   * Fix packaging
 
- -- Jean Parpaillon <jean.parpaillon@free.fr>  Sat, 10 Jan 2015 18:59:46 +0100
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Sun, 11 Jan 2015 18:50:29 +0100
 
 bkfw (0.2.8) wheezy; urgency=medium
 

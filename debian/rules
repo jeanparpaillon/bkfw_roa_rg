@@ -10,7 +10,6 @@ override_dh_clean:
 
 override_dh_auto_install:
 	dh_auto_install
-	-rm -rf rel/bkfw/erts-6.1/*
 	mkdir -p rel/bkfw/erts-6.1
 	ln -s /usr/lib/erlang/erts-6.1/bin rel/bkfw/erts-6.1/
 	mkdir -p debian/cereal
