@@ -1,8 +1,8 @@
 -define(DEBUG, true).
 
 -ifdef(DEBUG).
--define(debug(Msg), io:format("DEBUG: " ++ Msg)).
--define(debug(Msg, Data), io:format("DEBUG: " ++ Msg, Data)).
+-define(debug(Msg), case application:get_env(bkfw, debug, true) of true -> io:format("DEBUG: " ++ Msg); false -> true end).
+-define(debug(Msg, Data), case application:get_env(bkfw, debug, true) of true -> io:format("DEBUG: " ++ Msg, Data); false -> true end).
 -else.
 -define(debug(_Msg), true).
 -define(debug(_Msg, _Data), true).

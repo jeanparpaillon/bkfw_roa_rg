@@ -44,6 +44,7 @@
 	 {system_cmd, true},
 	 {password, {md5, "MjEyMzJmMjk3YTU3YTVhNzQzODk0YTBlNGE4MDFmYzM="}},
 	 {net, "/etc/network/interfaces"},
-	 {netif, "eth0"}
+	 {netif, "eth0"},
+	 {debug, true}
 	]}
  ]}.

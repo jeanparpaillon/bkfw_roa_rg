@@ -223,7 +223,8 @@ handle_alarms([Name  | Tail], #state{curInternalTemp=IT, powerSupply=PS}=S) ->
 
 
 get_ets_value(Key, Default) ->
-    case ets:lookup(?TID, Key) of
+    try ets:lookup(?TID, Key) of
 	[{Key, V}] -> V;
 	[] -> Default
+    catch _:_ -> Default
     end.

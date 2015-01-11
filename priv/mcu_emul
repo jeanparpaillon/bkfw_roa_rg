@@ -114,11 +114,11 @@ loop(#state{port=Port, tid=Tid}=S, Acc) ->
 	    Msg = << Acc/binary, Bin/binary >>,
 	    ?debug("received: ~p~n", [Msg]),
 	    case bkfw_parser:parse(Msg) of
-		{error, Err} ->
+		{error, Err, _} ->
 		    ?error("parse error: ~s~n", [Err]);
-		eof ->
+		{eof, _} ->
 		    ok;
-		{ok, {0, Cmd, Args}} ->
+		{ok, {0, Cmd, Args}, _} ->
 		    Obj = case ets:lookup(Tid, 0) of
 			      [] ->
 				  #edfa{internalTemp=random:uniform()*100,
@@ -127,7 +127,7 @@ loop(#state{port=Port, tid=Tid}=S, Acc) ->
 			  end,
 		    ets:insert(Tid, handle_msg(Obj, Cmd, Args, S)),
 		    loop(S, <<>>);
-		{ok, {Idx, Cmd, Args}} ->
+		{ok, {Idx, Cmd, Args}, _} ->
 		    Obj = case ets:lookup(Tid, Idx) of
 			      [] ->
 				  #mcu{
@@ -235,7 +235,8 @@ handle_msg(#mcu{index=Addr, curInternalTemp=IT}=Mcu, rit, [], #state{port=To}=S)
     {S, Mcu#mcu{curInternalTemp=ran(IT)}};
 
 handle_msg(#edfa{}=Edfa, ri, [], #state{port=To}=S) ->
-    reply(To, 0, ["Vendor= ", Edfa#edfa.vendor, "\r\n",
+    reply(To, 0, ["I\r\n",
+		  "Vendor= ", Edfa#edfa.vendor, "\r\n",
 		     "Module= ", Edfa#edfa.moduleType, "\r\n",
 		     "HW Ver= ", Edfa#edfa.hwVer, "\r\n",
 		     "HW Rev= ", Edfa#edfa.hwRev, "\r\n",
@@ -247,7 +248,8 @@ handle_msg(#edfa{}=Edfa, ri, [], #state{port=To}=S) ->
     {S, Edfa};
 
 handle_msg(#mcu{index=Addr}=Mcu, ri, [], #state{port=To}=S) ->
-    reply(To, Addr, ["Vendor= ", Mcu#mcu.vendor, "\r\n",
+    reply(To, Addr, ["I\r\n",
+		     "Vendor= ", Mcu#mcu.vendor, "\r\n",
 		     "Module= ", Mcu#mcu.moduleType, "\r\n",
 		     "HW Ver= ", Mcu#mcu.hwVer, "\r\n",
 		     "HW Rev= ", Mcu#mcu.hwRev, "\r\n",

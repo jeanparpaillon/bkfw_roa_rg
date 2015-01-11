@@ -9,10 +9,11 @@
 
 -export([token/1]).
 
--type token_ret() :: {ok, token(), binary()} | eof | {error, term()}.
+-type token_ret() :: {ok, token(), binary()} | {eof, binary()} | {error, term(), binary()}.
 
 -spec token(binary()) -> token_ret().
-token(<<>>) -> eof;
+token(<<>>) -> {eof, <<>>};
+token(<<13, 13, 10, R/bits>>) -> {eof, R};
 token(<< $\s, R/bits >>) -> token(R);
 token(<< $\t, R/bits >>) -> token(R);
 token(<< $=, R/bits >>) -> s_value(R, <<>>);
@@ -39,12 +40,13 @@ token(<< $6, R/bits >>) -> s_num(R, 6);
 token(<< $7, R/bits >>) -> s_num(R, 7);
 token(<< $8, R/bits >>) -> s_num(R, 8);
 token(<< $9, R/bits >>) -> s_num(R, 9);
-token(<< C, _R/bits >>) -> {error, io_lib:format("Invalid char: ~p", [C])}.
+token(<< C, R/bits >>) -> {error, io_lib:format("Invalid char: ~p", [C]), R}.
 
 %%%
 %%% priv
 %%%
-s_hex_i(<<>>) -> {error, eof};
+s_hex_i(<<>>) -> {error, eof, <<>>};
+s_hex_i(<<13, 13, 10, R/bits>>) -> {error, eof, <<13, 13, 10, R/bits>>};
 s_hex_i(<< $0, R/bits >>) -> s_hex(R, 0);
 s_hex_i(<< $1, R/bits >>) -> s_hex(R, 1);
 s_hex_i(<< $2, R/bits >>) -> s_hex(R, 2);
@@ -61,9 +63,10 @@ s_hex_i(<< $c, R/bits >>) -> s_hex(R, 12);
 s_hex_i(<< $d, R/bits >>) -> s_hex(R, 13);
 s_hex_i(<< $e, R/bits >>) -> s_hex(R, 14);
 s_hex_i(<< $f, R/bits >>) -> s_hex(R, 15);
-s_hex_i(<< C, _R/bits >>) -> {error, io_lib:format("Invalid hex: ~p", [C])}.
+s_hex_i(<< C, R/bits >>) -> {error, io_lib:format("Invalid hex: ~p", [C]), R}.
 
 s_hex(<<>>, Acc) -> {ok, Acc, <<>>};
+s_hex(<<13, 13, 10, R/bits>>, Acc) -> {ok, Acc, <<13, 13, 10, R/bits>>};
 s_hex(<< $\s, R/bits >>, Acc) -> {ok, Acc, R};
 s_hex(<< $\t, R/bits >>, Acc) -> {ok, Acc, R};
 s_hex(<< $0, R/bits >>, Acc) -> s_hex(R, Acc * 16);
@@ -82,12 +85,14 @@ s_hex(<< $c, R/bits >>, Acc) -> s_hex(R, Acc * 16 + 12);
 s_hex(<< $d, R/bits >>, Acc) -> s_hex(R, Acc * 16 + 13);
 s_hex(<< $e, R/bits >>, Acc) -> s_hex(R, Acc * 16 + 14);
 s_hex(<< $f, R/bits >>, Acc) -> s_hex(R, Acc * 16 + 15);
-s_hex(<< C, _R/bits >>, _Acc) -> {error, io_lib:format("Invalid hex: ~p", [C])}.
+s_hex(<< C, R/bits >>, _Acc) -> {error, io_lib:format("Invalid hex: ~p", [C]), R}.
 
 s_value(<<>>, Acc) -> {ok, Acc, <<>>};
+s_value(<<13, 13, 10, R/bits>>, Acc) -> {ok, Acc, <<13, 13, 10, R/bits>>};
 s_value(<< C, R/bits >>, Acc) ->  s_value(R, << Acc/binary, C >>).
 
 s_string(<<>>, Acc) -> s_str_or_atom(Acc, <<>>);
+s_string(<<13, 13, 10, R/bits>>, Acc) -> s_str_or_atom(Acc, <<13, 13, 10, R/bits>>);
 s_string(<< $\s, R/bits >>, Acc) -> s_str_or_atom(Acc, R);
 s_string(<< $\t, R/bits >>, Acc) -> s_str_or_atom(Acc, R);
 s_string(<< C, R/bits >>, Acc) when C >= 65, C =< 90 ->        % upper-case letters
@@ -98,8 +103,8 @@ s_string(<< C, R/bits >>, Acc) when C >= 48, C =< 57 ->        % digit
     s_string(R, << Acc/binary, C >>);
 s_string(<< $_, R/bits >>, Acc) -> s_string(R, << Acc/binary, $_ >>);
 s_string(<< $:, R/bits >>, Acc) -> s_string(R, << Acc/binary, $: >>);
-s_string(<< C, _R/bits >>, _Acc) -> 
-    {error, io_lib:format("Invalid char in string: ~p", [C])}.
+s_string(<< C, R/bits >>, _Acc) -> 
+    {error, io_lib:format("Invalid char in string: ~p", [C]), R/bits}.
 
 s_str_or_atom(Str, Rest) ->
     case kw_to_atom(Str) of
@@ -108,6 +113,7 @@ s_str_or_atom(Str, Rest) ->
     end.
 
 s_num_i(<<>>) -> {ok, 0, <<>>};
+s_num_i(<<13, 13, 10, R/bits>>) -> {ok, 0, <<13, 13, 10, R/bits>>};
 s_num_i(<< $\s, R/bits >>) -> {ok, 0, R};
 s_num_i(<< $\t, R/bits >>) -> {ok, 0, R};
 s_num_i(<< $0, R/bits >>) -> s_num_i(R);
@@ -121,9 +127,10 @@ s_num_i(<< $7, R/bits >>) -> s_num(R, 7);
 s_num_i(<< $8, R/bits >>) -> s_num(R, 8);
 s_num_i(<< $9, R/bits >>) -> s_num(R, 9);
 s_num_i(<< $., R/bits >>) -> s_frac_i(R, 0);
-s_num_i(<< C, _R/bits >>) -> {error, io_lib:format("Invalid num: ~p", [C])}.
+s_num_i(<< C, R/bits >>) -> {error, io_lib:format("Invalid num: ~p", [C]), R}.
 
 s_num(<<>>, Acc) -> {ok, Acc, <<>>};
+s_num(<<13, 13, 10, R/bits>>, Acc) -> {ok, Acc, <<13, 13, 10, R/bits>>};
 s_num(<< $\s, R/bits >>, Acc) -> {ok, Acc, R};
 s_num(<< $\t, R/bits >>, Acc) -> {ok, Acc, R};
 s_num(<< $0, R/bits >>, Acc) -> s_num(R, Acc * 10);
@@ -137,9 +144,10 @@ s_num(<< $7, R/bits >>, Acc) -> s_num(R, Acc * 10 + 7);
 s_num(<< $8, R/bits >>, Acc) -> s_num(R, Acc * 10 + 8);
 s_num(<< $9, R/bits >>, Acc) -> s_num(R, Acc * 10 + 9);
 s_num(<< $., R/bits >>, Acc) -> s_frac_i(R, Acc);
-s_num(<< C, _R/bits >>, _Acc) ->  {error, io_lib:format("Invalid num: ~p", [C])}.
+s_num(<< C, R/bits >>, _Acc) ->  {error, io_lib:format("Invalid num: ~p", [C]), R}.
 
 s_frac_i(<<>>, _) -> {error, "Invalid number: missing fraction"};
+s_frac_i(<<13, 13, 10, R/bits>>, _) -> {error, "Invalid number: missing fraction", R};
 s_frac_i(<< $0, R/bits >>, Int) -> s_frac(R, Int, 0, 1);
 s_frac_i(<< $1, R/bits >>, Int) -> s_frac(R, Int, 1, 1);
 s_frac_i(<< $2, R/bits >>, Int) -> s_frac(R, Int, 2, 1);
@@ -150,9 +158,10 @@ s_frac_i(<< $6, R/bits >>, Int) -> s_frac(R, Int, 6, 1);
 s_frac_i(<< $7, R/bits >>, Int) -> s_frac(R, Int, 7, 1);
 s_frac_i(<< $8, R/bits >>, Int) -> s_frac(R, Int, 8, 1);
 s_frac_i(<< $9, R/bits >>, Int) -> s_frac(R, Int, 9, 1);
-s_frac_i(<< C, _R/bits >>, _) -> {error, io_lib:format("Invalid num: ~p", [C])}.
+s_frac_i(<< C, R/bits >>, _) -> {error, io_lib:format("Invalid num: ~p", [C]), R}.
 
 s_frac(<<>>, Int, Frac, E) -> {ok, Int + Frac / math:pow(10, E), <<>>};
+s_frac(<<13, 13, 10, R/bits>>, Int, Frac, E) -> {ok, Int + Frac / math:pow(10, E), <<13, 13, 10, R/bits>>};
 s_frac(<< $\s, R/bits >>, Int, Frac, E) -> {ok, Int + Frac / math:pow(10, E), R};
 s_frac(<< $\t, R/bits >>, Int, Frac, E) -> {ok, Int + Frac / math:pow(10, E), R};
 s_frac(<< $0, R/bits >>, Int, Frac, E) -> s_frac(R, Int, Frac * 10, E + 1);
@@ -165,7 +174,7 @@ s_frac(<< $6, R/bits >>, Int, Frac, E) -> s_frac(R, Int, Frac * 10 + 6, E + 1);
 s_frac(<< $7, R/bits >>, Int, Frac, E) -> s_frac(R, Int, Frac * 10 + 7, E + 1);
 s_frac(<< $8, R/bits >>, Int, Frac, E) -> s_frac(R, Int, Frac * 10 + 8, E + 1);
 s_frac(<< $9, R/bits >>, Int, Frac, E) -> s_frac(R, Int, Frac * 10 + 9, E + 1);
-s_frac(<< C, _R/bits >>, _, _, _) -> {error, io_lib:format("Invalid num: ~p", [C])}.
+s_frac(<< C, R/bits >>, _, _, _) -> {error, io_lib:format("Invalid num: ~p", [C]), R}.
 
 kw_to_atom(<<"ADI">>)       -> adi;
 kw_to_atom(<<"ALARMS:">>)   -> alarms;
@@ -175,6 +184,7 @@ kw_to_atom(<<"EDFA_TEMP">>) -> edfa_temp;
 kw_to_atom(<<"EDFA_PSU">>)  -> edfa_psu;
 kw_to_atom(<<"GC">>)        -> gc;
 kw_to_atom(<<"IT">>)        -> it;
+kw_to_atom(<<"I">>)         -> i;
 kw_to_atom(<<"LC">>)        -> lc;
 kw_to_atom(<<"LI">>)        -> li;
 kw_to_atom(<<"LO">>)        -> lo;

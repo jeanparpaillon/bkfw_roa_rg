@@ -13,12 +13,14 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	terminate/2, code_change/3]).
 
+-define(TRACE, "/tmp/bkfw.trace").
 -define(SERVER, ?MODULE).
 -record(state, {owner                 :: pid(),
 		com                   :: term(),
 		port    = undefined   :: port(),
 		data    = <<>>        :: binary(),
-		msg     = undefined   :: msg()}).
+		msg     = undefined   :: msg(),
+		trace}).
 
 %%%
 %%% API
@@ -51,6 +53,10 @@ send(Com, To, Msg) when is_integer(To) ->
 %%--------------------------------------------------------------------
 -spec init(pid()) -> {ok, term()} | {error, term()} | ignore.
 init(Owner) ->
+    Trace = case application:get_env(bkfw, debug, true) of
+		true -> {ok, Dev} = file:open(?TRACE, [write]), Dev;
+		false -> undefined
+	    end,
     case application:get_env(bkfw, com) of
 	undefined ->
 	    {stop, {missing_parameter, com}};
@@ -59,7 +65,7 @@ init(Owner) ->
 	    case cereal:open_tty(Com) of
 		{ok, Fd} ->
 		    Port = open_port({fd, Fd, Fd}, [binary, stream, {line, 80}]),
-		    {ok, #state{owner=Owner, com=Fd, port=Port}};
+		    {ok, #state{owner=Owner, com=Fd, port=Port, trace=Trace}};
 		{error, Err} ->
 		    ?error("Error opening com port: ~p~n", [Err]),
 		    {stop, {error, Err}}
@@ -80,9 +86,10 @@ init(Owner) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({To, Msg}, {Pid, _Tag}, #state{owner=Pid, port=Port}=S) ->
+handle_call({To, Msg}, {Pid, _Tag}, #state{owner=Pid, port=Port, trace=Trace}=S) ->
     bkfw_mutex:wait(),
     Bin = ["0x", io_lib:format("~2.16.0b", [To]), " ", Msg, "\r\n"],
+    debug_com(Trace, Bin),
     Port ! {self(), {command, iolist_to_binary(Bin)}},
     {reply, ok, S};
 
@@ -116,21 +123,23 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info({Port, {data, {noeol, Bin}}}, #state{port=Port, data=Acc}=S) ->
+handle_info({Port, {data, {noeol, Bin}}}, #state{port=Port, data=Acc, trace=Trace}=S) ->
+    debug_com(Trace, Bin),
     {noreply, S#state{data= << Acc/binary, Bin/binary >>}};
 
-handle_info({Port, {data, {eol, Bin}}}, #state{msg=Msg, owner=Owner, port=Port, data=Acc}=S) ->
+handle_info({Port, {data, {eol, Bin}}}, #state{msg=Msg, owner=Owner, port=Port, data=Acc, trace=Trace}=S) ->
+    debug_com(Trace, [Bin, "\n"]),
     case bkfw_parser:parse(<< Acc/binary, Bin/binary >>, Msg) of
-	{ok, Msg2} ->
+	{ok, Msg2, Rest} ->
 	    Owner ! {msg, Msg2},
 	    bkfw_mutex:signal(),
-	    {noreply, S#state{msg=undefined, data= <<>>}};
-	{more, Msg2} ->
-	    {noreply, S#state{msg=Msg2, data= <<>>}};
-	{error, Err} ->
+	    {noreply, S#state{msg=undefined, data=Rest}};
+	{more, Msg2, Rest} ->
+	    {noreply, S#state{msg=Msg2, data=Rest}};
+	{error, Err, Rest} ->
 	    Owner ! {error, Err},
 	    bkfw_mutex:signal(),
-	    {noreply, S#state{data= <<>>}}
+	    {noreply, S#state{msg=undefined, data=Rest}}
     end;
 
 handle_info(_Info, State) ->
@@ -168,3 +177,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%%
 %%% Priv
 %%%
+debug_com(undefined, _) -> ok;
+debug_com(Dev, Bytes) -> file:write(Dev, Bytes).
+    
