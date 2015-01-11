@@ -88,8 +88,9 @@ init(Owner) ->
 %%--------------------------------------------------------------------
 handle_call({To, Msg}, {Pid, _Tag}, #state{owner=Pid, port=Port, trace=Trace}=S) ->
     bkfw_mutex:wait(),
+    debug_com(Trace, "[COM] Acquire\n"),
     Bin = ["0x", io_lib:format("~2.16.0b", [To]), " ", Msg, "\r\n"],
-    debug_com(Trace, Bin),
+    debug_com(Trace, ["[RPI -> CPU] ", Bin]),
     Port ! {self(), {command, iolist_to_binary(Bin)}},
     {reply, ok, S};
 
@@ -124,14 +125,15 @@ handle_cast(_Msg, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_info({Port, {data, {noeol, Bin}}}, #state{port=Port, data=Acc, trace=Trace}=S) ->
-    debug_com(Trace, Bin),
+    debug_com(Trace, ["[RPI <- CPU] ", Bin]),
     {noreply, S#state{data= << Acc/binary, Bin/binary >>}};
 
 handle_info({Port, {data, {eol, Bin}}}, #state{msg=Msg, owner=Owner, port=Port, data=Acc, trace=Trace}=S) ->
-    debug_com(Trace, [Bin, "\n"]),
+    debug_com(Trace, ["[RPI <- CPU] ", Bin, "\n"]),
     case bkfw_parser:parse(<< Acc/binary, Bin/binary >>, Msg) of
 	{ok, Msg2, Rest} ->
 	    Owner ! {msg, Msg2},
+	    debug_com(Trace, "[COM] Release\n"),
 	    bkfw_mutex:signal(),
 	    {noreply, S#state{msg=undefined, data=Rest}};
 	{more, Msg2, Rest} ->
