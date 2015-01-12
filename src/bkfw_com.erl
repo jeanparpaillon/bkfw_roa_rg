@@ -129,7 +129,8 @@ handle_info({Port, {data, {noeol, Bin}}}, #state{port=Port, data=Acc, trace=Trac
     debug_com(Trace, ["[RPI <- CPU] ", Bin]),
     {noreply, S#state{data= << Acc/binary, Bin/binary >>}};
 
-handle_info({Port, {data, {eol, Bin}}}, #state{port=Port, crlf=$\n}=S) ->
+handle_info({Port, {data, {eol, Bin}}}, #state{port=Port, crlf=$\n, trace=Trace}=S) ->
+    debug_com(Trace, ["[RPI <- CPU] ", Bin, "\r"]),
     {noreply, S#state{data=Bin, crlf=$\r}};
 
 handle_info({Port, {data, {eol, Bin}}}, #state{msg=Msg, owner=Owner, crlf=$\r,
