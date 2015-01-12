@@ -136,7 +136,14 @@ handle_call({get_kv, community}, _From, State) ->
     case snmpa_conf:read_community_config(get_snmp_configdir()) of
 	{ok, Com} ->
 	    Ret = [{public, list_to_binary(element(2, lists:keyfind("public", 1, Com)))},
-		   {restricted, list_to_binary(element(2, lists:keyfind("private", 1, Com)))}],
+		   {restricted, list_to_binary(element(2, lists:keyfind("private", 1, Com)))},
+		   {v3, [
+			 {level, noauthnopriv},
+			 {auth, hmacmd5},
+			 {authKey, <<>>},
+			 {priv, aes},
+			 {privKey, <<>>}
+			]}],
 	    {reply, Ret, State};
 	{error, Err} ->
 	    {reply, {error, Err}, State}
