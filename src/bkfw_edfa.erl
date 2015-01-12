@@ -51,7 +51,7 @@ get_kv() ->
      {curInternalTemp, get_ets_value(edfaCurInternalTemp, 0.0)},
      {powerSupply,     get_ets_value(edfaPowerSupply, 0.0)},
      {vendor,          get_ets_value(edfaVendor, <<>>)},
-     {moduleType,      get_ets_value(moduleType, <<>>)},
+     {moduleType,      get_ets_value(edfaModuleType, <<>>)},
      {hwVer,           get_ets_value(edfaHWVer, <<>>)},
      {hwRev,           get_ets_value(edfaHWRev, <<>>)},
      {swVer,           get_ets_value(edfaSWVer, <<>>)},
