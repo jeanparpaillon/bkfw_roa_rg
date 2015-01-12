@@ -159,18 +159,27 @@
 	    <input type="radio" ng-model="system.community.v3.level" value="authpriv">AuthPriv</input>
 	  </div>
 
-	  <dic class="form-group" ng-if="system.community.v3.level != 'noauthnopriv">
+	  <div class="form-group" ng-if="system.community.v3.level != 'noauthnopriv">
 	    <label>Authentication Protocol</label>
-	    <input type="text">
-
-	  <div class="form-group">
-	    <label>Authentication</label>
-	    <input type="radio" ng-model="system.community.v3.auth" value="noauth">NoAuth</input>
-	    <input type="radio" ng-model="system.community.v3.auth" value="hmacmd5">HMAC MD5</input>
-	    <input type="radio" ng-model="system.community.v3.auth" value="hmacsha">HMAC SHA</input>
+	    <input type="radio" ng-model="system.community.v3.auth" value="hmacmd5">MD5</input>
+	    <input type="radio" ng-model="system.community.v3.auth" value="hmacsha">SHA</input>
 	  </div>
 
-	  <div class="form-group" ng-if="system.community.v3.auth != 'hmac">
+	  <div class="form-group" ng-if="system.community.v3.level != 'noauthnopriv">
+	    <label>Authentication Key (passphrase)</label>
+	    <input type="input" autocomplete="off" ng-model="system.community.v3.authKey" />
+	  </div>
+
+	  <div class="form-group" ng-if="system.community.v3.level == 'authpriv'">
+	    <label>Privacy Protocol</label>
+	    <input type="radio" ng-model="system.community.v3.priv" value="aes">AES</input>
+	    <input type="radio" ng-model="system.community.v3.priv" value="des">DES</input>
+	  </div>
+
+	  <div class="form-group" ng-if="system.community.v3.level == 'authpriv'">
+	    <label>Private Key (passphrase)</label>
+	    <input type="input" autocomplete="off" ng-model="system.community.v3.privKey" />
+	  </div>
 	</div>
 
         <button type="submit" class="btn btn-primary">Apply</button>
