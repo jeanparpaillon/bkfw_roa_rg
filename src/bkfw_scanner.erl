@@ -28,16 +28,17 @@ token(<< Alpha, R/bits >>, SoFar) when Alpha >= 97, Alpha =< 122 ->
     s_string(R, << Alpha >>, << SoFar/bits, Alpha >>);  % Lower-case alpha
 token(<< $_, R/bits >>, SoFar) -> 
     s_string(R, << $_ >>, << SoFar/bits, $_ >>);
-token(<< $0, R/bits >>, SoFar) -> s_num_i(R, << SoFar/bits, $0 >>);
-token(<< $1, R/bits >>, SoFar) -> s_num(R, 1, << SoFar/bits, $1 >>);
-token(<< $2, R/bits >>, SoFar) -> s_num(R, 2, << SoFar/bits, $2 >>);
-token(<< $3, R/bits >>, SoFar) -> s_num(R, 3, << SoFar/bits, $3 >>);
-token(<< $4, R/bits >>, SoFar) -> s_num(R, 4, << SoFar/bits, $4 >>);
-token(<< $5, R/bits >>, SoFar) -> s_num(R, 5, << SoFar/bits, $5 >>);
-token(<< $6, R/bits >>, SoFar) -> s_num(R, 6, << SoFar/bits, $6 >>);
-token(<< $7, R/bits >>, SoFar) -> s_num(R, 7, << SoFar/bits, $7 >>);
-token(<< $8, R/bits >>, SoFar) -> s_num(R, 8, << SoFar/bits, $8 >>);
-token(<< $9, R/bits >>, SoFar) -> s_num(R, 9, << SoFar/bits, $9 >>);
+token(<< $-, R/bits >>, SoFar) -> s_num_i(R, -1, << SoFar/bits, $- >>);
+token(<< $0, R/bits >>, SoFar) -> s_num_i(R, 1, << SoFar/bits, $0 >>);
+token(<< $1, R/bits >>, SoFar) -> s_num(R, 1, 1, << SoFar/bits, $1 >>);
+token(<< $2, R/bits >>, SoFar) -> s_num(R, 1, 2, << SoFar/bits, $2 >>);
+token(<< $3, R/bits >>, SoFar) -> s_num(R, 1, 3, << SoFar/bits, $3 >>);
+token(<< $4, R/bits >>, SoFar) -> s_num(R, 1, 4, << SoFar/bits, $4 >>);
+token(<< $5, R/bits >>, SoFar) -> s_num(R, 1, 5, << SoFar/bits, $5 >>);
+token(<< $6, R/bits >>, SoFar) -> s_num(R, 1, 6, << SoFar/bits, $6 >>);
+token(<< $7, R/bits >>, SoFar) -> s_num(R, 1, 7, << SoFar/bits, $7 >>);
+token(<< $8, R/bits >>, SoFar) -> s_num(R, 1, 8, << SoFar/bits, $8 >>);
+token(<< $9, R/bits >>, SoFar) -> s_num(R, 1, 9, << SoFar/bits, $9 >>);
 token(<< C, R/bits >>, _) -> {error, io_lib:format("Invalid char: ~p", [C]), R}.
 
 %%%
@@ -134,73 +135,73 @@ s_str_or_atom(Str, Rest) ->
 	B -> {ok, B, Rest}
     end.
 
-s_num_i(<<>>, SoFar) -> {more, SoFar};
-s_num_i(<< $\r, $\n>>, _) -> {ok, 0, <<>>};
-s_num_i(<< $\r, $\n, R/bits>>, _) -> {ok, 0, << $\r, $\n, R/bits>>};
-s_num_i(<< $\s, R/bits >>, _) -> {ok, 0, R};
-s_num_i(<< $\t, R/bits >>, _) -> {ok, 0, R};
-s_num_i(<< $0, R/bits >>, SoFar) -> s_num_i(R, << SoFar/bits, $0 >>);
-s_num_i(<< $1, R/bits >>, SoFar) -> s_num(R, 1, << SoFar/bits, $1 >>);
-s_num_i(<< $2, R/bits >>, SoFar) -> s_num(R, 2, << SoFar/bits, $2 >>);
-s_num_i(<< $3, R/bits >>, SoFar) -> s_num(R, 3, << SoFar/bits, $3 >>);
-s_num_i(<< $4, R/bits >>, SoFar) -> s_num(R, 4, << SoFar/bits, $4 >>);
-s_num_i(<< $5, R/bits >>, SoFar) -> s_num(R, 5, << SoFar/bits, $5 >>);
-s_num_i(<< $6, R/bits >>, SoFar) -> s_num(R, 6, << SoFar/bits, $6 >>);
-s_num_i(<< $7, R/bits >>, SoFar) -> s_num(R, 7, << SoFar/bits, $7 >>);
-s_num_i(<< $8, R/bits >>, SoFar) -> s_num(R, 8, << SoFar/bits, $8 >>);
-s_num_i(<< $9, R/bits >>, SoFar) -> s_num(R, 9, << SoFar/bits, $9 >>);
-s_num_i(<< $., R/bits >>, SoFar) -> s_frac_i(R, 0, << SoFar/bits, $. >>);
-s_num_i(<< C, R/bits >>, _) -> {error, io_lib:format("Invalid num: ~p", [C]), R}.
+s_num_i(<<>>, _, SoFar) -> {more, SoFar};
+s_num_i(<< $\r, $\n>>, _, _) -> {ok, 0, <<>>};
+s_num_i(<< $\r, $\n, R/bits>>, _, _) -> {ok, 0, << $\r, $\n, R/bits>>};
+s_num_i(<< $\s, R/bits >>, _, _) -> {ok, 0, R};
+s_num_i(<< $\t, R/bits >>, _, _) -> {ok, 0, R};
+s_num_i(<< $0, R/bits >>, Sign, SoFar) -> s_num_i(R, Sign, << SoFar/bits, $0 >>);
+s_num_i(<< $1, R/bits >>, Sign, SoFar) -> s_num(R, Sign, 1, << SoFar/bits, $1 >>);
+s_num_i(<< $2, R/bits >>, Sign, SoFar) -> s_num(R, Sign, 2, << SoFar/bits, $2 >>);
+s_num_i(<< $3, R/bits >>, Sign, SoFar) -> s_num(R, Sign, 3, << SoFar/bits, $3 >>);
+s_num_i(<< $4, R/bits >>, Sign, SoFar) -> s_num(R, Sign, 4, << SoFar/bits, $4 >>);
+s_num_i(<< $5, R/bits >>, Sign, SoFar) -> s_num(R, Sign, 5, << SoFar/bits, $5 >>);
+s_num_i(<< $6, R/bits >>, Sign, SoFar) -> s_num(R, Sign, 6, << SoFar/bits, $6 >>);
+s_num_i(<< $7, R/bits >>, Sign, SoFar) -> s_num(R, Sign, 7, << SoFar/bits, $7 >>);
+s_num_i(<< $8, R/bits >>, Sign, SoFar) -> s_num(R, Sign, 8, << SoFar/bits, $8 >>);
+s_num_i(<< $9, R/bits >>, Sign, SoFar) -> s_num(R, Sign, 9, << SoFar/bits, $9 >>);
+s_num_i(<< $., R/bits >>, Sign, SoFar) -> s_frac_i(R, Sign, 0, << SoFar/bits, $. >>);
+s_num_i(<< C, R/bits >>, _, _) -> {error, io_lib:format("Invalid num: ~p", [C]), R}.
 
-s_num(<<>>, _, SoFar) -> {more, SoFar};
-s_num(<<$\r, $\n>>, Acc, _) -> {ok, Acc, <<>>};
-s_num(<<$\r, $\n, R/bits>>, Acc, _) -> {ok, Acc, <<$\r, $\n, R/bits>>};
-s_num(<< $\s, R/bits >>, Acc, _) -> {ok, Acc, R};
-s_num(<< $\t, R/bits >>, Acc, _) -> {ok, Acc, R};
-s_num(<< $0, R/bits >>, Acc, SoFar) -> s_num(R, Acc * 10, << SoFar/bits, $0 >>);
-s_num(<< $1, R/bits >>, Acc, SoFar) -> s_num(R, Acc * 10 + 1, << SoFar/bits, $1 >>);
-s_num(<< $2, R/bits >>, Acc, SoFar) -> s_num(R, Acc * 10 + 2, << SoFar/bits, $2 >>);
-s_num(<< $3, R/bits >>, Acc, SoFar) -> s_num(R, Acc * 10 + 3, << SoFar/bits, $3 >>);
-s_num(<< $4, R/bits >>, Acc, SoFar) -> s_num(R, Acc * 10 + 4, << SoFar/bits, $4 >>);
-s_num(<< $5, R/bits >>, Acc, SoFar) -> s_num(R, Acc * 10 + 5, << SoFar/bits, $5 >>);
-s_num(<< $6, R/bits >>, Acc, SoFar) -> s_num(R, Acc * 10 + 6, << SoFar/bits, $6 >>);
-s_num(<< $7, R/bits >>, Acc, SoFar) -> s_num(R, Acc * 10 + 7, << SoFar/bits, $7 >>);
-s_num(<< $8, R/bits >>, Acc, SoFar) -> s_num(R, Acc * 10 + 8, << SoFar/bits, $8 >>);
-s_num(<< $9, R/bits >>, Acc, SoFar) -> s_num(R, Acc * 10 + 9, << SoFar/bits, $9 >>);
-s_num(<< $., R/bits >>, Acc, SoFar) -> s_frac_i(R, Acc, << SoFar/bits, $. >>);
-s_num(<< C, R/bits >>, _Acc, _) ->  {error, io_lib:format("Invalid num: ~p", [C]), R}.
+s_num(<<>>, _, _, SoFar) -> {more, SoFar};
+s_num(<<$\r, $\n>>, Sign, Acc, _) -> {ok, Sign * Acc, <<>>};
+s_num(<<$\r, $\n, R/bits>>, Sign, Acc, _) -> {ok, Sign * Acc, <<$\r, $\n, R/bits>>};
+s_num(<< $\s, R/bits >>, Sign, Acc, _) -> {ok, Sign * Acc, R};
+s_num(<< $\t, R/bits >>, Sign, Acc, _) -> {ok, Sign * Acc, R};
+s_num(<< $0, R/bits >>, Sign, Acc, SoFar) -> s_num(R, Sign, Acc * 10, << SoFar/bits, $0 >>);
+s_num(<< $1, R/bits >>, Sign, Acc, SoFar) -> s_num(R, Sign, Acc * 10 + 1, << SoFar/bits, $1 >>);
+s_num(<< $2, R/bits >>, Sign, Acc, SoFar) -> s_num(R, Sign, Acc * 10 + 2, << SoFar/bits, $2 >>);
+s_num(<< $3, R/bits >>, Sign, Acc, SoFar) -> s_num(R, Sign, Acc * 10 + 3, << SoFar/bits, $3 >>);
+s_num(<< $4, R/bits >>, Sign, Acc, SoFar) -> s_num(R, Sign, Acc * 10 + 4, << SoFar/bits, $4 >>);
+s_num(<< $5, R/bits >>, Sign, Acc, SoFar) -> s_num(R, Sign, Acc * 10 + 5, << SoFar/bits, $5 >>);
+s_num(<< $6, R/bits >>, Sign, Acc, SoFar) -> s_num(R, Sign, Acc * 10 + 6, << SoFar/bits, $6 >>);
+s_num(<< $7, R/bits >>, Sign, Acc, SoFar) -> s_num(R, Sign, Acc * 10 + 7, << SoFar/bits, $7 >>);
+s_num(<< $8, R/bits >>, Sign, Acc, SoFar) -> s_num(R, Sign, Acc * 10 + 8, << SoFar/bits, $8 >>);
+s_num(<< $9, R/bits >>, Sign, Acc, SoFar) -> s_num(R, Sign, Acc * 10 + 9, << SoFar/bits, $9 >>);
+s_num(<< $., R/bits >>, Sign, Acc, SoFar) -> s_frac_i(R, Sign, Acc, << SoFar/bits, $. >>);
+s_num(<< C, R/bits >>, _Sign, _Acc, _) ->  {error, io_lib:format("Invalid num: ~p", [C]), R}.
 
-s_frac_i(<<>>, _, SoFar) -> {more, SoFar};
-s_frac_i(<<$\r, $\n>>, _, _) -> {error, "Invalid number: missing fraction", <<>>};
-s_frac_i(<<$\r, $\n, R/bits>>, _, _) -> {error, "Invalid number: missing fraction", R};
-s_frac_i(<< $0, R/bits >>, Int, SoFar) -> s_frac(R, Int, 0, 1, << SoFar/bits, $0 >>);
-s_frac_i(<< $1, R/bits >>, Int, SoFar) -> s_frac(R, Int, 1, 1, << SoFar/bits, $1 >>);
-s_frac_i(<< $2, R/bits >>, Int, SoFar) -> s_frac(R, Int, 2, 1, << SoFar/bits, $2 >>);
-s_frac_i(<< $3, R/bits >>, Int, SoFar) -> s_frac(R, Int, 3, 1, << SoFar/bits, $3 >>);
-s_frac_i(<< $4, R/bits >>, Int, SoFar) -> s_frac(R, Int, 4, 1, << SoFar/bits, $4 >>);
-s_frac_i(<< $5, R/bits >>, Int, SoFar) -> s_frac(R, Int, 5, 1, << SoFar/bits, $5 >>);
-s_frac_i(<< $6, R/bits >>, Int, SoFar) -> s_frac(R, Int, 6, 1, << SoFar/bits, $6 >>);
-s_frac_i(<< $7, R/bits >>, Int, SoFar) -> s_frac(R, Int, 7, 1, << SoFar/bits, $7 >>);
-s_frac_i(<< $8, R/bits >>, Int, SoFar) -> s_frac(R, Int, 8, 1, << SoFar/bits, $8 >>);
-s_frac_i(<< $9, R/bits >>, Int, SoFar) -> s_frac(R, Int, 9, 1, << SoFar/bits, $9 >>);
-s_frac_i(<< C, R/bits >>, _, _) -> {error, io_lib:format("Invalid num: ~p", [C]), R}.
+s_frac_i(<<>>, _, _, SoFar) -> {more, SoFar};
+s_frac_i(<<$\r, $\n>>, _, _, _) -> {error, "Invalid number: missing fraction", <<>>};
+s_frac_i(<<$\r, $\n, R/bits>>, _, _, _) -> {error, "Invalid number: missing fraction", R};
+s_frac_i(<< $0, R/bits >>, Sign, Int, SoFar) -> s_frac(R, Sign, Int, 0, 1, << SoFar/bits, $0 >>);
+s_frac_i(<< $1, R/bits >>, Sign, Int, SoFar) -> s_frac(R, Sign, Int, 1, 1, << SoFar/bits, $1 >>);
+s_frac_i(<< $2, R/bits >>, Sign, Int, SoFar) -> s_frac(R, Sign, Int, 2, 1, << SoFar/bits, $2 >>);
+s_frac_i(<< $3, R/bits >>, Sign, Int, SoFar) -> s_frac(R, Sign, Int, 3, 1, << SoFar/bits, $3 >>);
+s_frac_i(<< $4, R/bits >>, Sign, Int, SoFar) -> s_frac(R, Sign, Int, 4, 1, << SoFar/bits, $4 >>);
+s_frac_i(<< $5, R/bits >>, Sign, Int, SoFar) -> s_frac(R, Sign, Int, 5, 1, << SoFar/bits, $5 >>);
+s_frac_i(<< $6, R/bits >>, Sign, Int, SoFar) -> s_frac(R, Sign, Int, 6, 1, << SoFar/bits, $6 >>);
+s_frac_i(<< $7, R/bits >>, Sign, Int, SoFar) -> s_frac(R, Sign, Int, 7, 1, << SoFar/bits, $7 >>);
+s_frac_i(<< $8, R/bits >>, Sign, Int, SoFar) -> s_frac(R, Sign, Int, 8, 1, << SoFar/bits, $8 >>);
+s_frac_i(<< $9, R/bits >>, Sign, Int, SoFar) -> s_frac(R, Sign, Int, 9, 1, << SoFar/bits, $9 >>);
+s_frac_i(<< C, R/bits >>, _, _, _) -> {error, io_lib:format("Invalid num: ~p", [C]), R}.
 
-s_frac(<<>>, _, _, _, SoFar) -> {more, SoFar};
-s_frac(<<$\r, $\n>>, Int, Frac, E, _) -> {ok, Int + Frac / math:pow(10, E), <<>>};
-s_frac(<<$\r, $\n, R/bits>>, Int, Frac, E, _) -> {ok, Int + Frac / math:pow(10, E), <<$\r, $\n, R/bits>>};
-s_frac(<< $\s, R/bits >>, Int, Frac, E, _) -> {ok, Int + Frac / math:pow(10, E), R};
-s_frac(<< $\t, R/bits >>, Int, Frac, E, _) -> {ok, Int + Frac / math:pow(10, E), R};
-s_frac(<< $0, R/bits >>, Int, Frac, E, SoFar) -> s_frac(R, Int, Frac * 10, E + 1, << SoFar/bits, $0 >>);
-s_frac(<< $1, R/bits >>, Int, Frac, E, SoFar) -> s_frac(R, Int, Frac * 10 + 1, E + 1, << SoFar/bits, $1 >>);
-s_frac(<< $2, R/bits >>, Int, Frac, E, SoFar) -> s_frac(R, Int, Frac * 10 + 2, E + 1, << SoFar/bits, $2 >>);
-s_frac(<< $3, R/bits >>, Int, Frac, E, SoFar) -> s_frac(R, Int, Frac * 10 + 3, E + 1, << SoFar/bits, $3 >>);
-s_frac(<< $4, R/bits >>, Int, Frac, E, SoFar) -> s_frac(R, Int, Frac * 10 + 4, E + 1, << SoFar/bits, $4 >>);
-s_frac(<< $5, R/bits >>, Int, Frac, E, SoFar) -> s_frac(R, Int, Frac * 10 + 5, E + 1, << SoFar/bits, $5 >>);
-s_frac(<< $6, R/bits >>, Int, Frac, E, SoFar) -> s_frac(R, Int, Frac * 10 + 6, E + 1, << SoFar/bits, $6 >>);
-s_frac(<< $7, R/bits >>, Int, Frac, E, SoFar) -> s_frac(R, Int, Frac * 10 + 7, E + 1, << SoFar/bits, $7 >>);
-s_frac(<< $8, R/bits >>, Int, Frac, E, SoFar) -> s_frac(R, Int, Frac * 10 + 8, E + 1, << SoFar/bits, $8 >>);
-s_frac(<< $9, R/bits >>, Int, Frac, E, SoFar) -> s_frac(R, Int, Frac * 10 + 9, E + 1, << SoFar/bits, $9 >>);
-s_frac(<< C, R/bits >>, _, _, _, _) -> {error, io_lib:format("Invalid num: ~p", [C]), R}.
+s_frac(<<>>, _, _, _, _, SoFar) -> {more, SoFar};
+s_frac(<<$\r, $\n>>, Sign, Int, Frac, E, _) -> {ok, Sign * (Int + Frac / math:pow(10, E)), <<>>};
+s_frac(<<$\r, $\n, R/bits>>, Sign, Int, Frac, E, _) -> {ok, Sign * (Int + Frac / math:pow(10, E)), <<$\r, $\n, R/bits>>};
+s_frac(<< $\s, R/bits >>, Sign, Int, Frac, E, _) -> {ok, Sign * (Int + Frac / math:pow(10, E)), R};
+s_frac(<< $\t, R/bits >>, Sign, Int, Frac, E, _) -> {ok, Sign * (Int + Frac / math:pow(10, E)), R};
+s_frac(<< $0, R/bits >>, Sign, Int, Frac, E, SoFar) -> s_frac(R, Sign, Int, Frac * 10, E + 1, << SoFar/bits, $0 >>);
+s_frac(<< $1, R/bits >>, Sign, Int, Frac, E, SoFar) -> s_frac(R, Sign, Int, Frac * 10 + 1, E + 1, << SoFar/bits, $1 >>);
+s_frac(<< $2, R/bits >>, Sign, Int, Frac, E, SoFar) -> s_frac(R, Sign, Int, Frac * 10 + 2, E + 1, << SoFar/bits, $2 >>);
+s_frac(<< $3, R/bits >>, Sign, Int, Frac, E, SoFar) -> s_frac(R, Sign, Int, Frac * 10 + 3, E + 1, << SoFar/bits, $3 >>);
+s_frac(<< $4, R/bits >>, Sign, Int, Frac, E, SoFar) -> s_frac(R, Sign, Int, Frac * 10 + 4, E + 1, << SoFar/bits, $4 >>);
+s_frac(<< $5, R/bits >>, Sign, Int, Frac, E, SoFar) -> s_frac(R, Sign, Int, Frac * 10 + 5, E + 1, << SoFar/bits, $5 >>);
+s_frac(<< $6, R/bits >>, Sign, Int, Frac, E, SoFar) -> s_frac(R, Sign, Int, Frac * 10 + 6, E + 1, << SoFar/bits, $6 >>);
+s_frac(<< $7, R/bits >>, Sign, Int, Frac, E, SoFar) -> s_frac(R, Sign, Int, Frac * 10 + 7, E + 1, << SoFar/bits, $7 >>);
+s_frac(<< $8, R/bits >>, Sign, Int, Frac, E, SoFar) -> s_frac(R, Sign, Int, Frac * 10 + 8, E + 1, << SoFar/bits, $8 >>);
+s_frac(<< $9, R/bits >>, Sign, Int, Frac, E, SoFar) -> s_frac(R, Sign, Int, Frac * 10 + 9, E + 1, << SoFar/bits, $9 >>);
+s_frac(<< C, R/bits >>, _, _, _, _, _) -> {error, io_lib:format("Invalid num: ~p", [C]), R}.
 
 kw_to_atom(<<"FW Ver">>)    -> fwVer;
 kw_to_atom(<<"HW Rev">>)    -> hwRev;
@@ -266,6 +267,8 @@ float_test() ->
     ?assertEqual({more, <<"3.0">>}, token(<<"3.0">>)),
     ?assertEqual({ok, 0.001, <<>>}, token(<<"0.001 ">>)),
     ?assertEqual({ok, 0.1234, <<>>}, token(<<"0.1234 ">>)),
-    ?assertEqual({ok, 3.0, <<>>}, token(<<"3.0 ">>)).    
+    ?assertEqual({ok, 3.0, <<>>}, token(<<"3.0 ">>)),
+    ?assertEqual({ok, -34, <<>>}, token(<<"-34 ">>)),
+    ?assertEqual({ok, -0.325, <<>>}, token(<<"-0.325 ">>)).
 
 -endif.
