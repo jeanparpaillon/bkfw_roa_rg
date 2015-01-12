@@ -6,6 +6,10 @@ body {
   font-size: 13px;
 }
 
+.top-nav {
+    background-color: #ffffff;
+}
+
 h1 {
   font-size: 25px;
 }
