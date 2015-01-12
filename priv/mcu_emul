@@ -20,7 +20,7 @@
 		  {pty,     undefined, undefined, string,               "Path to pty"}
 		 ]).
 
--define(mcu_alarms, {"PIN", "POUT", "PUMP_TEMP", "PUMP_BIAS", "BREF", "ADI", "MUTE"}).
+-define(mcu_alarms, {"PIN", "POUT", "PUMP_TEMP", "PUMP_BIAS", "EDFA_TEMP", "EDFA_PSU", "BREF", "ADI", "MUTE"}).
 -define(edfa_alarms, {"EDFA_TEMP", "EDFA_PSU"}).
 
 -define(WAIT, true).
@@ -210,12 +210,11 @@ handle_msg(#edfa{}=Edfa, ra, [], #state{port=To}=S) ->
 
 handle_msg(#mcu{index=Addr}=Mcu, ra, [], #state{port=To}=S) ->
     case random:uniform(4) of
-	%1 ->
-	%    Alarm = element(random:uniform(size(?mcu_alarms)), ?mcu_alarms),
-	%    reply(To, Addr, ["ALARMS: ", Alarm]);
-	%_ ->
-	%    reply(To, Addr, "ALARMS:")
-	_ -> reply(To, Addr, "ALARMS: EDFA_TEMP")
+	1 ->
+	    Alarm = element(random:uniform(size(?mcu_alarms)), ?mcu_alarms),
+	    reply(To, Addr, ["ALARMS: ", Alarm]);
+	_ ->
+	    reply(To, Addr, "ALARMS:")
     end,
     {S, Mcu};
 
