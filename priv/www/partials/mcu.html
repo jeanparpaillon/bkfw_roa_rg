@@ -10,25 +10,29 @@
           <table class="table table-hover">
             <tbody>
               <tr class="danger text-danger" ng-repeat="alarm in mcu.detail.alarms()">
-                <td colspan="2">{{ alarm.data.msg }}
+                <td colspan="3">{{ alarm.data.msg }}
                   <span class="glyphicon glyphicon-exclamation-sign text-danger pull-right"></span>
                 </td>
               </tr>
               <tr>
                 <td>{{ mcu.label.operatingMode }}</td>
                 <td>{{ mcu.detail.operatingMode | mcuMode }}</td>
+		<td></td>
               </tr>
               <tr>
                 <td>{{ mcu.label.ampConsign }}</td>
                 <td>{{ mcu.detail.ampConsign }}</td>
+		<td>mA</td>
               </tr>
               <tr>
                 <td>{{ mcu.label.gainConsign }}</td>
                 <td>{{ mcu.detail.gainConsign }}</td>
+		<td>dB</td>
               </tr>
               <tr>
                 <td>{{ mcu.label.outputPowerConsign }}</td>
                 <td>{{ mcu.detail.outputPowerConsign }}</td>
+		<td>dBm</td>
               </tr>
               <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('curLaserTemp')}">
                 <td>{{ mcu.label.curLaserTemp }}</td>
@@ -40,6 +44,7 @@
                   </span>
                   {{ mcu.detail.curLaserTemp | numeraljs:'0.00' }}
                 </td>
+		<td>&deg;C</td>
               </tr>
               <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('curAmp')}">
                 <td>{{ mcu.label.curAmp }}</td>
@@ -51,6 +56,7 @@
                   </span>
                   {{ mcu.detail.curAmp | numeraljs:'0.00' }}
                 </td>
+		<td>mA</td>
               </tr>
               <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('curInternalAmp')}">
                 <td>{{ mcu.label.curInternalAmp }}</td>
@@ -62,6 +68,7 @@
                   </span>
                   {{ mcu.detail.curInternalAmp | numeraljs:'0.00' }}
                 </td>
+		<td>&deg;C</td>
               </tr>
               <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('powerInput')}">
                 <td>{{ mcu.label.powerInput }}</td>
@@ -73,6 +80,7 @@
                   </span>
                   {{ mcu.detail.powerInput | numeraljs:'0.00' }}
                 </td>
+		<td>dBm</td>
               </tr>
               <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('powerOutput')}">
                 <td>{{ mcu.label.powerOutput }}</td>
@@ -84,6 +92,7 @@
                   </span>
                   {{ mcu.detail.powerOutput | numeraljs:'0.00'}}
                 </td>
+		<td>dBm</td>
               </tr>
               <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('powerSupply')}">
                 <td>{{ mcu.label.powerSupply }}</td>
@@ -95,14 +104,17 @@
                   </span>
                   {{ mcu.detail.powerSupply | numeraljs:'0.00' }}
                 </td>
+		<td>V</td>
               </tr>
               <tr>
                 <td>{{ mcu.label.inputLossThreshold }}</td>
                 <td>{{ mcu.detail.inputLossThreshold }}</td>
+		<td>dBm</td>
               </tr>
               <tr>
                 <td>{{ mcu.label.outputLossThreshold }}</td>
                 <td>{{ mcu.detail.outputLossThreshold }}</td>
+		<td>dBm</td>
               </tr>
             </tbody>
           </table>
