@@ -210,11 +210,12 @@ handle_msg(#edfa{}=Edfa, ra, [], #state{port=To}=S) ->
 
 handle_msg(#mcu{index=Addr}=Mcu, ra, [], #state{port=To}=S) ->
     case random:uniform(4) of
-	1 ->
-	    Alarm = element(random:uniform(size(?mcu_alarms)), ?mcu_alarms),
-	    reply(To, Addr, ["ALARMS: ", Alarm]);
-	_ ->
-	    reply(To, Addr, "ALARMS:")
+	%1 ->
+	%    Alarm = element(random:uniform(size(?mcu_alarms)), ?mcu_alarms),
+	%    reply(To, Addr, ["ALARMS: ", Alarm]);
+	%_ ->
+	%    reply(To, Addr, "ALARMS:")
+	_ -> reply(To, Addr, "ALARMS: EDFA_TEMP")
     end,
     {S, Mcu};
 
