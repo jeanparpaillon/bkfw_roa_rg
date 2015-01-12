@@ -12,9 +12,10 @@
 -type token_ret() :: {ok, token(), binary()} | {eof, binary()} | {more, binary()} | {error, term(), binary()}.
 
 -spec token(binary()) -> token_ret().
+token(<< 0, Bin/bits >>) -> token(Bin);
 token(Bin) -> token(Bin, <<>>).
 
-token(<<>>, SoFar) -> {more, SoFar};
+token(<<>>, SoFar) -> {eof, SoFar};
 token(<< $\r, $\n >>, _) -> {eof, <<>>};
 token(<< $\r, $\n, R/bits>>, _) -> {eof, R};
 token(<< $\s, R/bits >>, SoFar) -> token(R, << SoFar/bits, $\s >>);

@@ -97,7 +97,7 @@ start(Opts) ->
 	Pty ->
 	    ?info("Opening ~p~n", [Pty]),
 	    {ok, Fd} = cereal:open_tty(Pty),
-	    ok = cereal:set_raw_tty_mode(Fd),
+	    %ok = cereal:set_raw_tty_mode(Fd),
 	    Port = open_port({fd, Fd, Fd}, [binary, stream, {line, 80}]),
 	    Slots = list_to_binary(proplists:get_value(slots, Opts)),
 	    ?info("Slots: ~.2b~n", [binary_to_integer(Slots, 16)]),
@@ -111,7 +111,7 @@ loop(#state{port=Port, tid=Tid}=S, Acc) ->
 	{Port, {data, {noeol, Bin}}} ->
 	    loop(S, << Acc/binary, Bin/binary >>);
 	{Port, {data, {eol, Bin}}} ->
-	    Msg = << Acc/binary, Bin/binary >>,
+	    Msg = << Acc/binary, Bin/binary, $\r, $\n >>,
 	    ?debug("received: ~p~n", [Msg]),
 	    case bkfw_parser:parse(Msg) of
 		{error, Err, _} ->
@@ -235,34 +235,34 @@ handle_msg(#mcu{index=Addr, curInternalTemp=IT}=Mcu, rit, [], #state{port=To}=S)
     {S, Mcu#mcu{curInternalTemp=ran(IT)}};
 
 handle_msg(#edfa{}=Edfa, ri, [], #state{port=To}=S) ->
-    reply(To, 0, ["I", $\r, $\n,
-		  "Vendor= ", Edfa#edfa.vendor, $\r, $\n,
-		     "Module= ", Edfa#edfa.moduleType, $\r, $\n,
-		     "HW Ver= ", Edfa#edfa.hwVer, $\r, $\n,
-		     "HW Rev= ", Edfa#edfa.hwRev, $\r, $\n,
-		     "SW Ver= ", Edfa#edfa.swVer, $\r, $\n,
-		     "FW Ver= ", Edfa#edfa.fwVer, $\r, $\n,
-		     "Part Num= ", Edfa#edfa.partNum, $\r, $\n,
-		     "Ser. Num= ", Edfa#edfa.serialNum, $\r, $\n,
-		     "Prod. Date= ", Edfa#edfa.productDate, $\r, $\n]),
+    reply(To, 0, ["I", $\r, $\n, $\r, $\n, 
+		  "Vendor= ", Edfa#edfa.vendor, $\r, $\n, $\r, $\n, 
+		     "Module= ", Edfa#edfa.moduleType, $\r, $\n, $\r, $\n,
+		     "HW Ver= ", Edfa#edfa.hwVer, $\r, $\n, $\r, $\n,
+		     "HW Rev= ", Edfa#edfa.hwRev, $\r, $\n, $\r, $\n,
+		     "SW Ver= ", Edfa#edfa.swVer, $\r, $\n, $\r, $\n,
+		     "FW Ver= ", Edfa#edfa.fwVer, $\r, $\n, $\r, $\n,
+		     "Part Num= ", Edfa#edfa.partNum, $\r, $\n, $\r, $\n,
+		     "Ser. Num= ", Edfa#edfa.serialNum, $\r, $\n, $\r, $\n,
+		     "Prod. Date= ", Edfa#edfa.productDate, $\r, $\n, $\r, $\n]),
     {S, Edfa};
 
 handle_msg(#mcu{index=Addr}=Mcu, ri, [], #state{port=To}=S) ->
-    reply(To, Addr, ["I", $\r, $\n,
-		     "Vendor= ", Mcu#mcu.vendor, $\r, $\n,
-		     "Module= ", Mcu#mcu.moduleType, $\r, $\n,
-		     "HW Ver= ", Mcu#mcu.hwVer, $\r, $\n,
-		     "HW Rev= ", Mcu#mcu.hwRev, $\r, $\n,
-		     "SW Ver= ", Mcu#mcu.swVer, $\r, $\n,
-		     "FW Ver= ", Mcu#mcu.fwVer, $\r, $\n,
-		     "Part Num= ", Mcu#mcu.partNum, $\r, $\n,
-		     "Ser. Num= ", Mcu#mcu.serialNum, $\r, $\n,
-		     "Prod. Date= ", Mcu#mcu.productDate, $\r, $\n]),
+    reply(To, Addr, ["I", $\r, $\n, $\r, $\n,
+		     "Vendor= ", Mcu#mcu.vendor, $\r, $\n, $\r, $\n,
+		     "Module= ", Mcu#mcu.moduleType, $\r, $\n, $\r, $\n,
+		     "HW Ver= ", Mcu#mcu.hwVer, $\r, $\n, $\r, $\n,
+		     "HW Rev= ", Mcu#mcu.hwRev, $\r, $\n, $\r, $\n,
+		     "SW Ver= ", Mcu#mcu.swVer, $\r, $\n, $\r, $\n,
+		     "FW Ver= ", Mcu#mcu.fwVer, $\r, $\n, $\r, $\n,
+		     "Part Num= ", Mcu#mcu.partNum, $\r, $\n, $\r, $\n,
+		     "Ser. Num= ", Mcu#mcu.serialNum, $\r, $\n, $\r, $\n,
+		     "Prod. Date= ", Mcu#mcu.productDate, $\r, $\n, $\r, $\n]),
     {S, Mcu};
 
 handle_msg(#mcu{index=Addr, powerPd1=PD1, powerPd2=PD2}=Mcu, rpm, [], #state{port=To}=S) ->
-    reply(To, Addr, [io_lib:format("PD1 ~.2f dBm", [PD1]), $\r, $\n,
-		     io_lib:format("PD2 ~.2f dBm", [PD2]), $\r, $\n]),
+    reply(To, Addr, [io_lib:format("PD1 ~.2f dBm", [PD1]), $\r, $\n, $\r, $\n,
+		     io_lib:format("PD2 ~.2f dBm", [PD2]), $\r, $\n, $\r, $\n]),
     {S, Mcu#mcu{powerPd1=ran(PD1), powerPd2=ran(PD2)}};
 
 handle_msg(#edfa{index=Addr, powerSupply=V}=Edfa, rv, [], #state{port=To}=S) ->
@@ -307,7 +307,7 @@ handle_msg(#mcu{index=Addr}=Mcu, Cmd, Args, #state{port=To}=S) ->
 reply(To, Addr, Ans) ->
     ?WAIT,
     HexAddr = ["0x", io_lib:format("~2.16.0b", [Addr])],
-    Msg = iolist_to_binary([HexAddr, " ", Ans, $\r, $\n]),
+    Msg = iolist_to_binary([HexAddr, " ", Ans, $\r, $\n, $\r, $\n]),
     ?debug("replying: ~p~n", [Msg]),
     To ! {self(), {command, Msg}}.
 

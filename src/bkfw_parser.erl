@@ -16,6 +16,8 @@ parse(Bin, Msg) ->
 %%%
 %%% Priv
 %%%
+parse_msg({eof, Rest}, undefined) ->
+    {more, undefined, Rest};
 parse_msg({eof, Rest}, {A, i, Lines}) ->
     {ok, {A, i, lists:reverse(Lines)}, Rest};
 parse_msg({eof, Rest}, {_, pd, _}=Msg) ->
@@ -38,7 +40,7 @@ parse_cmd({error, Err, Rest}, _) ->
     {error, Err, Rest};
 parse_cmd({eof, Rest}, {Addr, pd, Lines}) ->
     {ok, {Addr, pd, Lines}, Rest};
-parse_cmd({eof, Rest}, {Addr, ri, Lines}) ->
+parse_cmd({eof, Rest}, {Addr, i, Lines}) ->
     {ok, {Addr, i, Lines}, Rest};
 parse_cmd({eof, Rest}, _) ->
     {error, eof, Rest};

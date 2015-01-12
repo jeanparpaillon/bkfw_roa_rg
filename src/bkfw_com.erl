@@ -20,6 +20,7 @@
 		port    = undefined   :: port(),
 		data    = <<>>        :: binary(),
 		msg     = undefined   :: msg(),
+		crlf,
 		trace}).
 
 %%%
@@ -64,10 +65,8 @@ init(Owner) ->
 	    ?info("Opening com port: ~p~n", [Com]),
 	    case cereal:open_tty(Com) of
 		{ok, Fd} ->
-		    cereal:set_raw_tty_mode(Fd),
-		    cereal:set_tty_flow(0),
 		    Port = open_port({fd, Fd, Fd}, [binary, stream, {line, 80}]),
-		    {ok, #state{owner=Owner, com=Fd, port=Port, trace=Trace}};
+		    {ok, #state{owner=Owner, com=Fd, port=Port, trace=Trace, crlf=$\n}};
 		{error, Err} ->
 		    ?error("Error opening com port: ~p~n", [Err]),
 		    {stop, {error, Err}}
@@ -130,21 +129,24 @@ handle_info({Port, {data, {noeol, Bin}}}, #state{port=Port, data=Acc, trace=Trac
     debug_com(Trace, ["[RPI <- CPU] ", Bin]),
     {noreply, S#state{data= << Acc/binary, Bin/binary >>}};
 
-handle_info({Port, {data, {eol, Bin}}}, #state{msg=Msg, owner=Owner, port=Port, data=Acc, trace=Trace}=S) ->
+handle_info({Port, {data, {eol, Bin}}}, #state{port=Port, crlf=$\n}=S) ->
+    {noreply, S#state{data=Bin, crlf=$\r}};
+
+handle_info({Port, {data, {eol, Bin}}}, #state{msg=Msg, owner=Owner, crlf=$\r,
+					       port=Port, data=Data, trace=Trace}=S) ->
     debug_com(Trace, ["[RPI <- CPU] ", Bin, "\n"]),
-    ?debug("handle ~p\n", [Bin]),
-    case bkfw_parser:parse(<< Acc/binary, Bin/binary >>, Msg) of
+    case bkfw_parser:parse(<< Data/binary, Bin/binary, $\r, $\n >>, Msg) of
 	{ok, Msg2, Rest} ->
 	    Owner ! {msg, Msg2},
 	    debug_com(Trace, "[COM] Answer received\n"),
 	    bkfw_mutex:signal(),
-	    {noreply, S#state{msg=undefined, data=Rest}};
+	    {noreply, S#state{msg=undefined, data=Rest, crlf=$\n}};
 	{more, Msg2, Rest} ->
-	    {noreply, S#state{msg=Msg2, data=Rest}};
+	    {noreply, S#state{msg=Msg2, data=Rest, crlf=$\n}};
 	{error, Err, Rest} ->
 	    Owner ! {error, Err},
 	    bkfw_mutex:signal(),
-	    {noreply, S#state{msg=undefined, data=Rest}}
+	    {noreply, S#state{msg=undefined, data=Rest, crlf=$\n}}
     end;
 
 handle_info(_Info, State) ->
