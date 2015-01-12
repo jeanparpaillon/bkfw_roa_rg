@@ -120,6 +120,10 @@ init_infos(S) ->
 	{ok, _Ret} ->
 	    ?error("[0] RI invalid answer: ~p~n", [_Ret]),
 	    {error, invalid_infos};
+	{error, {timeout, _}} ->
+	    ?debug("EDFA RI timeout: retry in 2 seconds...\n"),
+	    timer:sleep(2000),
+	    init_infos(S);
 	{error, Err} ->
 	    ?error("[0] Error monitoring EDFA: ~p~n", [Err]),
 	    {error, Err}

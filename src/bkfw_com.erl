@@ -64,6 +64,8 @@ init(Owner) ->
 	    ?info("Opening com port: ~p~n", [Com]),
 	    case cereal:open_tty(Com) of
 		{ok, Fd} ->
+		    cereal:set_raw_tty_mode(Fd),
+		    cereal:set_tty_flow(0),
 		    Port = open_port({fd, Fd, Fd}, [binary, stream, {line, 80}]),
 		    {ok, #state{owner=Owner, com=Fd, port=Port, trace=Trace}};
 		{error, Err} ->
@@ -88,8 +90,8 @@ init(Owner) ->
 %%--------------------------------------------------------------------
 handle_call({To, Msg}, {Pid, _Tag}, #state{owner=Pid, port=Port, trace=Trace}=S) ->
     bkfw_mutex:wait(),
-    debug_com(Trace, "[COM] Acquire\n"),
-    Bin = ["0x", io_lib:format("~2.16.0b", [To]), " ", Msg, "\r\n"],
+    debug_com(Trace, "[COM] Send command\n"),
+    Bin = ["0x", io_lib:format("~2.16.0b", [To]), " ", Msg, $\r, $\n],
     debug_com(Trace, ["[RPI -> CPU] ", Bin]),
     Port ! {self(), {command, iolist_to_binary(Bin)}},
     {reply, ok, S};
@@ -130,10 +132,11 @@ handle_info({Port, {data, {noeol, Bin}}}, #state{port=Port, data=Acc, trace=Trac
 
 handle_info({Port, {data, {eol, Bin}}}, #state{msg=Msg, owner=Owner, port=Port, data=Acc, trace=Trace}=S) ->
     debug_com(Trace, ["[RPI <- CPU] ", Bin, "\n"]),
+    ?debug("handle ~p\n", [Bin]),
     case bkfw_parser:parse(<< Acc/binary, Bin/binary >>, Msg) of
 	{ok, Msg2, Rest} ->
 	    Owner ! {msg, Msg2},
-	    debug_com(Trace, "[COM] Release\n"),
+	    debug_com(Trace, "[COM] Answer received\n"),
 	    bkfw_mutex:signal(),
 	    {noreply, S#state{msg=undefined, data=Rest}};
 	{more, Msg2, Rest} ->
@@ -181,4 +184,3 @@ code_change(_OldVsn, State, _Extra) ->
 %%%
 debug_com(undefined, _) -> ok;
 debug_com(Dev, Bytes) -> file:write(Dev, Bytes).
-    
