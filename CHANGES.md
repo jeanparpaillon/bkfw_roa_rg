@@ -18,3 +18,10 @@
 # 0.2.9
 
 * Fix 0.2.8 packaging
+
+# 0.2.10
+
+* Adapt to Raspberry COM
+* Update graphicals (colours)
+* Fix typos in UI
+* Temporary disable SNMPv3 in UI

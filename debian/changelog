@@ -1,8 +1,11 @@
-bkfw (0.2.10) UNRELEASED; urgency=medium
+bkfw (0.2.10) wheezy; urgency=medium
 
   * Add preinst script for fixing previous broken install
+  * Adapt to RPI COM
+  * Fix some typos in UI
+  * Temporary disable SNMP v3
 
- -- Jean Parpaillon <jean.parpaillon@free.fr>  Sun, 11 Jan 2015 18:50:36 +0100
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Mon, 12 Jan 2015 15:58:34 +0100
 
 bkfw (0.2.9) wheezy; urgency=medium
 
