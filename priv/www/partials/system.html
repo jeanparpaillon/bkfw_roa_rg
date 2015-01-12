@@ -100,25 +100,30 @@
     <div class="block">
       <h2>Security</h2>
 
-      <form name="security" role="form" ng-submit="system.securitySave()" class="form-horizontal">
-        <div class="form-group">
-	  <label>Login</label>
-	  <input type="text" disabled value="admin" class="form-control"></input>
-
-	  <br/>
+      <form name="security" role="form" ng-submit="system.securitySave()" >
+	<div class="block" >
+	  <h4>HTTP security</h4>
 	  
-          <label>Password</label>
-          <input type="password" ng-model="system.password.password" name="password"
-                 class="form-control" autocomplete="off" />
-        </div>
-        <div class="form-group" ng-class="{'has-error': security.confirm.$error.compareTo}">
-          <label>Confirm password</label>
-          <input type="password" name="confirm" ng-model="system.password.confirm"
-                 class="form-control" compare-to="system.password.password" />
-          <p>{{ system.password.confirm.$error }}</p>
-          <span class="text-danger" ng-show="security.confirm.$error.compareTo">Passwords don't match</span>
-        </div>
-
+          <div class="form-group row">
+	    <label>Login</label>
+	    <input type="text" disabled value="admin" class="form-control"></input>
+	  </div>
+	  
+	  <div>  
+            <label>Password</label>
+            <input type="password" ng-model="system.password.password" name="password"
+                   class="form-control" autocomplete="off" />
+          </div>
+          <div class="form-group" ng-class="{'has-error': security.confirm.$error.compareTo}">
+            <label>Confirm password</label>
+            <input type="password" name="confirm" ng-model="system.password.confirm"
+                   class="form-control" compare-to="system.password.password" />
+            <p>{{ system.password.confirm.$error }}</p>
+            <span class="text-danger" ng-show="security.confirm.$error.compareTo">Passwords don't match</span>
+          </div>
+	  
+	</div>
+	
         <div class="checkbox">
           <label ng-repeat="(protocol, enabled) in system.protocol">
             <input type="checkbox" ng-model="system.protocol[protocol]" /> {{ protocol }}
@@ -159,13 +164,13 @@
 	    <input type="radio" ng-model="system.community.v3.level" value="authpriv">AuthPriv</input>
 	  </div>
 
-	  <div class="form-group" ng-if="system.community.v3.level != 'noauthnopriv">
+	  <div class="form-group" ng-if="system.community.v3.level != 'noauthnopriv'">
 	    <label>Authentication Protocol</label>
 	    <input type="radio" ng-model="system.community.v3.auth" value="hmacmd5">MD5</input>
 	    <input type="radio" ng-model="system.community.v3.auth" value="hmacsha">SHA</input>
 	  </div>
 
-	  <div class="form-group" ng-if="system.community.v3.level != 'noauthnopriv">
+	  <div class="form-group" ng-if="system.community.v3.level != 'noauthnopriv'">
 	    <label>Authentication Key (passphrase)</label>
 	    <input type="input" autocomplete="off" ng-model="system.community.v3.authKey" />
 	  </div>
