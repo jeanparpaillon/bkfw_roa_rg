@@ -14,7 +14,7 @@ IMPORTS
 	FROM BKTEL-PHOTONICS-SMI;
 
 edfaModule MODULE-IDENTITY
-    LAST-UPDATED "201412140000Z"
+    LAST-UPDATED "201501120000Z"
     ORGANIZATION "BKtel Photonics"
     CONTACT-INFO
             "   BKtel Photonics
@@ -29,6 +29,9 @@ edfaModule MODULE-IDENTITY
     REVISION	"201412140000Z"
     DESCRIPTION
 	"Update traps definitions."
+    REVISION	"201501120000Z"
+    DESCRIPTION
+	"Add 2 MCU traps."
     ::= { bktelPhotonics 1 }
 
 edfaMIB	OBJECT IDENTIFIER ::= { edfaModule 1 }
@@ -415,6 +418,26 @@ edfaPumpBiasTrap NOTIFICATION-TYPE
 	"Laser current is over 95% of EOL"
     ::= { edfaMIBTraps 4 }
 
+edfaMcuInternalTempTrap NOTIFICATION-TYPE
+    OBJECTS {
+        edfaMcuIndex,
+	edfaCurInternalTemp
+    }
+    STATUS current
+    DESCRIPTION
+	"MCU Internal temperature alarm"
+    ::= { edfaMIBTraps 5 }
+
+edfaMcuPowerSupplyTrap NOTIFICATION-TYPE
+    OBJECTS {
+        edfaMcuIndex,
+	edfaPowerSupply
+    }
+    STATUS current
+    DESCRIPTION
+	"MCU Power supply alarm"
+    ::= { edfaMIBTraps 6 }
+
 edfaInternalTempTrap NOTIFICATION-TYPE
     OBJECTS {
 	edfaCurInternalTemp
@@ -422,7 +445,7 @@ edfaInternalTempTrap NOTIFICATION-TYPE
     STATUS current
     DESCRIPTION
 	"EDFA Internal temperature alarm"
-    ::= { edfaMIBTraps 5 }
+    ::= { edfaMIBTraps 7 }
 
 edfaPowerSupplyTrap NOTIFICATION-TYPE
     OBJECTS {
@@ -431,7 +454,7 @@ edfaPowerSupplyTrap NOTIFICATION-TYPE
     STATUS current
     DESCRIPTION
 	"EDFA Power supply alarm"
-    ::= { edfaMIBTraps 6 }
+    ::= { edfaMIBTraps 8 }
 
 edfaBrefTrap NOTIFICATION-TYPE
     OBJECTS {
@@ -442,7 +465,7 @@ edfaBrefTrap NOTIFICATION-TYPE
     STATUS current
     DESCRIPTION
 	"Back reflection alarm"
-    ::= { edfaMIBTraps 7 }
+    ::= { edfaMIBTraps 9 }
 
 edfaAdiTrap NOTIFICATION-TYPE
     OBJECTS {
@@ -451,7 +474,7 @@ edfaAdiTrap NOTIFICATION-TYPE
     STATUS current
     DESCRIPTION
 	"Shutdown input active"
-    ::= { edfaMIBTraps 8 }
+    ::= { edfaMIBTraps 10 }
 
 edfaMuteTrap NOTIFICATION-TYPE
     OBJECTS {
@@ -460,13 +483,13 @@ edfaMuteTrap NOTIFICATION-TYPE
     STATUS current
     DESCRIPTION
 	"Mute input is active"
-    ::= { edfaMIBTraps 9 }
+    ::= { edfaMIBTraps 11 }
 
 edfaGenericTrap NOTIFICATION-TYPE
     STATUS current
     DESCRIPTION
 	"Generic EDFA trap (for testing purpose mainly)"
-    ::= { edfaMIBTraps 10 }
+    ::= { edfaMIBTraps 12 }
 
 edfaMIBTrapGroups OBJECT IDENTIFIER ::= { edfaMIBConformance 1 }
 
@@ -476,6 +499,8 @@ edfaMIBTrapGroup NOTIFICATION-GROUP
 	edfaOutputPowerTrap,
 	edfaPumpTempTrap,
 	edfaPumpBiasTrap,
+	edfaMcuInternalTempTrap,
+	edfaMcuPowerSupplyTrap,
 	edfaInternalTempTrap,
 	edfaPowerSupplyTrap,
 	edfaBrefTrap,

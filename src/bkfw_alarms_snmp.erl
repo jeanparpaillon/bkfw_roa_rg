@@ -16,7 +16,7 @@ init(_Args) ->
     {ok, []}.
 
 handle_event(#edfaAlarm{name=Name, obj=Obj}, S) -> 
-    Trap = alarm_to_trap(Name),
+    Trap = alarm_to_trap(Name, Obj),
     Varbinds = alarm_to_vars(Name, Obj),
     send_trap(Trap, Varbinds),
     {ok, S}.
@@ -49,16 +49,18 @@ send_trap(Trap, Varbinds) ->
 	    ok
     end.
 
-alarm_to_trap(pin) -> edfaInputPowerTrap;
-alarm_to_trap(pout) -> edfaOutputPowerTrap;
-alarm_to_trap(pump_temp) -> edfaPumpTempTrap;
-alarm_to_trap(pump_bias) -> edfaPumpBiasTrap;
-alarm_to_trap(edfa_temp) -> edfaInternalTempTrap;
-alarm_to_trap(edfa_psu) -> edfaPowerSupplyTrap;
-alarm_to_trap(bref) -> edfaBrefTrap;
-alarm_to_trap(adi) -> edfaAdiTrap;
-alarm_to_trap(mute) -> edfaMuteTrap;
-alarm_to_trap(_) -> undefined.
+alarm_to_trap(pin, _) -> edfaInputPowerTrap;
+alarm_to_trap(pout, _) -> edfaOutputPowerTrap;
+alarm_to_trap(pump_temp, _) -> edfaPumpTempTrap;
+alarm_to_trap(pump_bias, _) -> edfaPumpBiasTrap;
+alarm_to_trap(edfa_temp, #edfaMcuTable{}) -> edfaMcuInternalTempTrap;
+alarm_to_trap(edfa_temp, {_,_}) -> edfaInternalTempTrap;
+alarm_to_trap(edfa_psu, #edfaMcuTable{}) -> edfaMcuPowerSupplyTrap;
+alarm_to_trap(edfa_psu, {_,_}) -> edfaPowerSupplyTrap;
+alarm_to_trap(bref, _) -> edfaBrefTrap;
+alarm_to_trap(adi, _) -> edfaAdiTrap;
+alarm_to_trap(mute, _) -> edfaMuteTrap;
+alarm_to_trap(_, _) -> undefined.
 
 alarm_to_vars(pin, E) ->       [{edfaMcuPowerPd1, [E#edfaMcuTable.index], 
 				 round(E#edfaMcuTable.powerPd1)}];
@@ -68,6 +70,10 @@ alarm_to_vars(pump_temp, E) -> [{edfaMcuCurLaserTemp, [E#edfaMcuTable.index],
 				 round(E#edfaMcuTable.curLaserTemp)}];
 alarm_to_vars(pump_bias, E) -> [{edfaMcuCurAmp, [E#edfaMcuTable.index], 
 				 round(E#edfaMcuTable.curAmp)}];
+alarm_to_vars(edfa_temp, #edfaMcuTable{index=Idx, curInternalTemp=T}) -> [{edfaMcuCurInternalTemp, [Idx],
+									   round(T)}];
+alarm_to_vars(edfa_psu, #edfaMcuTable{index=Idx, powerSupply=P}) ->  [{edfaMcuPowerSupply, [Idx],
+								       round(P)}];
 alarm_to_vars(edfa_temp, {IT, _}) -> [{edfaCurInternalTemp,  round(IT)}];
 alarm_to_vars(edfa_psu, {_, PS}) ->  [{edfaPowerSupply, round(PS)}];
 alarm_to_vars(bref, _E) ->     [];
