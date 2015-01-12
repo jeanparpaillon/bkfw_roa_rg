@@ -186,4 +186,8 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Priv
 %%%
 debug_com(undefined, _) -> ok;
-debug_com(Dev, Bytes) -> file:write(Dev, Bytes).
+debug_com(Dev, Bytes) -> 
+    Now = erlang:now(),
+    {{_Y,_M,_D},{H,M,S}} = calendar:now_to_universal_time(Now),
+    {_,_,MS} = Now,
+    file:write(Dev, [io_lib:format("[~p:~p:~p.~p]", [H,M,S,MS]), Bytes]).

@@ -1,18 +1,26 @@
 -define(DEBUG, true).
 
 -ifdef(DEBUG).
--define(debug(Msg), case application:get_env(bkfw, debug, true) of true -> io:format("DEBUG: " ++ Msg); false -> true end).
--define(debug(Msg, Data), case application:get_env(bkfw, debug, true) of true -> io:format("DEBUG: " ++ Msg, Data); false -> true end).
+-define(debug(Msg), case application:get_env(bkfw, debug, true) of 
+			true -> 
+			    error_logger:info_msg("DEBUG: " ++ Msg); 
+			false -> true 
+		    end).
+-define(debug(Msg, Data), case application:get_env(bkfw, debug, true) of 
+			      true -> 
+				  error_logger:info_msg("DEBUG: " ++ Msg, Data); 
+			      false -> true 
+			  end).
 -else.
 -define(debug(_Msg), true).
 -define(debug(_Msg, _Data), true).
 -endif.
 
--define(info(Msg), io:format("INFO: " ++ Msg)).
--define(info(Msg, Data), io:format("INFO: " ++ Msg, Data)).
+-define(info(Msg), error_logger:info_msg("INFO: " ++ Msg)).
+-define(info(Msg, Data), error_logger:info_msg("INFO: " ++ Msg, Data)).
 
--define(error(Msg), io:format("ERROR: " ++ Msg)).
--define(error(Msg, Data), io:format("ERROR: " ++ Msg, Data)).
+-define(error(Msg), error_logger:error_msg("ERROR: " ++ Msg)).
+-define(error(Msg, Data), error_logger:error_msg("ERROR: " ++ Msg, Data)).
 
 % scan & parse structs
 -type terminal() :: adi | alarms | bref | cc | 'edfa_temp' | 'edfa_psu' | fwVer | gc | hwRev | 

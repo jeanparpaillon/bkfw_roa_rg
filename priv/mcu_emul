@@ -23,8 +23,8 @@
 -define(mcu_alarms, {"PIN", "POUT", "PUMP_TEMP", "PUMP_BIAS", "BREF", "ADI", "MUTE"}).
 -define(edfa_alarms, {"EDFA_TEMP", "EDFA_PSU"}).
 
-%-define(WAIT, true).
--define(WAIT, timer:sleep(500)).
+-define(WAIT, true).
+%-define(WAIT, timer:sleep(500)).
 
 -record(mcu, {index              ,
 	      ampConsign         ,
@@ -139,9 +139,9 @@ loop(#state{port=Port, tid=Tid}=S, Acc) ->
 				     curLaserTemp=random:uniform()*100,
 				     curAmp=random:uniform()*100,
 				     curInternalTemp=random:uniform()*100,
-				     powerPd1=random:uniform()*100,
-				     powerPd2=random:uniform()*100,
-				     powerPd3=random:uniform()*100,
+				     powerPd1=random:uniform()*100 * element(random:uniform(2), {1,-1}),
+				     powerPd2=random:uniform()*100 * element(random:uniform(2), {1,-1}),
+				     powerPd3=random:uniform()*100 * element(random:uniform(2), {1,-1}),
 				     powerSupply=12.0,
 				     inputLossThreshold=random:uniform()*100,
 				     outputLossThreshold=random:uniform()*100,
