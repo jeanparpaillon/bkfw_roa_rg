@@ -36,7 +36,7 @@ $(error "Rebar not available on this system")
 endif
 
 .PHONY: all compile doc clean test dialyzer typer shell distclean pdf \
-  update-deps clean-common-test-data rebuild install
+  update-deps clean-common-test-data rebuild install dist
 
 all: deps compile test
 
@@ -105,6 +105,9 @@ RELNAME=bkfw
 RELVERSION=$(shell ./version.sh)
 RELDIR=$(RELNAME)-$(RELVERSION)
 RELBIN=$(RELNAME)_$(RELVERSION).bin
+dist:
+	git archive --prefix=$(RELNAME)-$(RELVERSION)/ HEAD . | gzip -c - > $(RELNAME)-$(RELVERSION).source.tar.gz
+
 release:
 	rm -rf $(RELDIR)
 	rm -f $(RELDIR).zip
