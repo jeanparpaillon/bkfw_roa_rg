@@ -25,3 +25,7 @@
 * Update graphicals (colours)
 * Fix typos in UI
 * Temporary disable SNMPv3 in UI
+
+# 0.2.11
+
+* Update protocol: handle out-of-range values for setpoints
