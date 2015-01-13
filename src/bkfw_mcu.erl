@@ -91,25 +91,37 @@ set_kv(Idx, Kv) ->
 	    case get_consign(ampConsign, Kv) of
 		undefined -> {error, missing_consign};
 		V -> 
-		    bkfw_srv:command(Idx, scc, [<<"1 ">>, io_lib:format("~.2f", [V])]),
-		    bkfw_srv:command(Idx, smode, [<<"CC">>]),
-		    ok
+		    case bkfw_srv:command(Idx, scc, [<<"1 ">>, io_lib:format("~.2f", [V])]) of
+			{ok, {Idx, scc, [1, ofr]}} ->
+			    {error, ofr};
+			_ ->
+			    bkfw_srv:command(Idx, smode, [<<"CC">>]),
+			    ok
+		    end
 	    end;
 	?edfaMcuOperatingMode_gc ->
 	    case get_consign(gainConsign, Kv) of
 		undefined -> {error, missing_consign};
 		V -> 
-		    bkfw_srv:command(Idx, sgc, [io_lib:format("~.2f", [V])]),
-		    bkfw_srv:command(Idx, smode, [<<"GC">>]),
-		    ok
+		    case bkfw_srv:command(Idx, sgc, [io_lib:format("~.2f", [V])]) of
+			{ok, {Idx, sgc, [ofr]}} ->
+			    {error, ofr};
+			_ ->
+			    bkfw_srv:command(Idx, smode, [<<"GC">>]),
+			    ok
+		    end
 	    end;
 	?edfaMcuOperatingMode_pc ->
 	    case get_consign(outputPowerConsign, Kv) of
 		undefined -> {error, mising_consign};
 		V ->
-		    bkfw_srv:command(Idx, spc, [io_lib:format("~.2f", [V])]),
-		    bkfw_srv:command(Idx, smode, [<<"PC">>]),
-		    ok
+		    case bkfw_srv:command(Idx, spc, [io_lib:format("~.2f", [V])]) of
+			{ok, {Idx, spc, [ofr]}} ->
+			    {error, ofr};
+			_ ->
+			    bkfw_srv:command(Idx, smode, [<<"PC">>]),
+			    ok
+		    end
 	    end
     catch error:badarg ->
 	    {error, missing_mode}

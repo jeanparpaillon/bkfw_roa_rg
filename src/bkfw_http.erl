@@ -195,6 +195,7 @@ to_json(Req, #state{section=sys, sys=_}=S) ->
 
 
 from_json(Req, #state{section=mcu, index=I}=S) ->
+    ?debug("POST /api/mcu/~p\n", [I]),
     case parse_body(Req) of
 	{error, invalid_body, Req2} ->
 	    {false, ?set_error(invalid_body, Req2), S};
@@ -204,7 +205,12 @@ from_json(Req, #state{section=mcu, index=I}=S) ->
 	{ok, Json, Req2} ->
 	    case bkfw_mcu:set_kv(I, Json) of
 		ok ->
+		    ?debug("Set MCU kv=ok\n"),
 		    {true, Req2, S};
+		{error, ofr} ->
+		    ?debug("Set MCU kv=ofr\n"),
+		    {ok, Req3} = cowboy_req:reply(416, Req2),
+		    {halt, Req3, S};
 		{error, Err} ->
 		    ?error("Request error: ~p~n", [Err]),
 		    {false, ?set_error(Err, Req2), S}

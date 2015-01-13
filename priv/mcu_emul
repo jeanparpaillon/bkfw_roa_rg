@@ -166,12 +166,22 @@ handle_msg(#mcu{index=Addr}=Mcu, rcc, [Pos], #state{port=To}=S) when is_integer(
     reply(To, Addr, io_lib:format("CC ~p ~.2f mA", [Pos, Mcu#mcu.ampConsign])),
     {S, Mcu};
 
-handle_msg(#mcu{index=Addr}=Mcu, scc, [Pos, Cur], #state{port=To}=S) when is_integer(Pos), is_float(Cur) ->
+handle_msg(#mcu{index=Addr}=Mcu, scc, [Pos, Cur], #state{port=To}=S) when is_integer(Pos), 
+									  Cur > 20 ->
+    reply(To, Addr, io_lib:format("SCC ~p OFR", [Pos])),
+    {S, Mcu};
+
+handle_msg(#mcu{index=Addr}=Mcu, scc, [Pos, Cur], #state{port=To}=S) when is_integer(Pos), 
+									  is_float(Cur) ->
     reply(To, Addr, io_lib:format("SCC ~p ~.2f", [Pos, Cur])),
     {S, Mcu#mcu{ampConsign=Cur}};
 
 handle_msg(#mcu{index=Addr}=Mcu, rgc, [], #state{port=To}=S) ->
     reply(To, Addr, io_lib:format("GC ~.2f dB", [Mcu#mcu.gainConsign])),
+    {S, Mcu};
+
+handle_msg(#mcu{index=Addr}=Mcu, sgc, [Gain], #state{port=To}=S) when Gain > 20 ->
+    reply(To, Addr, "SGC OFR"),
     {S, Mcu};
 
 handle_msg(#mcu{index=Addr}=Mcu, sgc, [Gain], #state{port=To}=S) when is_float(Gain) ->
@@ -180,6 +190,10 @@ handle_msg(#mcu{index=Addr}=Mcu, sgc, [Gain], #state{port=To}=S) when is_float(G
 
 handle_msg(#mcu{index=Addr}=Mcu, rpc, [], #state{port=To}=S) ->
     reply(To, Addr, io_lib:format("PC ~.2f dBm", [Mcu#mcu.outputPowerConsign])),
+    {S, Mcu};
+
+handle_msg(#mcu{index=Addr}=Mcu, spc, [Pow], #state{port=To}=S) when Pow > 20 ->
+    reply(To, Addr, "SPC OFR"),
     {S, Mcu};
 
 handle_msg(#mcu{index=Addr}=Mcu, spc, [Pow], #state{port=To}=S) ->

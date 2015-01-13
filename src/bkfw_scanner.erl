@@ -230,6 +230,7 @@ kw_to_atom(<<"MODULE=">>)   -> module;
 kw_to_atom(<<"MUTE">>)      -> mute;
 kw_to_atom(<<"N">>)         -> n;
 kw_to_atom(<<"OFF">>)       -> off;
+kw_to_atom(<<"OFR">>)       -> ofr;
 kw_to_atom(<<"PC">>)        -> pc;
 kw_to_atom(<<"PIN">>)       -> pin;
 kw_to_atom(<<"POUT">>)      -> pout;
