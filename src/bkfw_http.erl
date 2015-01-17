@@ -194,6 +194,30 @@ to_json(Req, #state{section=sys, sys=_}=S) ->
     {<<"{}">>, Req, S}.
 
 
+from_json(Req, #state{section=mcu, index=undefined}=S) ->
+    case parse_body(Req) of
+	{error, invalid_body, Req2} ->
+	    {false, ?set_error(invalid_body, Req2), S};
+	{error, Err, Req2} ->
+	    ?error("Internal error: ~p~n", [Err]),
+	    {halt, ?set_error(internal, Req2), S};
+	{ok, Json, Req2} ->
+	    ?debug("POST /api/mcu/\n"
+		   "       ~p\n", [Json]),
+	    Indices = mnesia:dirty_all_keys(ampTable),
+	    Err = lists:foldl(fun (I, Acc) ->
+				      case bkfw_mcu:set_kv(I, Json) of
+					  ok -> Acc;
+					  {error, Err} ->
+					      ?error("Request error: ~p~n", [Err]),
+					      [ [io_lib:format("amp #~p: ", [I]), err_to_string(Err)] | Acc ]
+				      end
+			      end, [], Indices),
+	    case Err of
+		[] -> {true, Req2, S};
+		Errors -> {false, ?set_errors(Errors, Req2), S}
+	    end		
+    end;
 from_json(Req, #state{section=mcu, index=I}=S) ->
     case parse_body(Req) of
 	{error, invalid_body, Req2} ->
