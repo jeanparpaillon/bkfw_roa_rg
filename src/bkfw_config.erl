@@ -132,21 +132,18 @@ handle_call({get_kv, net}, _From, #state{net=Net}=State) ->
 	    end,
     {reply, Props, State};
 
-handle_call({get_kv, community}, _From, State) ->
-    case snmpa_conf:read_community_config(get_snmp_configdir()) of
-	{ok, Com} ->
-	    Ret = [{public, list_to_binary(element(2, lists:keyfind("public", 1, Com)))},
-		   {restricted, list_to_binary(element(2, lists:keyfind("private", 1, Com)))},
-		   {v3, [
-			 {level, noauthnopriv},
-			 {auth, hmacmd5},
-			 {authKey, <<>>},
-			 {priv, aes},
-			 {privKey, <<>>}
-			]}],
-	    {reply, Ret, State};
+handle_call({get_kv, community}, _From, State) ->    
+    Dir = get_snmp_configdir(),
+    case get_snmp_com(Dir) of
 	{error, Err} ->
-	    {reply, {error, Err}, State}
+	    {reply, {error, Err}, State};
+	{ok, Com} ->
+	    case get_snmp_usm(Dir) of
+		{error, Err} ->
+		    {reply, {error, Err}, State};
+		{ok, Usm} ->
+		    {reply, Com ++ Usm, State}
+	    end
     end;
 
 handle_call({get_kv, protocol}, _From, State) ->
@@ -202,32 +199,21 @@ handle_call({set_kv, password, Props}, _From, State) ->
     end;
 handle_call({set_kv, community, Props}, _From, State) ->
     Dir = get_snmp_configdir(),
-    case snmpa_conf:read_community_config(Dir) of
-	{ok, Com} ->
-	    case get_communities(Props) of
-		{ok, Pub, Priv} ->
-		    Com2 = set_community("public", Pub, Com),
-		    Com3 = set_community("private", Priv, Com2),
-		    ok = snmpa_conf:write_community_config(Dir, Com3),
-		    snmp_community_mib:reconfigure(Dir),
-		    {reply, ok, State};
-		{error, Err} ->
-		    {reply, {error, Err}, State}
+    case set_snmp_com(Dir, Props) of
+	ok ->
+	    case set_snmp_usm(Dir, Props) of
+		ok -> {reply, ok, State};
+		{error, Err} -> {reply, {error, Err}, State}
 	    end;
-	{error, Err} ->
-	    {reply, {error, Err}, State}
+	{error, Err} -> {reply, {error, Err}, State}
     end;
 
 handle_call({set_kv, protocol, Props}, _From, State) ->
     AgentEnv = application:get_env(snmp, agent, []),
-    Versions = lists:foldl(fun ({snmpv1, true}, Acc) ->
-				   [v1 | Acc];
-			       ({snmpv2, true}, Acc) ->
-				   [v2 | Acc];
-			       ({snmpv3, true}, Acc) ->
-				   [v3 | Acc];
-			       (_, Acc) ->
-				   Acc
+    Versions = lists:foldl(fun ({snmpv1, true}, Acc) -> [v1 | Acc];
+			       ({snmpv2, true}, Acc) -> [v2 | Acc];
+			       ({snmpv3, true}, Acc) -> [v3 | Acc];
+			       (_, Acc) -> Acc
 			   end, [], Props),
     Ret = save_user_config(snmp, agent, lists:keystore(versions, 1, AgentEnv, {versions, Versions})),
     bkfw_app:restart(),
@@ -556,4 +542,96 @@ parse_ip_port(BinIP, BinPort) ->
 	    end;
 	{error, einval} ->
 	    {error, invalid_target}
+    end.
+
+get_snmp_com(Dir) ->
+    case snmpa_conf:read_community_config(Dir) of
+	{ok, Com} ->
+	    {ok, [{public, list_to_binary(element(2, lists:keyfind("public", 1, Com)))},
+		  {restricted, list_to_binary(element(2, lists:keyfind("private", 1, Com)))}
+		 ]};
+	{error, Err} -> {error, Err}
+    end.
+
+get_snmp_usm(Dir) ->
+    case snmpa_conf:read_usm_config(Dir) of
+	{ok, [Conf]} ->
+	    Ret = [
+		   {username, list_to_binary(element(2, Conf))},
+		   {engine, get_snmp_engine_id(Dir)},
+		   {level, get_usm_level(Conf)},
+		   {auth, element(5, Conf)},
+		   {authKey, <<>>},
+		   {priv, element(8, Conf)},
+		   {privKey, <<>>}
+		  ],
+	    {ok, Ret};
+	{ok, []} -> {ok, []};
+	{ok, _} -> {error, invalid_config};
+	{error, Err} -> {error, Err}
+    end.
+
+set_snmp_com(Dir, Props) ->
+    case snmpa_conf:read_community_config(Dir) of
+	{ok, Com} ->
+	    case get_communities(Props) of
+		{ok, Pub, Priv} ->
+		    Com2 = set_community("public", Pub, Com),
+		    Com3 = set_community("private", Priv, Com2),
+		    ok = snmpa_conf:write_community_config(Dir, Com3),
+		    snmp_community_mib:reconfigure(Dir),
+		    ok;
+		{error, Err} -> {error, Err}
+	    end;
+	{error, Err} -> {error, Err}
+    end.
+
+% USM entry:
+% {EngineID, UserName, SecName, Clone, AuthP, AuthKeyC, OwnAuthKeyC, PrivP, PrivKeyC, OwnPrivKeyC, Public, AuthKey, PrivKey}
+-define(SEC_NAME, "publicSec").
+set_snmp_usm(Dir, Props) ->
+    ?debug("USM Props=~p\n", [Props]),
+    EngineID = proplists:get_value(engine, Props),
+    AuthP = binary_to_existing_atom(proplists:get_value(auth, Props), latin1),
+    AuthKey = get_usm_authkey(EngineID, AuthP, Props),
+    PrivP = binary_to_existing_atom(proplists:get_value(priv, Props), latin1),
+    PrivKey = get_usm_privkey(EngineID, Props),
+    Conf = { EngineID,                                                      % EngineID
+	     binary_to_list(proplists:get_value(username, Props)),          % UserName
+	     ?SEC_NAME,                                                     % SecName
+	     zeroDotZero,                                                   % Clone
+	     AuthP,                                                         % AuthP
+	     "",                                                            % AuthKeyC
+	     "",                                                            % OwnAuthKeyC
+	     PrivP,                                                         % PrivP
+	     "",                                                            % PrivKeyC
+	     "",                                                            % OwnPrivKeyC
+	     "",                                                            % Public
+	     AuthKey,                                                       % AuthKey
+	     PrivKey                                                        % PrivKey
+	   },
+    ok = snmpa_conf:write_usm_config(Dir, Conf),
+    snmp_user_based_sm_mib:reconfigure(Dir).
+
+
+get_usm_authkey(EngineID, usmHMACMD5AuthProtocol, Props) ->
+    snmp:passwd2localized_key(md5, binary_to_list(proplists:get_value(authKey, Props)), EngineID);
+get_usm_authkey(EngineID, usmHMACSHAAuthProtocol, Props) ->
+    snmp:passwd2localized_key(sha, binary_to_list(proplists:get_value(authKey, Props)), EngineID).
+
+
+get_usm_privkey(EngineID, Props) ->
+    snmp:passwd2localized_key(md5, binary_to_list(proplists:get_value(privKey, Props)), EngineID).
+
+get_usm_level(Conf) ->
+    case {element(5, Conf), element(8, Conf)} of
+	{usmNoAuthProtocol, usmNoPrivProtocol} -> noauthnopriv;
+	{_, usmNoPrivProtocol} -> authnopriv;
+	{_, _} -> authpriv
+    end.
+
+get_snmp_engine_id(Dir) ->
+    case snmpa_conf:read_agent_config(Dir) of
+	{ok, Conf} -> list_to_binary(proplists:get_value(snmpEngineID, Conf, "agent"));
+	{error, _} -> <<"agent">>
     end.
