@@ -60,6 +60,9 @@ Example:
 # Default values
 
 * SNMP communities (v1 + v2): public (read-only), private (read-write)
+* SNMP v3:
+  * .1.3.6.1.2.1 accessible noAUthNoPriv
+  * .1.3.6.1.4.1 accessible with authPriv or authNoPriv
 * HTTP login/password: admin / admin
 * SNMP v3: 
 
