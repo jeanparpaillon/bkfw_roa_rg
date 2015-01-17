@@ -195,7 +195,6 @@ to_json(Req, #state{section=sys, sys=_}=S) ->
 
 
 from_json(Req, #state{section=mcu, index=I}=S) ->
-    ?debug("POST /api/mcu/~p\n", [I]),
     case parse_body(Req) of
 	{error, invalid_body, Req2} ->
 	    {false, ?set_error(invalid_body, Req2), S};
@@ -203,6 +202,8 @@ from_json(Req, #state{section=mcu, index=I}=S) ->
 	    ?error("Internal error: ~p~n", [Err]),
 	    {halt, ?set_error(internal, Req2), S};
 	{ok, Json, Req2} ->
+	    ?debug("POST /api/mcu/~p\n"
+		   "       ~p\n", [I, Json]),
 	    case bkfw_mcu:set_kv(I, Json) of
 		ok ->
 		    ?debug("Set MCU kv=ok\n"),
@@ -451,6 +452,7 @@ err_to_string(invalid_net_address) -> <<"Invalid value: network address">>;
 err_to_string(invalid_net_mask) -> <<"Invalid value: network mask">>;
 err_to_string(invalid_community) -> <<"Invalid value: community name">>;
 err_to_string(invalid_target) -> <<"Invalid value: target address">>;
+err_to_string(invalid_thresholds) -> <<"Invalid value: thresholds">>;
 err_to_string(empty_password) -> <<"Invalid value: empty password">>;
 err_to_string({unexpected, _}) -> <<"Internal error in backend">>;
 err_to_string(Else) when is_atom(Else) -> atom_to_binary(Else, utf8);

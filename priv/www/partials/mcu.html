@@ -106,7 +106,7 @@
                 </td>
 		<td>V</td>
               </tr>
-              <tr>
+              <!-- tr>
                 <td>{{ mcu.label.inputLossThreshold }}</td>
                 <td>{{ mcu.detail.inputLossThreshold }}</td>
 		<td>dBm</td>
@@ -115,7 +115,7 @@
                 <td>{{ mcu.label.outputLossThreshold }}</td>
                 <td>{{ mcu.detail.outputLossThreshold }}</td>
 		<td>dBm</td>
-              </tr>
+              </tr -->
             </tbody>
           </table>
         </div>
@@ -125,7 +125,7 @@
     <div class="col-md-6">
 
       <div class="block">
-        <h2>Control</h2>
+        <h2>Operating Mode</h2>
 
         <p class="alert alert-info" ng-hide="mcu.controlMode">
           Loading...
@@ -145,6 +145,20 @@
             <label>Value in {{ mcu.modeID[mcu.controlMode].valueType }}</label>
             <input type="text" ng-model="mcu.controlValue" class="form-control" />
           </div>
+	</form>
+
+	<h2>Alarm Settings</h2>
+	
+	<form role="form" ng-submit="mcu.setThresholds()" >
+          <div class="form-group" >
+            <label>Loss of input power threshold (dBm)</label>
+            <input type="text" ng-model="mcu.inputLossThreshold" class="form-control" />
+          </div>	  
+
+          <div class="form-group" >
+            <label>Loss of output power threshold (dBm)</label>
+            <input type="text" ng-model="mcu.outputLossThreshold" class="form-control" />
+          </div>	  
 
           <button type="submit" class="btn btn-primary">Set</button>
         </form>

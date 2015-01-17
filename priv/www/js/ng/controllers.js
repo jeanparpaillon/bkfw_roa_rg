@@ -29,6 +29,9 @@ angular.module('bkfwApp.controllers', [])
   this.controlMode = null;
   this.controlValue = null;
 
+    this.inputLossThreshold = null;
+    this.outputLossThreshold = null;
+
   $scope.$watch(
     function() {
       return mcu.get($stateParams.mcuIndex);
@@ -45,6 +48,13 @@ angular.module('bkfwApp.controllers', [])
           this.controlValue = mcu.getControlValue(this.detail, this.controlMode);
           console.debug("Control value is " + this.controlValue);
         }
+
+        if (this.inputLossThreshold === null) {
+          this.inputLossThreshold = this.detail.inputLossThreshold;
+        }	
+        if (this.outputLossThreshold === null) {
+          this.outputLossThreshold = this.detail.outputLossThreshold;
+        }	
       }
     })
   );
@@ -53,9 +63,27 @@ angular.module('bkfwApp.controllers', [])
     this.controlValue = mcu.getControlValue(this.detail, this.controlMode);
   };
 
+  this.setThresholds = function() {
+      dialogs.confirm("Confirm setting thresholds:")
+
+	  .then(angular.bind(this, function() {
+
+	      var newMcu = angular.copy(this.detail);
+	      delete newMcu.operatingMode;
+	      newMcu.inputLossThreshold = this.inputLossThreshold;
+	      newMcu.outputLossThreshold = this.outputLossThreshold;
+
+	      mcu.save(newMcu)
+	  
+		  .then(angular.bind(this, function() {
+		      dialogs.success("Thresholds set");
+		  }));
+	  }));
+  };
+
   this.setOperatingMode = function() {
 
-    dialogs.confirm("Are you sure ?")
+    dialogs.confirm("Confirm setting operating mode:")
 
     .then(angular.bind(this, function() {
       console.debug("Setting operating mode to " + this.controlMode);
@@ -80,7 +108,7 @@ angular.module('bkfwApp.controllers', [])
 
 }])
 
-.controller('systemCtrl', ['$q', '$http', '$timeout', '$state', 'sys', 'auth', 'FileUploader', 'dialogs', 'edfa', 'apiErrorsConfig', function($q, $http, $timeout, $state, sys, auth, FileUploader, dialogs, edfa, apiErrorsConfig) {
+    .controller('systemCtrl', ['$q', '$http', '$timeout', '$state', 'sys', 'auth', 'FileUploader', 'dialogs', 'edfa', 'apiErrorsConfig', '$scope', function($q, $http, $timeout, $state, sys, auth, FileUploader, dialogs, edfa, apiErrorsConfig, $scope) {
 
   function getError(response) {
   }
@@ -135,10 +163,11 @@ angular.module('bkfwApp.controllers', [])
 
   this.securitySave = function() {
 
-    var actions = [
-      [this.community.$save(), "Community settings saved"],
-      [this.protocol.$save(), "Protocol settings saved"],
-    ];
+    var actions = [ [this.protocol.$save(), "Protocol settings saved"] ];
+
+    if ($scope.security.$valid) {
+	actions.push([this.community.$save(), "SNMP settings saved"]);
+    }
 
     // check this.password.confirm because
     // only this field is validated and it's

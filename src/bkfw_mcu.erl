@@ -81,52 +81,12 @@ get_kv(#edfaMcuTable{}=T) ->
     ].
 
 set_kv(Idx, Kv) ->
-    try binary_to_integer(proplists:get_value(operatingMode, Kv, <<"0">>)) of
-	0 ->
-	    {error, missing_mode};
-	?edfaMcuOperatingMode_off ->
-	    bkfw_srv:command(Idx, smode, [<<"OFF">>]),
-	    ok;
-	?edfaMcuOperatingMode_cc ->
-	    case get_consign(ampConsign, Kv) of
-		undefined -> {error, missing_consign};
-		V -> 
-		    case bkfw_srv:command(Idx, scc, [<<"1 ">>, io_lib:format("~.2f", [V])]) of
-			{ok, {Idx, scc, [1, ofr]}} ->
-			    {error, ofr};
-			_ ->
-			    bkfw_srv:command(Idx, smode, [<<"CC">>]),
-			    ok
-		    end
-	    end;
-	?edfaMcuOperatingMode_gc ->
-	    case get_consign(gainConsign, Kv) of
-		undefined -> {error, missing_consign};
-		V -> 
-		    case bkfw_srv:command(Idx, sgc, [io_lib:format("~.2f", [V])]) of
-			{ok, {Idx, sgc, [ofr]}} ->
-			    {error, ofr};
-			_ ->
-			    bkfw_srv:command(Idx, smode, [<<"GC">>]),
-			    ok
-		    end
-	    end;
-	?edfaMcuOperatingMode_pc ->
-	    case get_consign(outputPowerConsign, Kv) of
-		undefined -> {error, mising_consign};
-		V ->
-		    case bkfw_srv:command(Idx, spc, [io_lib:format("~.2f", [V])]) of
-			{ok, {Idx, spc, [ofr]}} ->
-			    {error, ofr};
-			_ ->
-			    bkfw_srv:command(Idx, smode, [<<"PC">>]),
-			    ok
-		    end
-	    end
-    catch error:badarg ->
-	    {error, missing_mode}
+    case get_kv_integer(operatingMode, Kv) of
+	undefined ->
+	    set_thresholds(Idx, Kv);
+	Mode ->
+	    set_operating_mode(Idx, Mode, Kv)
     end.
-
 
 %%% SNMP functions
 table_func(new, NameDb) ->
@@ -450,3 +410,98 @@ set_from_snmp(Idx, [{?edfaMcuOperatingMode, Val} | Tail]) ->
 set_from_snmp(_, [{Col, _} | _]) ->
     {error, Col}.
 
+
+set_operating_mode(Idx, ?edfaMcuOperatingMode_off, _) ->
+    bkfw_srv:command(Idx, smode, [<<"OFF">>]),
+    ok;
+set_operating_mode(Idx, ?edfaMcuOperatingMode_cc, Kv) ->
+    case get_consign(ampConsign, Kv) of
+	undefined -> {error, missing_consign};
+	V -> 
+	    case bkfw_srv:command(Idx, scc, [<<"1 ">>, io_lib:format("~.2f", [V])]) of
+		{ok, {Idx, scc, [1, ofr]}} ->
+		    {error, ofr};
+		_ ->
+		    bkfw_srv:command(Idx, smode, [<<"CC">>]),
+		    ok
+	    end
+    end;
+set_operating_mode(Idx, ?edfaMcuOperatingMode_gc, Kv) ->
+    case get_consign(gainConsign, Kv) of
+	undefined -> {error, missing_consign};
+	V -> 
+	    case bkfw_srv:command(Idx, sgc, [io_lib:format("~.2f", [V])]) of
+		{ok, {Idx, sgc, [ofr]}} ->
+		    {error, ofr};
+		_ ->
+		    bkfw_srv:command(Idx, smode, [<<"GC">>]),
+		    ok
+	    end
+    end;
+set_operating_mode(Idx, ?edfaMcuOperatingMode_pc, Kv) ->
+    case get_consign(outputPowerConsign, Kv) of
+	undefined -> {error, mising_consign};
+	V ->
+	    case bkfw_srv:command(Idx, spc, [io_lib:format("~.2f", [V])]) of
+		{ok, {Idx, spc, [ofr]}} ->
+		    {error, ofr};
+		_ ->
+		    bkfw_srv:command(Idx, smode, [<<"PC">>]),
+		    ok
+	    end
+    end;
+set_operating_mode(_, _, _) ->
+    {error, internal}.
+
+set_thresholds(Idx, Kv) ->
+    case get_kv_float(inputLossThreshold, Kv) of
+	undefined ->
+	    {error, invalid_thresholds};
+	IT ->
+	    case bkfw_srv:command(Idx, sli, [io_lib:format("~.2f", [IT])]) of
+		{ok, {Idx, sli, _}} ->
+		    case get_kv_float(outputLossThreshold, Kv) of
+			undefined ->
+			    {error, invalid_thresholds};
+			OT ->
+			    case bkfw_srv:command(Idx, slo, [io_lib:format("~.2f", [OT])]) of
+				{ok, {Idx, slo, _}} ->
+				    ok;
+				_ ->
+				    {error, internal}
+			    end
+		    end;
+		_ ->
+		    {error, internal}
+	    end
+    end.
+ 
+get_kv_integer(Key, Props) ->
+    case proplists:get_value(Key, Props) of
+	undefined -> undefined;
+	I when is_integer(I) -> I;
+	F when is_float(F) -> undefined;
+	Else ->
+	    try binary_to_integer(Else) of
+		I -> I
+	    catch error:badarg ->
+		    undefined
+	    end
+    end.
+
+get_kv_float(Key, Props) ->
+    case proplists:get_value(Key, Props) of
+	undefined -> undefined;
+	I when is_integer(I) -> I + 0.0;
+	F when is_float(F) -> F;
+	Else ->
+	    try binary_to_integer(Else) of
+		I -> I + 0.0
+	    catch error:badarg ->
+		    try binary_to_float(Else) of
+			F -> F
+		    catch error:badarg ->
+			    undefined
+		    end
+	    end
+    end.
