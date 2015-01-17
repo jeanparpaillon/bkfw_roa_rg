@@ -179,10 +179,7 @@
 	  <div class="form-group" ng-if="system.community.level != 'noauthnopriv'">
 	    <label>Authentication Key (passphrase)</label>
 	    <input name="authKey" type="input" autocomplete="off" model="system.community.authKey"
-		   ng-minlength="8" ng-class="{ 'has-error': security.authKey.$error.minlength }"/>
-	    <span class="text-danger" ng-show="security.authKey.$dirty && security.authKey.$error" >
-	      Passphrase must be at least 8 characters long
-	    </span>
+		   ng-class="{ 'has-error': security.authKey.$error.minlength }"/>
 	  </div>
 
 	  <div class="form-group" ng-if="system.community.level == 'authpriv'">
