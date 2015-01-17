@@ -191,7 +191,7 @@ handle_slots(Mask, Idx, #state{slots=Slots}=S) when
     % slot is not occupied, slot was occupied
     ?info("Stop MCU monitor (slot: ~p)~n", [Idx]),
     ok = mnesia:dirty_delete(smmMcuTable, Idx+1),
-    bkfw_mcus_sup:terminate_mcu(element(Idx+1, Slots)),
+    bkfw_mcus_sup:terminate_mcu(Idx+1, element(Idx+1, Slots)),
     handle_slots(Mask, Idx+1, S#state{slots=setelement(Idx+1, Slots, false)});
 
 handle_slots(Mask, Idx, #state{slots=Slots}=S) when

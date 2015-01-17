@@ -13,7 +13,7 @@
 %%%
 -export([start_link/0,
 	 start_mcu/1,
-	 terminate_mcu/1]).
+	 terminate_mcu/2]).
 
 %%% supervisor callback
 -export([init/1]).
@@ -28,9 +28,11 @@ start_link() ->
 
 % Idx start at 1
 start_mcu(Idx) ->
+    bkfw_srv:flush(),
     supervisor:start_child(?MODULE, [Idx]).
 
-terminate_mcu(Pid) ->
+terminate_mcu(_Idx, Pid) ->
+    bkfw_srv:flush(),
     ok = supervisor:terminate_child(?MODULE, Pid).
 
 %%%
