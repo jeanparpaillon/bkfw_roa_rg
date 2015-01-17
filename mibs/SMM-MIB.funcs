@@ -1,0 +1,14 @@
+% -*- erlang -*-
+{smmVendor,                  {bkfw_edfa, variable_func, [edfaVendor]}}.
+{smmModuleType,              {bkfw_edfa, variable_func, [edfaModuleType]}}.
+{smmHWVer,                   {bkfw_edfa, variable_func, [edfaHWVer]}}.
+{smmHWRev,                   {bkfw_edfa, variable_func, [edfaHWRev]}}.
+{smmSWVer,                   {bkfw_edfa, variable_func, [edfaSWVer]}}.
+{smmFWVer,                   {bkfw_edfa, variable_func, [edfaFWVer]}}.
+{smmPartNum,                 {bkfw_edfa, variable_func, [edfaPartNum]}}.
+{smmSerialNum,               {bkfw_edfa, variable_func, [edfaSerialNum]}}.
+{smmProductDate,             {bkfw_edfa, variable_func, [edfaProductDate]}}.
+{smmPowerSupply,             {bkfw_edfa, variable_func, [edfaPowerSupply]}}.
+{smmCurInternalTemp,         {bkfw_edfa, variable_func, [edfaCurInternalTemp]}}.
+{smmNumber,                  {bkfw_edfa, variable_func, [edfaNumber]}}.
+{ampTable,                {bkfw_mcu,  table_func,    [{edfaMcuTable, mnesia}]}}.

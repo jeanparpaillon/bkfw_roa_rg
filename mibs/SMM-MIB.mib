@@ -1,0 +1,515 @@
+SMM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Gauge32, Integer32, NOTIFICATION-TYPE
+	FROM SNMPv2-SMI
+
+    NOTIFICATION-GROUP
+	FROM SNMPv2-CONF
+
+    TEXTUAL-CONVENTION, DisplayString, DateAndTime, RowStatus
+    	FROM SNMPv2-TC
+
+    bktelPhotonics
+	FROM BKTEL-PHOTONICS-SMI;
+
+smmModule MODULE-IDENTITY
+    LAST-UPDATED "201501120000Z"
+    ORGANIZATION "BKtel Photonics"
+    CONTACT-INFO
+            "   BKtel Photonics
+	    	website: www.bktel-photonics.com
+		email: photonics@bktel.com"
+    DESCRIPTION
+            "The MIB module to describe commands for BKtel Photonics Supervision Management Module."
+
+    REVISION      "201410170000Z"
+    DESCRIPTION
+	"Initial revision."
+    REVISION	"201412140000Z"
+    DESCRIPTION
+	"Update traps definitions."
+    REVISION	"201501120000Z"
+    DESCRIPTION
+	"Add 2 MCU traps."
+    ::= { bktelPhotonics 1 }
+
+smmMIB	OBJECT IDENTIFIER ::= { smmModule 1 }
+smmMIBObjects OBJECT IDENTIFIER ::= { smmMIB 1 }
+smmMIBTraps OBJECT IDENTIFIER ::= { smmMIB 2 }
+smmMIBConformance OBJECT IDENTIFIER ::= { smmMIB 3 }
+
+smm OBJECT IDENTIFIER ::= { smmMIBObjects 1 }
+
+-- Datatypes
+
+-- Managed Objects
+
+smmVendor	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"SMM vendor."
+    ::= { smm 1 }
+
+smmModuleType	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"SMM type."
+    ::= { smm 2 }
+
+smmHWVer	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"SMM hardware version."
+    ::= { smm 3 }
+
+smmHWRev	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"SMM hardware revision."
+    ::= { smm 4 }
+
+smmSWVer	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"SMM software version."
+    ::= { smm 5 }
+
+smmFWVer	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"SMM firmware version."
+    ::= { smm 6 }
+
+smmPartNum	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"SMM part number."
+    ::= { smm 7 }
+
+smmSerialNum	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"SMM serial number."
+    ::= { smm 8 }
+
+smmProductDate	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"SMM production date."
+    ::= { smm 9 }
+
+smmPowerSupply	OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The SMM power supply voltage."
+    ::= { smm 10 }
+
+smmCurInternalTemp	OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The SMM internal temperature."
+    ::= { smm 11 }
+
+smmNumber OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+	"The number of amplifiers present on the system."
+    ::= { smm 12 }
+
+-- the Amp table
+
+ampTable OBJECT-TYPE
+    SYNTAX	SEQUENCE OF AmpEntry
+    MAX-ACCESS	not-accessible
+    STATUS	current
+    DESCRIPTION
+	"A list of Amplifier entries. The number of entries is 
+	given by the value of AmpNumber."
+    ::= { smm 13 }
+
+ampEntry OBJECT-TYPE
+    SYNTAX	AmpEntry
+    MAX-ACCESS	not-accessible
+    STATUS	current
+    DESCRIPTION
+	"An entry containing management information applicable to a particular Amplifier."
+    INDEX	{ ampIndex }
+    ::= { ampTable 1 }
+
+AmpEntry ::=
+	SEQUENCE {
+		ampIndex			INTEGER,
+		ampAmpConsign	 	Gauge32,
+		ampGainConsign		Integer32,
+		ampOutputPowerConsign	Gauge32,
+		ampOperatingMode		INTEGER,
+		ampCurLaserTemp		Integer32,
+		ampCurAmp			Gauge32,
+		ampCurInternalTemp		Integer32,
+		ampPowerPd1            	Integer32,
+		ampPowerPd2            	Integer32,
+		ampPowerPd3            	Integer32,
+		ampPowerSupply         	Integer32,
+		ampInputLossTh    		Integer32,
+		ampOutputLossTh        	Integer32,
+		ampVendor			DisplayString,
+		ampModuleType		DisplayString,
+		ampHWVer			DisplayString,
+		ampHWRev			DisplayString,
+		ampSWVer			DisplayString,
+		ampFWVer			DisplayString,
+		ampPartNum			DisplayString,
+		ampSerialNum		DisplayString,
+		ampProductDate		DateAndTime
+	}
+
+ampIndex OBJECT-TYPE
+    SYNTAX    	INTEGER
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"A unique value, greater than zero, for each amplifier."
+    ::= { ampEntry 1 }
+
+ampAmpConsign OBJECT-TYPE
+    SYNTAX	Gauge32
+    MAX-ACCESS	read-write
+    STATUS	current
+    DESCRIPTION
+	"The value of the lasers current consign used in current control mode, in mA."
+    ::= { ampEntry 2 }
+
+ampGainConsign OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-write
+    STATUS	current
+    DESCRIPTION
+	"The value of the lasers gain consign used in gain control mode, in dBm."
+    ::= { ampEntry 3 }
+
+ampOutputPowerConsign OBJECT-TYPE
+    SYNTAX	Gauge32
+    MAX-ACCESS	read-write
+    STATUS	current
+    DESCRIPTION
+	"The value of the lasers output power consign used in output power control mode, in dBm."
+    ::= { ampEntry 4 }
+
+ampOperatingMode OBJECT-TYPE
+    SYNTAX	INTEGER {
+                    pc(1),
+		    gc(2),
+		    cc(3),
+		    off(4)
+		    }
+    MAX-ACCESS	read-write
+    STATUS	current
+    DESCRIPTION
+	"The current operational mode of the laser."
+    ::= { ampEntry 5 }
+
+ampCurLaserTemp	OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The current laser temperature."
+    ::= { ampEntry 6 }
+
+ampCurAmp	OBJECT-TYPE
+    SYNTAX	Gauge32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The current laser electrical current."
+    ::= { ampEntry 7 }
+
+ampCurInternalTemp	OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The current internal temperature."
+    ::= { ampEntry 8 }
+
+ampPowerPd1	OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The power level on the monitoring photodiode(1)."
+    ::= { ampEntry 9 }
+
+ampPowerPd2	OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The power level on the monitoring photodiode(2)."
+    ::= { ampEntry 10 }
+
+ampPowerPd3	OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The power level on the monitoring photodiode(3)."
+    ::= { ampEntry 11 }
+
+ampPowerSupply	OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The power supply voltage."
+    ::= { ampEntry 12 }
+
+ampInputLossTh	OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The loss of input power threshold."
+    ::= { ampEntry 13 }
+
+ampOutputLossTh OBJECT-TYPE
+    SYNTAX	Integer32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The loss of output power threshold."
+    ::= { ampEntry 14 }
+
+ampVendor	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Module vendor."
+    ::= { ampEntry 15 }
+
+ampModuleType	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Module type."
+    ::= { ampEntry 16 }
+
+ampHWVer	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Module hardware version."
+    ::= { ampEntry 17 }
+
+ampHWRev	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Module hardware revision."
+    ::= { ampEntry 18 }
+
+ampSWVer	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Module software version."
+    ::= { ampEntry 19 }
+
+ampFWVer	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Module firmware version."
+    ::= { ampEntry 20 }
+
+ampPartNum	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Module part number."
+    ::= { ampEntry 21 }
+
+ampSerialNum	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Module serial number."
+    ::= { ampEntry 22 }
+
+ampProductDate	OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"Module production date."
+    ::= { ampEntry 23 }
+
+smmInputPowerTrap NOTIFICATION-TYPE
+    OBJECTS {
+    	ampIndex,
+	ampPowerPd1
+    }
+    STATUS current
+    DESCRIPTION
+	"Loss of input power alarm"
+    ::= { smmMIBTraps 1 }
+
+smmOutputPowerTrap NOTIFICATION-TYPE
+    OBJECTS {
+        ampIndex,
+	ampPowerPd2
+    }
+    STATUS current
+    DESCRIPTION
+	"Loss of output power alarm"
+    ::= { smmMIBTraps 2 }
+
+smmPumpTempTrap NOTIFICATION-TYPE
+    OBJECTS {
+        ampIndex,
+	ampCurLaserTemp
+    }
+    STATUS current
+    DESCRIPTION
+	"Pump temperature alarm"
+    ::= { smmMIBTraps 3 }
+
+smmPumpBiasTrap NOTIFICATION-TYPE
+    OBJECTS {
+        ampIndex,
+	ampCurAmp
+    }
+    STATUS current
+    DESCRIPTION
+	"Laser current is over 95% of EOL"
+    ::= { smmMIBTraps 4 }
+
+ampInternalTempTrap NOTIFICATION-TYPE
+    OBJECTS {
+        ampIndex,
+	smmCurInternalTemp
+    }
+    STATUS current
+    DESCRIPTION
+	"MCU Internal temperature alarm"
+    ::= { smmMIBTraps 5 }
+
+ampPowerSupplyTrap NOTIFICATION-TYPE
+    OBJECTS {
+        ampIndex,
+	smmPowerSupply
+    }
+    STATUS current
+    DESCRIPTION
+	"MCU Power supply alarm"
+    ::= { smmMIBTraps 6 }
+
+smmInternalTempTrap NOTIFICATION-TYPE
+    OBJECTS {
+	smmCurInternalTemp
+    }
+    STATUS current
+    DESCRIPTION
+	"smm Internal temperature alarm"
+    ::= { smmMIBTraps 7 }
+
+smmPowerSupplyTrap NOTIFICATION-TYPE
+    OBJECTS {
+	smmPowerSupply
+    }
+    STATUS current
+    DESCRIPTION
+	"SMM Power supply alarm"
+    ::= { smmMIBTraps 8 }
+
+smmBrefTrap NOTIFICATION-TYPE
+    OBJECTS {
+        ampIndex,
+	ampPowerPd2,
+	ampPowerPd3
+    }
+    STATUS current
+    DESCRIPTION
+	"Back reflection alarm"
+    ::= { smmMIBTraps 9 }
+
+smmAdiTrap NOTIFICATION-TYPE
+    OBJECTS {
+        ampIndex
+    }
+    STATUS current
+    DESCRIPTION
+	"Shutdown input active"
+    ::= { smmMIBTraps 10 }
+
+smmMuteTrap NOTIFICATION-TYPE
+    OBJECTS {
+        ampIndex
+    }
+    STATUS current
+    DESCRIPTION
+	"Mute input is active"
+    ::= { smmMIBTraps 11 }
+
+smmGenericTrap NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+	"Generic SMM trap (for testing purpose mainly)"
+    ::= { smmMIBTraps 12 }
+
+smmMIBTrapGroups OBJECT IDENTIFIER ::= { smmMIBConformance 1 }
+
+smmMIBTrapGroup NOTIFICATION-GROUP
+    NOTIFICATIONS {
+        smmInputPowerTrap,
+	smmOutputPowerTrap,
+	smmPumpTempTrap,
+	smmPumpBiasTrap,
+	ampInternalTempTrap,
+	ampPowerSupplyTrap,
+	smmInternalTempTrap,
+	smmPowerSupplyTrap,
+	smmBrefTrap,
+	smmAdiTrap,
+	smmMuteTrap,
+	smmGenericTrap
+    }
+    STATUS current
+    DESCRIPTION
+	"The notifications generated by SMM."
+    ::= { smmMIBTrapGroups 1 }
+
+END
