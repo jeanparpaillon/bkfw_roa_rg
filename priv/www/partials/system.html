@@ -178,8 +178,7 @@
 
 	  <div class="form-group" ng-if="system.community.level != 'noauthnopriv'">
 	    <label>Authentication Key (passphrase)</label>
-	    <input name="authKey" type="input" autocomplete="off" model="system.community.authKey"
-		   ng-class="{ 'has-error': security.authKey.$error.minlength }"/>
+	    <input name="authKey" type="input" autocomplete="off" ng-model="system.community.authKey" />
 	  </div>
 
 	  <div class="form-group" ng-if="system.community.level == 'authpriv'">
@@ -190,7 +189,7 @@
 
 	  <div class="form-group" ng-if="system.community.level == 'authpriv'">
 	    <label>Private Key (passphrase)</label>
-	    <input type="input" autocomplete="off" model="system.community.privKey" />
+	    <input type="input" autocomplete="off" ng-model="system.community.privKey" />
 	  </div>
 	</div>
 

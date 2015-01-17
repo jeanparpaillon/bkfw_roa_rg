@@ -201,11 +201,11 @@ handle_call({set_kv, community, Props}, _From, State) ->
     Dir = get_snmp_configdir(),
     case set_snmp_com(Dir, Props) of
 	ok ->
-	    {reply, ok, State};
-	    %% case set_snmp_usm(Dir, Props) of
-	    %% 	ok -> {reply, ok, State};
-	    %% 	{error, Err} -> {reply, {error, Err}, State}
-	    %% end;
+	    %{reply, ok, State};
+	    case set_snmp_usm(Dir, Props) of
+	    	ok -> {reply, ok, State};
+	    	{error, Err} -> {reply, {error, Err}, State}
+	    end;
 	{error, Err} -> {reply, {error, Err}, State}
     end;
 
@@ -555,8 +555,8 @@ get_snmp_com(Dir) ->
     end.
 
 get_snmp_usm(Dir) ->
-    case snmpa_conf:read_usm_config(Dir) of
-	{ok, [Conf]} ->
+    case read_usm_config(Dir) of
+	{ok, Conf} ->
 	    Ret = [
 		   {username, list_to_binary(element(2, Conf))},
 		   {engine, get_snmp_engine_id(Dir)},
@@ -567,9 +567,28 @@ get_snmp_usm(Dir) ->
 		   {privKey, <<>>}
 		  ],
 	    {ok, Ret};
-	{ok, []} -> {ok, []};
-	{ok, _} -> {error, invalid_config};
 	{error, Err} -> {error, Err}
+    end.
+
+% USM entry:
+% {EngineID, UserName, SecName, Clone, AuthP, AuthKeyC, OwnAuthKeyC, PrivP, PrivKeyC, OwnPrivKeyC, Public, AuthKey, PrivKey}
+-define(SEC_NAME, "privateSec").
+-define(SEC_PUBLIC, {"agent", "", "publicSec", zeroDotZero, 
+		     usmNoAuthProtocol, "", "", 
+		     usmNoPrivProtocol, "", "", "", "", ""}).
+
+read_usm_config(Dir) ->
+    case snmpa_conf:read_usm_config(Dir) of
+	{ok, Conf} ->
+	    case lists:keyfind(?SEC_NAME, 3, Conf) of
+		false ->
+		    {ok, {"agent", "admin", "privateSec", zeroDotZero, 
+			  usmHMACMD5AuthProtocol, "", "",
+			  usmNoPrivProtocol, "", "", "", "", ""}};
+		PrivateConf -> {ok, PrivateConf}
+	    end;
+	{error, Err} ->
+	    {error, Err}
     end.
 
 set_snmp_com(Dir, Props) ->
@@ -587,42 +606,63 @@ set_snmp_com(Dir, Props) ->
 	{error, Err} -> {error, Err}
     end.
 
-% USM entry:
-% {EngineID, UserName, SecName, Clone, AuthP, AuthKeyC, OwnAuthKeyC, PrivP, PrivKeyC, OwnPrivKeyC, Public, AuthKey, PrivKey}
--define(SEC_NAME, "publicSec").
 set_snmp_usm(Dir, Props) ->
-    ?debug("USM Props=~p\n", [Props]),
-    EngineID = proplists:get_value(engine, Props),
+    EngineID = binary_to_list(proplists:get_value(engine, Props)),
     AuthP = binary_to_existing_atom(proplists:get_value(auth, Props), latin1),
-    AuthKey = get_usm_authkey(EngineID, AuthP, Props),
-    PrivP = binary_to_existing_atom(proplists:get_value(priv, Props), latin1),
-    PrivKey = get_usm_privkey(EngineID, Props),
-    Conf = { EngineID,                                                      % EngineID
-	     binary_to_list(proplists:get_value(username, Props)),          % UserName
-	     ?SEC_NAME,                                                     % SecName
-	     zeroDotZero,                                                   % Clone
-	     AuthP,                                                         % AuthP
-	     "",                                                            % AuthKeyC
-	     "",                                                            % OwnAuthKeyC
-	     PrivP,                                                         % PrivP
-	     "",                                                            % PrivKeyC
-	     "",                                                            % OwnPrivKeyC
-	     "",                                                            % Public
-	     AuthKey,                                                       % AuthKey
-	     PrivKey                                                        % PrivKey
-	   },
-    ok = snmpa_conf:write_usm_config(Dir, Conf),
-    snmp_user_based_sm_mib:reconfigure(Dir).
+    case get_usm_authkey(EngineID, AuthP, Props) of
+	{ok, AuthKey} ->
+	    PrivP = binary_to_existing_atom(proplists:get_value(priv, Props), latin1),
+	    case get_usm_privkey(EngineID, Props) of
+		{ok, PrivKey} ->
+		    Conf = { EngineID,                                                      % EngineID
+			     binary_to_list(proplists:get_value(username, Props)),          % UserName
+			     ?SEC_NAME,                                                     % SecName
+			     zeroDotZero,                                                   % Clone
+			     AuthP,                                                         % AuthP
+			     "",                                                            % AuthKeyC
+			     "",                                                            % OwnAuthKeyC
+			     PrivP,                                                         % PrivP
+			     "",                                                            % PrivKeyC
+			     "",                                                            % OwnPrivKeyC
+			     "",                                                            % Public
+			     AuthKey,                                                       % AuthKey
+			     PrivKey                                                        % PrivKey
+			   },
+		    ?debug("USM Props=~p\n", [Conf]),
+		    ok = snmpa_conf:write_usm_config(Dir, [?SEC_PUBLIC, Conf]),
+		    snmp_user_based_sm_mib:reconfigure(Dir);
+		{error, Err} -> {error, Err}
+	    end;
+	{error, Err} -> {error, Err}
+    end.
 
 
 get_usm_authkey(EngineID, usmHMACMD5AuthProtocol, Props) ->
-    snmp:passwd2localized_key(md5, binary_to_list(proplists:get_value(authKey, Props)), EngineID);
+    case binary_to_list(proplists:get_value(authKey, Props)) of
+	[] -> {ok, []};
+	Key when length(Key) >= 8 -> 
+	    {ok, snmp:passwd2localized_key(md5, Key, EngineID)};
+	_ ->
+	    {error, invalid_snmp_authkey}
+    end;
 get_usm_authkey(EngineID, usmHMACSHAAuthProtocol, Props) ->
-    snmp:passwd2localized_key(sha, binary_to_list(proplists:get_value(authKey, Props)), EngineID).
+    case binary_to_list(proplists:get_value(authKey, Props)) of
+	[] -> {ok, []};
+	Key when length(Key) >= 8 ->
+	    {ok, snmp:passwd2localized_key(sha, Key, EngineID)};
+	_ ->
+	    {error, invalid_snmp_authkey}
+    end.
 
 
 get_usm_privkey(EngineID, Props) ->
-    snmp:passwd2localized_key(md5, binary_to_list(proplists:get_value(privKey, Props)), EngineID).
+    case binary_to_list(proplists:get_value(privKey, Props)) of
+	[] -> {ok, []};
+	Key when length(Key) >= 8 ->
+	    {ok, snmp:passwd2localized_key(md5, Key, EngineID)};
+	_ ->
+	    {error, invalid_snmp_privkey}
+    end.
 
 get_usm_level(Conf) ->
     case {element(5, Conf), element(8, Conf)} of
