@@ -208,10 +208,6 @@ from_json(Req, #state{section=mcu, index=I}=S) ->
 		ok ->
 		    ?debug("Set MCU kv=ok\n"),
 		    {true, Req2, S};
-		{error, ofr} ->
-		    ?debug("Set MCU kv=ofr\n"),
-		    {ok, Req3} = cowboy_req:reply(416, Req2),
-		    {halt, Req3, S};
 		{error, Err} ->
 		    ?error("Request error: ~p~n", [Err]),
 		    {false, ?set_error(Err, Req2), S}
@@ -453,6 +449,7 @@ err_to_string(invalid_net_mask) -> <<"Invalid value: network mask">>;
 err_to_string(invalid_community) -> <<"Invalid value: community name">>;
 err_to_string(invalid_target) -> <<"Invalid value: target address">>;
 err_to_string(invalid_thresholds) -> <<"Invalid value: thresholds">>;
+err_to_string(ofr) -> <<"Consign out of range, check your manual">>;
 err_to_string(empty_password) -> <<"Invalid value: empty password">>;
 err_to_string({unexpected, _}) -> <<"Internal error in backend">>;
 err_to_string(Else) when is_atom(Else) -> atom_to_binary(Else, utf8);
