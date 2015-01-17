@@ -201,10 +201,11 @@ handle_call({set_kv, community, Props}, _From, State) ->
     Dir = get_snmp_configdir(),
     case set_snmp_com(Dir, Props) of
 	ok ->
-	    case set_snmp_usm(Dir, Props) of
-		ok -> {reply, ok, State};
-		{error, Err} -> {reply, {error, Err}, State}
-	    end;
+	    {reply, ok, State};
+	    %% case set_snmp_usm(Dir, Props) of
+	    %% 	ok -> {reply, ok, State};
+	    %% 	{error, Err} -> {reply, {error, Err}, State}
+	    %% end;
 	{error, Err} -> {reply, {error, Err}, State}
     end;
 

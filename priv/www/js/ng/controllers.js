@@ -163,10 +163,10 @@ angular.module('bkfwApp.controllers', [])
 
   this.securitySave = function() {
 
-    var actions = [ [this.protocol.$save(), "Protocol settings saved"] ];
+    var actions = [ [this.protocol.$save(), "Protocol settings"] ];
 
     if ($scope.security.$valid) {
-	actions.push([this.community.$save(), "SNMP settings saved"]);
+	actions.push([this.community.$save(), "SNMP settings"]);
     }
 
     // check this.password.confirm because
@@ -175,16 +175,17 @@ angular.module('bkfwApp.controllers', [])
     if (this.password.confirm) {
       actions.push(
         [$http.post('/api/sys/password', {password: this.password.confirm}),
-         "New password set"]
+         "New password"]
       );
     }
 
-    $q.all(actions.map(function(a) {
-      return a[0]
-      .then(function() {
-        dialogs.success(a[1]);
-      });
-    }));
+      $q.all(actions.map(function(a) {
+	  return a[0];
+      }))
+	  .then(function() {
+	      dialogs.modal("Settings are being applied, please wait...");
+	      return edfa.waitUntilOnline(3);
+	  });
   };
 
   this.reboot = function() {
