@@ -1,3 +1,11 @@
+bkfw (0.3) wheezy; urgency=medium
+
+  * Add SNMPv3 support
+  * Update MIB
+  * Allow to set all amps at a time
+
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Sat, 17 Jan 2015 13:56:12 +0100
+
 bkfw (0.2.11) wheezy; urgency=medium
 
   * Update procotol: handle out-of-range setpoints

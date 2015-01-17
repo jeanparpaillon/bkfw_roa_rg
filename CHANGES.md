@@ -29,3 +29,10 @@
 # 0.2.11
 
 * Update protocol: handle out-of-range values for setpoints
+
+# 0.3
+
+* Add SNMPv3 support
+* Update MIB
+* Enable multiple amps setting
+* Improve query time when amps are added/removed
