@@ -55,7 +55,10 @@ send(Com, To, Msg) when is_integer(To) ->
 -spec init(pid()) -> {ok, term()} | {error, term()} | ignore.
 init(Owner) ->
     Trace = case application:get_env(bkfw, debug, true) of
-		true -> {ok, Dev} = file:open(?TRACE, [write]), Dev;
+		true -> 
+		    {ok, Dev} = file:open(?TRACE, [append]),
+		    file:write(Dev, ["[COM] Reopening COM port\n"]),
+		    Dev;
 		false -> undefined
 	    end,
     case application:get_env(bkfw, com) of
