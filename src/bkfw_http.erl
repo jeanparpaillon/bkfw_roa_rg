@@ -143,7 +143,7 @@ resource_exists(Req, #state{section=mcu, index=badarg}=S) ->
 resource_exists(Req, #state{section=mcu, index=undefined}=S) ->
     {true, Req, S};
 resource_exists(Req, #state{section=mcu, index=I}=S) ->
-    case mnesia:dirty_match_object(#edfaMcuTable{index=I, _='_'}) of
+    case mnesia:dirty_match_object(#ampTable{index=I, _='_'}) of
 	[] ->
 	    {false, Req, S};
 	[Mcu] ->
@@ -172,7 +172,7 @@ allow_missing_post(Req, State) ->
 
 
 to_json(Req, #state{section=mcu, index=undefined}=S) ->
-    Mcus = mnesia:dirty_match_object(#edfaMcuTable{_='_'}),
+    Mcus = mnesia:dirty_match_object(#ampTable{_='_'}),
     Ejson = lists:map(fun bkfw_mcu:get_kv/1, Mcus),
     {jsx:encode(Ejson, ?JSX_OPTS), Req, S};
 

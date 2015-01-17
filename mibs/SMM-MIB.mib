@@ -32,6 +32,9 @@ smmModule MODULE-IDENTITY
     REVISION	"201501120000Z"
     DESCRIPTION
 	"Add 2 MCU traps."
+    REVISION	"201501170000Z"
+    DESCRIPTION
+	"Fix trap names (regarding SMM and AMP)."
     ::= { bktelPhotonics 1 }
 
 smmMIB	OBJECT IDENTIFIER ::= { smmModule 1 }
@@ -377,7 +380,7 @@ ampProductDate	OBJECT-TYPE
 	"Module production date."
     ::= { ampEntry 23 }
 
-smmInputPowerTrap NOTIFICATION-TYPE
+ampInputPowerTrap NOTIFICATION-TYPE
     OBJECTS {
     	ampIndex,
 	ampPowerPd1
@@ -387,7 +390,7 @@ smmInputPowerTrap NOTIFICATION-TYPE
 	"Loss of input power alarm"
     ::= { smmMIBTraps 1 }
 
-smmOutputPowerTrap NOTIFICATION-TYPE
+ampOutputPowerTrap NOTIFICATION-TYPE
     OBJECTS {
         ampIndex,
 	ampPowerPd2
@@ -397,7 +400,7 @@ smmOutputPowerTrap NOTIFICATION-TYPE
 	"Loss of output power alarm"
     ::= { smmMIBTraps 2 }
 
-smmPumpTempTrap NOTIFICATION-TYPE
+ampPumpTempTrap NOTIFICATION-TYPE
     OBJECTS {
         ampIndex,
 	ampCurLaserTemp
@@ -407,7 +410,7 @@ smmPumpTempTrap NOTIFICATION-TYPE
 	"Pump temperature alarm"
     ::= { smmMIBTraps 3 }
 
-smmPumpBiasTrap NOTIFICATION-TYPE
+ampPumpBiasTrap NOTIFICATION-TYPE
     OBJECTS {
         ampIndex,
 	ampCurAmp
@@ -420,11 +423,11 @@ smmPumpBiasTrap NOTIFICATION-TYPE
 ampInternalTempTrap NOTIFICATION-TYPE
     OBJECTS {
         ampIndex,
-	smmCurInternalTemp
+	ampCurInternalTemp
     }
     STATUS current
     DESCRIPTION
-	"MCU Internal temperature alarm"
+	"Amp Internal temperature alarm"
     ::= { smmMIBTraps 5 }
 
 ampPowerSupplyTrap NOTIFICATION-TYPE
@@ -434,7 +437,7 @@ ampPowerSupplyTrap NOTIFICATION-TYPE
     }
     STATUS current
     DESCRIPTION
-	"MCU Power supply alarm"
+	"Amp Power supply alarm"
     ::= { smmMIBTraps 6 }
 
 smmInternalTempTrap NOTIFICATION-TYPE
@@ -455,7 +458,7 @@ smmPowerSupplyTrap NOTIFICATION-TYPE
 	"SMM Power supply alarm"
     ::= { smmMIBTraps 8 }
 
-smmBrefTrap NOTIFICATION-TYPE
+ampBrefTrap NOTIFICATION-TYPE
     OBJECTS {
         ampIndex,
 	ampPowerPd2,
@@ -466,7 +469,7 @@ smmBrefTrap NOTIFICATION-TYPE
 	"Back reflection alarm"
     ::= { smmMIBTraps 9 }
 
-smmAdiTrap NOTIFICATION-TYPE
+ampAdiTrap NOTIFICATION-TYPE
     OBJECTS {
         ampIndex
     }
@@ -475,7 +478,7 @@ smmAdiTrap NOTIFICATION-TYPE
 	"Shutdown input active"
     ::= { smmMIBTraps 10 }
 
-smmMuteTrap NOTIFICATION-TYPE
+ampMuteTrap NOTIFICATION-TYPE
     OBJECTS {
         ampIndex
     }
@@ -494,17 +497,17 @@ smmMIBTrapGroups OBJECT IDENTIFIER ::= { smmMIBConformance 1 }
 
 smmMIBTrapGroup NOTIFICATION-GROUP
     NOTIFICATIONS {
-        smmInputPowerTrap,
-	smmOutputPowerTrap,
-	smmPumpTempTrap,
-	smmPumpBiasTrap,
+        ampInputPowerTrap,
+	ampOutputPowerTrap,
+	ampPumpTempTrap,
+	ampPumpBiasTrap,
 	ampInternalTempTrap,
 	ampPowerSupplyTrap,
 	smmInternalTempTrap,
 	smmPowerSupplyTrap,
-	smmBrefTrap,
-	smmAdiTrap,
-	smmMuteTrap,
+	ampBrefTrap,
+	ampAdiTrap,
+	ampMuteTrap,
 	smmGenericTrap
     }
     STATUS current

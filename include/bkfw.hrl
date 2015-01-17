@@ -34,36 +34,36 @@
 -type msg() :: {Addr :: integer(), Cmd :: atom(), Lines :: [msg_line()]}.
 
 % SNMP table record
--include("EDFA-MIB.hrl").
+-include("SMM-MIB.hrl").
 
--record(edfaMcuTable, {index                                         :: integer(),
-		       ampConsign         = 0                        :: float(),
-		       gainConsign        = 0                        :: float(),
-		       outputPowerConsign = 0                        :: float(),
-		       operatingMode      = ?edfaMcuOperatingMode_off:: integer(),
-		       curLaserTemp       = 0                        :: float(),
-		       curAmp             = 0                        :: float(),
-		       curInternalTemp    = 0                        :: float(),
-		       powerPd1           = 0                        :: float(),
-		       powerPd2           = 0                        :: float(),
-		       powerPd3           = 0                        :: float(),
-		       powerSupply        = 0                        :: float(),
-		       inputLossThreshold = 0                        :: float(),
-		       outputLossThreshold= 0                        :: float(),
-		       vendor             = ""                       :: string(),
-		       moduleType         = ""                       :: string(),
-		       hwVer              = ""                       :: string(),
-		       hwRev              = ""                       :: string(),
-		       swVer              = ""                       :: string(),
-		       fwVer              = ""                       :: string(),
-		       partNum            = ""                       :: string(),
-		       serialNum          = ""                       :: string(),
-		       productDate        = ""                       :: string()
-		   }).
--type edfaMcuTable() :: #edfaMcuTable{}.
+-record(ampTable, {index                                         :: integer(),
+		   ampConsign         = 0                        :: float(),
+		   gainConsign        = 0                        :: float(),
+		   outputPowerConsign = 0                        :: float(),
+		   operatingMode      = ?ampOperatingMode_off:: integer(),
+		   curLaserTemp       = 0                        :: float(),
+		   curAmp             = 0                        :: float(),
+		   curInternalTemp    = 0                        :: float(),
+		   powerPd1           = 0                        :: float(),
+		   powerPd2           = 0                        :: float(),
+		   powerPd3           = 0                        :: float(),
+		   powerSupply        = 0                        :: float(),
+		   inputLossThreshold = 0                        :: float(),
+		   outputLossThreshold= 0                        :: float(),
+		   vendor             = ""                       :: string(),
+		   moduleType         = ""                       :: string(),
+		   hwVer              = ""                       :: string(),
+		   hwRev              = ""                       :: string(),
+		   swVer              = ""                       :: string(),
+		   fwVer              = ""                       :: string(),
+		   partNum            = ""                       :: string(),
+		   serialNum          = ""                       :: string(),
+		   productDate        = ""                       :: string()
+		  }).
+-type ampTable() :: #ampTable{}.
 
--type edfaAlarmName() :: pin | pout | pump_temp | pump_bias | edfa_temp | edfa_psu | bref | adi | mute.
--record(edfaAlarm, {index                       :: integer(),
-		    name                        :: edfaAlarmName(),
+-type smmAlarmName() :: pin | pout | pump_temp | pump_bias | edfa_temp | edfa_psu | bref | adi | mute.
+-record(smmAlarm, {index                       :: integer(),
+		    name                        :: smmAlarmName(),
 		    obj                         :: term()}).
--type edfaAlarm() :: #edfaAlarm{}.
+-type smmAlarm() :: #smmAlarm{}.

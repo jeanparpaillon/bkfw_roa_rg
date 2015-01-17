@@ -17,7 +17,7 @@
 init([Handler]) ->
     {ok, #state{handler=Handler}}.
 
-handle_event(#edfaAlarm{index=Idx, name=Name}, #state{handler=To}=S) ->
+handle_event(#smmAlarm{index=Idx, name=Name}, #state{handler=To}=S) ->
     To ! {alarm, [{index, Idx},
 		  {name, Name},
 		  {var, alarm_to_var(Name)}]},

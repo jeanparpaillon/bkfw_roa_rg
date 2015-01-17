@@ -15,7 +15,7 @@
 init(_Args) ->
     {ok, []}.
 
-handle_event(#edfaAlarm{name=Name, obj=Obj}, S) -> 
+handle_event(#smmAlarm{name=Name, obj=Obj}, S) -> 
     Trap = alarm_to_trap(Name, Obj),
     Varbinds = alarm_to_vars(Name, Obj),
     send_trap(Trap, Varbinds),
@@ -49,33 +49,33 @@ send_trap(Trap, Varbinds) ->
 	    ok
     end.
 
-alarm_to_trap(pin, _) -> edfaInputPowerTrap;
-alarm_to_trap(pout, _) -> edfaOutputPowerTrap;
-alarm_to_trap(pump_temp, _) -> edfaPumpTempTrap;
-alarm_to_trap(pump_bias, _) -> edfaPumpBiasTrap;
-alarm_to_trap(edfa_temp, #edfaMcuTable{}) -> edfaMcuInternalTempTrap;
-alarm_to_trap(edfa_temp, {_,_}) -> edfaInternalTempTrap;
-alarm_to_trap(edfa_psu, #edfaMcuTable{}) -> edfaMcuPowerSupplyTrap;
-alarm_to_trap(edfa_psu, {_,_}) -> edfaPowerSupplyTrap;
-alarm_to_trap(bref, _) -> edfaBrefTrap;
-alarm_to_trap(adi, _) -> edfaAdiTrap;
-alarm_to_trap(mute, _) -> edfaMuteTrap;
+alarm_to_trap(pin, _) -> ampInputPowerTrap;
+alarm_to_trap(pout, _) -> ampOutputPowerTrap;
+alarm_to_trap(pump_temp, _) -> ampPumpTempTrap;
+alarm_to_trap(pump_bias, _) -> ampPumpBiasTrap;
+alarm_to_trap(edfa_temp, #ampTable{}) -> ampInternalTempTrap;
+alarm_to_trap(edfa_temp, {_,_}) -> smmInternalTempTrap;
+alarm_to_trap(edfa_psu, #ampTable{}) -> ampPowerSupplyTrap;
+alarm_to_trap(edfa_psu, {_,_}) -> smmPowerSupplyTrap;
+alarm_to_trap(bref, _) -> ampBrefTrap;
+alarm_to_trap(adi, _) -> ampAdiTrap;
+alarm_to_trap(mute, _) -> ampMuteTrap;
 alarm_to_trap(_, _) -> undefined.
 
-alarm_to_vars(pin, E) ->       [{edfaMcuPowerPd1, [E#edfaMcuTable.index], 
-				 round(E#edfaMcuTable.powerPd1)}];
-alarm_to_vars(pout, E) ->      [{edfaMcuPowerPd2, [E#edfaMcuTable.index], 
-				 round(E#edfaMcuTable.powerPd2)}];
-alarm_to_vars(pump_temp, E) -> [{edfaMcuCurLaserTemp, [E#edfaMcuTable.index], 
-				 round(E#edfaMcuTable.curLaserTemp)}];
-alarm_to_vars(pump_bias, E) -> [{edfaMcuCurAmp, [E#edfaMcuTable.index], 
-				 round(E#edfaMcuTable.curAmp)}];
-alarm_to_vars(edfa_temp, #edfaMcuTable{index=Idx, curInternalTemp=T}) -> [{edfaMcuCurInternalTemp, [Idx],
-									   round(T)}];
-alarm_to_vars(edfa_psu, #edfaMcuTable{index=Idx, powerSupply=P}) ->  [{edfaMcuPowerSupply, [Idx],
-								       round(P)}];
-alarm_to_vars(edfa_temp, {IT, _}) -> [{edfaCurInternalTemp,  round(IT)}];
-alarm_to_vars(edfa_psu, {_, PS}) ->  [{edfaPowerSupply, round(PS)}];
+alarm_to_vars(pin, E) ->       [{ampPowerPd1, [E#ampTable.index], 
+				 round(E#ampTable.powerPd1)}];
+alarm_to_vars(pout, E) ->      [{ampPowerPd2, [E#ampTable.index], 
+				 round(E#ampTable.powerPd2)}];
+alarm_to_vars(pump_temp, E) -> [{ampCurLaserTemp, [E#ampTable.index], 
+				 round(E#ampTable.curLaserTemp)}];
+alarm_to_vars(pump_bias, E) -> [{ampCurAmp, [E#ampTable.index], 
+				 round(E#ampTable.curAmp)}];
+alarm_to_vars(edfa_temp, #ampTable{index=Idx, curInternalTemp=T}) -> [{ampCurInternalTemp, [Idx],
+								       round(T)}];
+alarm_to_vars(edfa_psu, #ampTable{index=Idx, powerSupply=P}) ->  [{ampPowerSupply, [Idx],
+								   round(P)}];
+alarm_to_vars(edfa_temp, {IT, _}) -> [{smmCurInternalTemp,  round(IT)}];
+alarm_to_vars(edfa_psu, {_, PS}) ->  [{smmPowerSupply, round(PS)}];
 alarm_to_vars(bref, _E) ->     [];
 alarm_to_vars(adi, _E) ->      [];
 alarm_to_vars(mute, _E) ->     [].

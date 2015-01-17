@@ -46,38 +46,38 @@
 -record(state, {idx                        :: integer(),
 		period                     :: integer(),
 		positions   = 1            :: integer(),
-		entry       = #edfaMcuTable{} :: edfaMcuTable()
+		entry       = #ampTable{} :: ampTable()
 	       }).
 
 start_link(Idx) ->
-    ?info("Start MCU monitor (slot: ~p)~n", [Idx]),
+    ?info("Start AMP monitor (slot: ~p)~n", [Idx]),
     Pid = spawn_link(?MODULE, init, [Idx]),
     {ok, Pid}.
 
-get_kv(#edfaMcuTable{}=T) ->
+get_kv(#ampTable{}=T) ->
     [
-     {index,               T#edfaMcuTable.index},
-     {ampConsign,          T#edfaMcuTable.ampConsign},
-     {gainConsign,         T#edfaMcuTable.gainConsign},
-     {outputPowerConsign,  T#edfaMcuTable.outputPowerConsign},
-     {operatingMode,       T#edfaMcuTable.operatingMode},
-     {curLaserTemp,        T#edfaMcuTable.curLaserTemp},
-     {curAmp,              T#edfaMcuTable.curAmp},
-     {curInternalAmp,      T#edfaMcuTable.curInternalTemp},
-     {powerInput,          T#edfaMcuTable.powerPd1},
-     {powerOutput,         T#edfaMcuTable.powerPd2},
-     {powerSupply,         T#edfaMcuTable.powerSupply},
-     {inputLossThreshold,  T#edfaMcuTable.inputLossThreshold},
-     {outputLossThreshold, T#edfaMcuTable.outputLossThreshold},
-     {vendor,              T#edfaMcuTable.vendor},
-     {moduleType,          T#edfaMcuTable.moduleType},
-     {hwVer,               T#edfaMcuTable.hwVer},
-     {hwRev,               T#edfaMcuTable.hwRev},
-     {swVer,               T#edfaMcuTable.swVer},
-     {fwVer,               T#edfaMcuTable.fwVer},
-     {partNum,             T#edfaMcuTable.partNum},
-     {serialNum,           T#edfaMcuTable.serialNum},
-     {productDate,         T#edfaMcuTable.productDate}
+     {index,               T#ampTable.index},
+     {ampConsign,          T#ampTable.ampConsign},
+     {gainConsign,         T#ampTable.gainConsign},
+     {outputPowerConsign,  T#ampTable.outputPowerConsign},
+     {operatingMode,       T#ampTable.operatingMode},
+     {curLaserTemp,        T#ampTable.curLaserTemp},
+     {curAmp,              T#ampTable.curAmp},
+     {curInternalAmp,      T#ampTable.curInternalTemp},
+     {powerInput,          T#ampTable.powerPd1},
+     {powerOutput,         T#ampTable.powerPd2},
+     {powerSupply,         T#ampTable.powerSupply},
+     {inputLossThreshold,  T#ampTable.inputLossThreshold},
+     {outputLossThreshold, T#ampTable.outputLossThreshold},
+     {vendor,              T#ampTable.vendor},
+     {moduleType,          T#ampTable.moduleType},
+     {hwVer,               T#ampTable.hwVer},
+     {hwRev,               T#ampTable.hwRev},
+     {swVer,               T#ampTable.swVer},
+     {fwVer,               T#ampTable.fwVer},
+     {partNum,             T#ampTable.partNum},
+     {serialNum,           T#ampTable.serialNum},
+     {productDate,         T#ampTable.productDate}
     ].
 
 set_kv(Idx, Kv) ->
@@ -139,7 +139,7 @@ table_func(Op, RowIndex, Cols, NameDb) ->
 %%%
 init(Idx) ->
     Period = application:get_env(bkfw, mcu_period, ?PERIOD),
-    loop(#state{idx=Idx, period=Period, entry=#edfaMcuTable{index=Idx}}).
+    loop(#state{idx=Idx, period=Period, entry=#ampTable{index=Idx}}).
 
 loop(#state{period=Period}=S) ->
     S2 = lists:foldl(fun (F, Acc) -> F(Acc) end, S, ?FUNS),
@@ -151,12 +151,12 @@ read_cc(#state{idx=Idx, positions=P}=S) ->
     F = fun(X, #state{entry=E}=Acc) ->
 		case bkfw_srv:command(Idx, rcc, [integer_to_binary(X)]) of
 		    {ok, {Idx, cc, [X, A, <<"mA">>]}} when is_float(A); is_integer(A) ->
-			Acc#state{entry=E#edfaMcuTable{ampConsign=A}};
+			Acc#state{entry=E#ampTable{ampConsign=A}};
 		    {ok, _Ret} ->
 			?error("[~p] RCC invalid answer: ~p~n", [Idx, _Ret]),
 			Acc;
 		    {error, Err} ->
-			?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err]),
+			?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
 			Acc
 		end
 	end,
@@ -165,37 +165,37 @@ read_cc(#state{idx=Idx, positions=P}=S) ->
 read_gc(#state{idx=Idx, entry=E}=S) ->
     case bkfw_srv:command(Idx, rgc, []) of
 	{ok, {Idx, gc, [Y, <<"dB">>]}} when is_float(Y); is_integer(Y) ->
-	    S#state{entry=E#edfaMcuTable{gainConsign=Y}};
+	    S#state{entry=E#ampTable{gainConsign=Y}};
 	{ok, _Ret} ->
 	    ?error("[~p] RGC invalid answer: ~p~n", [Idx, _Ret]),
 	    S;
 	{error, Err} ->
-	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err]),
+	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
 	    S
     end.
 
 read_pc(#state{idx=Idx, entry=E}=S) ->
     case bkfw_srv:command(Idx, rpc, []) of
 	{ok, {Idx, pc, [Y, <<"dBm">>]}} when is_float(Y); is_integer(Y) ->
-	    S#state{entry=E#edfaMcuTable{outputPowerConsign=Y}};
+	    S#state{entry=E#ampTable{outputPowerConsign=Y}};
 	{ok, _Ret} ->
 	    ?error("[~p] RPC invalid answer: ~p~n", [Idx, _Ret]),
 	    S;
 	{error, Err} ->
-	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err]),
+	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
 	    S
     end.
 
 read_mode(#state{idx=Idx, entry=E}=S) ->
     case bkfw_srv:command(Idx, rmode, []) of
 	{ok, {Idx, mode, [Mode]}} ->
-	    M = parse_mode(Mode, E#edfaMcuTable.operatingMode),
-	    S#state{entry=E#edfaMcuTable{operatingMode=M}};
+	    M = parse_mode(Mode, E#ampTable.operatingMode),
+	    S#state{entry=E#ampTable{operatingMode=M}};
 	{ok, _Ret} ->
 	    ?error("[~p] RMODE invalid answer: ~p~n", [Idx, _Ret]),
 	    S;
 	{error, Err} ->
-	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err]),
+	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
 	    S
     end.
 
@@ -207,7 +207,7 @@ read_a(#state{idx=Idx}=S) ->
 	    ?error("[~p] RA invalid answer: ~p~n", [Idx, _Ret]),
 	    S;
 	{error, Err} ->
-	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err]),
+	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
 	    S
     end.
 
@@ -215,12 +215,12 @@ read_lt(#state{idx=Idx, positions=P}=S) ->
     F = fun(X, #state{entry=E}=Acc) ->
 		case bkfw_srv:command(Idx, rlt, [integer_to_binary(X)]) of
 		    {ok, {Idx, lt, [X, T, <<"C">>]}} when is_float(T); is_integer(T) ->
-			S#state{entry=E#edfaMcuTable{curLaserTemp=T}};
+			S#state{entry=E#ampTable{curLaserTemp=T}};
 		    {ok, _Ret} ->
 			?error("[~p] RLT invalid answer: ~p~n", [Idx, _Ret]),
 			Acc;
 		    {error, Err} ->
-			?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err]),
+			?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
 			Acc
 		end
 	end,
@@ -230,12 +230,12 @@ read_lc(#state{idx=Idx, positions=P}=S) ->
     F = fun(X, #state{entry=E}=Acc) ->
 		case bkfw_srv:command(Idx, rlc, [integer_to_binary(X)]) of
 		    {ok, {Idx, lc, [X, A, <<"mA">>]}} when is_float(A); is_integer(A) ->
-			S#state{entry=E#edfaMcuTable{curAmp=A}};
+			S#state{entry=E#ampTable{curAmp=A}};
 		    {ok, _Ret} ->
 			?error("[~p] RLC invalid answer: ~p~n", [Idx, _Ret]),
 			Acc;
 		    {error, Err} ->
-			?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err]),
+			?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
 			Acc
 		end
 	end,
@@ -244,98 +244,98 @@ read_lc(#state{idx=Idx, positions=P}=S) ->
 read_it(#state{idx=Idx, entry=E}=S) ->
     case bkfw_srv:command(Idx, rit, []) of
 	{ok, {Idx, it, [T, <<"C">>]}} when is_float(T); is_integer(T) ->
-	    S#state{entry=E#edfaMcuTable{curInternalTemp=T}};
+	    S#state{entry=E#ampTable{curInternalTemp=T}};
 	{ok, _Ret} ->
 	    ?error("[~p] RIT invalid answer: ~p~n", [Idx, _Ret]),
 	    S;
 	{error, Err} ->
-	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err]),
+	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
 	    S
     end.
 
 read_i(#state{idx=Idx, entry=E}=S) ->
     case bkfw_srv:command(Idx, ri, []) of
 	{ok, {Idx, i, Infos}} ->
-	    S#state{entry=E#edfaMcuTable{
-			    vendor=get_info(vendor, Infos, E#edfaMcuTable.vendor),
-			    moduleType=get_info(moduleType, Infos, E#edfaMcuTable.moduleType),
-			    hwVer=get_info(hwVer, Infos, E#edfaMcuTable.hwVer),
-			    hwRev=get_info(hwRev, Infos, E#edfaMcuTable.hwRev),
-			    swVer=get_info(swVer, Infos, E#edfaMcuTable.swVer),
-			    fwVer=get_info(fwVer, Infos, E#edfaMcuTable.fwVer),
-			    partNum=get_info(partNum, Infos, E#edfaMcuTable.partNum),
-			    serialNum=get_info(serialNum, Infos, E#edfaMcuTable.serialNum),
-			    productDate=get_info(productDate, Infos, E#edfaMcuTable.productDate)
+	    S#state{entry=E#ampTable{
+			    vendor=get_info(vendor, Infos, E#ampTable.vendor),
+			    moduleType=get_info(moduleType, Infos, E#ampTable.moduleType),
+			    hwVer=get_info(hwVer, Infos, E#ampTable.hwVer),
+			    hwRev=get_info(hwRev, Infos, E#ampTable.hwRev),
+			    swVer=get_info(swVer, Infos, E#ampTable.swVer),
+			    fwVer=get_info(fwVer, Infos, E#ampTable.fwVer),
+			    partNum=get_info(partNum, Infos, E#ampTable.partNum),
+			    serialNum=get_info(serialNum, Infos, E#ampTable.serialNum),
+			    productDate=get_info(productDate, Infos, E#ampTable.productDate)
 			   }};
 	{ok, _Ret} ->
 	    ?error("[~p] RI invalid answer: ~p~n", [Idx, _Ret]),
 	    S;
 	{error, Err} ->
-	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err]),
+	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
 	    S
     end.
 
 read_pm(#state{idx=Idx, entry=E}=S) ->
     case bkfw_srv:command(Idx, rpm, []) of
 	{ok, {Idx, pd, Lines}} ->
-	    Defaults = { E#edfaMcuTable.powerPd1,
-			 E#edfaMcuTable.powerPd2,
-			 E#edfaMcuTable.powerPd3 },
+	    Defaults = { E#ampTable.powerPd1,
+			 E#ampTable.powerPd2,
+			 E#ampTable.powerPd3 },
 	    {Pd1, Pd2, Pd3} = parse_pd(Lines, Defaults),
-	    S#state{entry=E#edfaMcuTable{powerPd1=Pd1,
+	    S#state{entry=E#ampTable{powerPd1=Pd1,
 					 powerPd2=Pd2,
 					 powerPd3=Pd3}};
 	{ok, _Ret} ->
 	    ?error("[~p] RPM invalid answer: ~p~n", [Idx, _Ret]),
 	    S;
 	{error, Err} ->
-	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err]),
+	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
 	    S
     end.
 
 read_v(#state{idx=Idx, entry=E}=S) ->
     case bkfw_srv:command(Idx, rv, []) of
 	{ok, {Idx, v, [V, v]}} when is_float(V); is_integer(V) ->
-	    S#state{entry=E#edfaMcuTable{powerSupply=V}};
+	    S#state{entry=E#ampTable{powerSupply=V}};
 	{ok, _Ret} ->
 	    ?error("[~p] RV invalid answer: ~p~n", [Idx, _Ret]),
 	    S;
 	{error, Err} ->
-	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err]),
+	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
 	    S
     end.
 
 read_li(#state{idx=Idx, entry=E}=S) ->
     case bkfw_srv:command(Idx, rli, []) of
 	{ok, {Idx, li, [Y, <<"dBm">>]}} ->
-	    S#state{entry=E#edfaMcuTable{inputLossThreshold=Y}};
+	    S#state{entry=E#ampTable{inputLossThreshold=Y}};
 	{ok, _Ret} ->
 	    ?error("[~p] RLI invalid answer: ~p~n", [Idx, _Ret]),
 	    S;
 	{error, Err} ->
-	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err]),
+	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
 	    S
     end.
 
 read_lo(#state{idx=Idx, entry=E}=S) ->
     case bkfw_srv:command(Idx, rlo, []) of
 	{ok, {Idx, lo, [Y, <<"dBm">>]}} ->
-	    S#state{entry=E#edfaMcuTable{outputLossThreshold=Y}};
+	    S#state{entry=E#ampTable{outputLossThreshold=Y}};
 	{ok, _Ret} ->
 	    ?error("[~p] RLO invalid answer: ~p~n", [Idx, _Ret]),
 	    S;
 	{error, Err} ->
-	    ?error("[~p] Error monitoring MCU: ~p~n", [Idx, Err]),
+	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
 	    S
     end.
 
 %%%
 %%% Convenience functions
 %%%
-parse_mode(pc, _) -> ?edfaMcuOperatingMode_pc;
-parse_mode(gc, _) -> ?edfaMcuOperatingMode_gc;
-parse_mode(cc, _) -> ?edfaMcuOperatingMode_cc;
-parse_mode(off, _) -> ?edfaMcuOperatingMode_off.
+parse_mode(pc, _) -> ?ampOperatingMode_pc;
+parse_mode(gc, _) -> ?ampOperatingMode_gc;
+parse_mode(cc, _) -> ?ampOperatingMode_cc;
+parse_mode(off, _) -> ?ampOperatingMode_off.
 
 parse_pd([], Acc) -> Acc;
 parse_pd([ [1, P, <<"dBm">>] | Tail], {_, Pd2, Pd3}) -> parse_pd(Tail, {P, Pd2, Pd3});
@@ -353,9 +353,9 @@ get_info(Key, Infos, Default) ->
 
 handle_alarms([], S) -> S;
 handle_alarms([Name  | Tail], #state{entry=E}=S) -> 
-    gen_event:notify(bkfw_alarms, #edfaAlarm{index=E#edfaMcuTable.index,
-					     name=Name,
-					     obj=E}),
+    gen_event:notify(bkfw_alarms, #smmAlarm{index=E#ampTable.index,
+					    name=Name,
+					    obj=E}),
     handle_alarms(Tail, S).
 
 get_consign(Name, Kv) ->
@@ -381,40 +381,40 @@ get_consign(Name, Kv) ->
 
 set_from_snmp(_, []) ->
     ok;
-set_from_snmp(Idx, [{?edfaMcuAmpConsign, Val} | Tail]) when is_integer(Val) ->
+set_from_snmp(Idx, [{?ampAmpConsign, Val} | Tail]) when is_integer(Val) ->
     bkfw_srv:command(Idx, scc, [<<"1 ">>, io_lib:format("~b.0", [Val])]),
     set_from_snmp(Idx, Tail);
-set_from_snmp(Idx, [{?edfaMcuGainConsign, Val} | Tail]) when is_integer(Val) ->
+set_from_snmp(Idx, [{?ampGainConsign, Val} | Tail]) when is_integer(Val) ->
     bkfw_srv:command(Idx, sgc, [io_lib:format("~b.0", [Val])]),
     set_from_snmp(Idx, Tail);
-set_from_snmp(Idx, [{?edfaMcuOutputPowerConsign, Val} | Tail]) when is_integer(Val) ->
+set_from_snmp(Idx, [{?ampOutputPowerConsign, Val} | Tail]) when is_integer(Val) ->
     bkfw_srv:command(Idx, spc, [io_lib:format("~b.0", [Val])]),
     set_from_snmp(Idx, Tail);
-set_from_snmp(Idx, [{?edfaMcuOperatingMode, Val} | Tail]) ->
+set_from_snmp(Idx, [{?ampOperatingMode, Val} | Tail]) ->
     case Val of
-	?edfaMcuOperatingMode_off -> 
+	?ampOperatingMode_off -> 
 	    bkfw_srv:command(Idx, smode, [<<"OFF">>]),
 	    set_from_snmp(Idx, Tail);
-	?edfaMcuOperatingMode_cc -> 
+	?ampOperatingMode_cc -> 
 	    bkfw_srv:command(Idx, smode, [<<"CC">>]),
 	    set_from_snmp(Idx, Tail);
-	?edfaMcuOperatingMode_gc -> 
+	?ampOperatingMode_gc -> 
 	    bkfw_srv:command(Idx, smode, [<<"GC">>]),
 	    set_from_snmp(Idx, Tail);
-	?edfaMcuOperatingMode_pc -> 
+	?ampOperatingMode_pc -> 
 	    bkfw_srv:command(Idx, smode, [<<"PC">>]),
 	    set_from_snmp(Idx, Tail);
 	_ -> 
-	    {error, ?edfaMcuOperatingMode}
+	    {error, ?ampOperatingMode}
     end;
 set_from_snmp(_, [{Col, _} | _]) ->
     {error, Col}.
 
 
-set_operating_mode(Idx, ?edfaMcuOperatingMode_off, _) ->
+set_operating_mode(Idx, ?ampOperatingMode_off, _) ->
     bkfw_srv:command(Idx, smode, [<<"OFF">>]),
     ok;
-set_operating_mode(Idx, ?edfaMcuOperatingMode_cc, Kv) ->
+set_operating_mode(Idx, ?ampOperatingMode_cc, Kv) ->
     case get_consign(ampConsign, Kv) of
 	undefined -> {error, missing_consign};
 	V -> 
@@ -426,7 +426,7 @@ set_operating_mode(Idx, ?edfaMcuOperatingMode_cc, Kv) ->
 		    ok
 	    end
     end;
-set_operating_mode(Idx, ?edfaMcuOperatingMode_gc, Kv) ->
+set_operating_mode(Idx, ?ampOperatingMode_gc, Kv) ->
     case get_consign(gainConsign, Kv) of
 	undefined -> {error, missing_consign};
 	V -> 
@@ -438,7 +438,7 @@ set_operating_mode(Idx, ?edfaMcuOperatingMode_gc, Kv) ->
 		    ok
 	    end
     end;
-set_operating_mode(Idx, ?edfaMcuOperatingMode_pc, Kv) ->
+set_operating_mode(Idx, ?ampOperatingMode_pc, Kv) ->
     case get_consign(outputPowerConsign, Kv) of
 	undefined -> {error, mising_consign};
 	V ->

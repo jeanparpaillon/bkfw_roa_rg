@@ -48,17 +48,17 @@ start_link() ->
 
 get_kv() ->
     [
-     {curInternalTemp, get_ets_value(edfaCurInternalTemp, 0.0)},
-     {powerSupply,     get_ets_value(edfaPowerSupply, 0.0)},
-     {vendor,          get_ets_value(edfaVendor, <<>>)},
-     {moduleType,      get_ets_value(edfaModuleType, <<>>)},
-     {hwVer,           get_ets_value(edfaHWVer, <<>>)},
-     {hwRev,           get_ets_value(edfaHWRev, <<>>)},
-     {swVer,           get_ets_value(edfaSWVer, <<>>)},
-     {fwVer,           get_ets_value(edfaFWVer, <<>>)},
-     {partNum,         get_ets_value(edfaPartNum, <<>>)},
-     {serialNum,       get_ets_value(edfaSerialNum, <<>>)},
-     {productDate,     get_ets_value(edfaProductDate, <<>>)}
+     {curInternalTemp, get_ets_value(smmCurInternalTemp, 0.0)},
+     {powerSupply,     get_ets_value(smmPowerSupply, 0.0)},
+     {vendor,          get_ets_value(smmVendor, <<>>)},
+     {moduleType,      get_ets_value(smmModuleType, <<>>)},
+     {hwVer,           get_ets_value(smmHWVer, <<>>)},
+     {hwRev,           get_ets_value(smmHWRev, <<>>)},
+     {swVer,           get_ets_value(smmSWVer, <<>>)},
+     {fwVer,           get_ets_value(smmFWVer, <<>>)},
+     {partNum,         get_ets_value(smmPartNum, <<>>)},
+     {serialNum,       get_ets_value(smmSerialNum, <<>>)},
+     {productDate,     get_ets_value(smmProductDate, <<>>)}
     ].
 
 %%% SNMP functions
@@ -80,10 +80,10 @@ variable_func(get, Key) ->
 %%% Private
 %%%
 init(Time) ->
-    ?info("Starting EDFA monitoring~n", []),
+    ?info("Starting SMM monitoring~n", []),
     timer:sleep(1000),
     _ = ets:new(?TID, [named_table]),
-    ets:insert(?TID, {edfaNumber, 0}),
+    ets:insert(?TID, {smmNumber, 0}),
     case init_state() of
 	{ok, #state{}=S} ->
 	    loop(Time, S);
@@ -105,15 +105,15 @@ init_infos(S) ->
 	{ok, {0, i, Infos}} ->
 	    ets:insert(?TID, 
 		       [
-			{edfaVendor, get_info(vendor, Infos)},
-			{edfaModuleType, get_info(moduleType, Infos)},
-			{edfaHWVer, get_info(hwVer, Infos)},
-			{edfaHWRev, get_info(hwRev, Infos)},
-			{edfaSWVer, get_info(swVer, Infos)},
-			{edfaFWVer, get_info(fwVer, Infos)},
-			{edfaPartNum, get_info(partNum, Infos)},
-			{edfaSerialNum, get_info(serialNum, Infos)},
-			{edfaProductDate, get_info(productDate, Infos)}
+			{smmVendor, get_info(vendor, Infos)},
+			{smmModuleType, get_info(moduleType, Infos)},
+			{smmHWVer, get_info(hwVer, Infos)},
+			{smmHWRev, get_info(hwRev, Infos)},
+			{smmSWVer, get_info(swVer, Infos)},
+			{smmFWVer, get_info(fwVer, Infos)},
+			{smmPartNum, get_info(partNum, Infos)},
+			{smmSerialNum, get_info(serialNum, Infos)},
+			{smmProductDate, get_info(productDate, Infos)}
 		       ]
 		      ),
 	    {ok, S};
@@ -121,11 +121,11 @@ init_infos(S) ->
 	    ?error("[0] RI invalid answer: ~p~n", [_Ret]),
 	    {error, invalid_infos};
 	{error, {timeout, _}} ->
-	    ?debug("EDFA RI timeout: retry in 2 seconds...\n"),
+	    ?debug("SMM RI timeout: retry in 2 seconds...\n"),
 	    timer:sleep(2000),
 	    init_infos(S);
 	{error, Err} ->
-	    ?error("[0] Error monitoring EDFA: ~p~n", [Err]),
+	    ?error("[0] Error monitoring SMM: ~p~n", [Err]),
 	    {error, Err}
     end.
 
@@ -135,31 +135,31 @@ get_info(Key, Infos) ->
 read_v(S) ->
     case bkfw_srv:command(0, rv, []) of
 	{ok, {0, v, [V, v]}} when is_float(V); is_integer(V) ->
-	    ets:insert(?TID, {edfaPowerSupply, V}),
+	    ets:insert(?TID, {smmPowerSupply, V}),
 	    S#state{powerSupply=V};
 	{ok, _Ret} ->
 	    ?error("[0] RV invalid answer: ~p~n", [_Ret]),
 	    S;
 	{error, Err} ->
-	    ?error("[0] Error monitoring EDFA: ~p~n", [Err]),
+	    ?error("[0] Error monitoring SMM: ~p~n", [Err]),
 	    S
     end.
 
 read_it(S) ->
     case bkfw_srv:command(0, rit, []) of
 	{ok, {0, it, [T, <<"C">>]}} when is_float(T); is_integer(T) ->
-	    ets:insert(?TID, {edfaCurInternalTemp, T}),
+	    ets:insert(?TID, {smmCurInternalTemp, T}),
 	    S#state{curInternalTemp=T};
 	{ok, _Ret} ->
 	    ?error("[0] RIT invalid answer: ~p~n", [_Ret]),
 	    S;
 	{error, Err} ->
-	    ?error("[0] Error monitoring EDFA: ~p~n", [Err]),
+	    ?error("[0] Error monitoring SMM: ~p~n", [Err]),
 	    S
     end.
 
 read_n(#state{n=0}=S) ->
-    ets:insert(?TID, {edfaNumber, 0}),
+    ets:insert(?TID, {smmNumber, 0}),
     case bkfw_srv:command(0, rn, []) of
 	{ok, {0, n, [Mask]}} when is_integer(Mask) ->
 	    handle_slots(Mask, 0, S#state{n=1});
@@ -167,7 +167,7 @@ read_n(#state{n=0}=S) ->
 	    ?error("Unrecognized answer: ~p~n", [_Ret]),
 	    S#state{n=0};
 	{error, Err} ->
-	    ?error("Error monitoring EDFA: ~p~n", [Err]),
+	    ?error("Error monitoring SMM: ~p~n", [Err]),
 	    S#state{n=0}
     end;
 read_n(#state{n=N}=S) when N<5 ->
@@ -190,7 +190,7 @@ handle_slots(Mask, Idx, #state{slots=Slots}=S) when
       Mask band (1 bsl Idx) == 0, is_pid(element(Idx+1, Slots)) ->
     % slot is not occupied, slot was occupied
     ?info("Stop MCU monitor (slot: ~p)~n", [Idx]),
-    ok = mnesia:dirty_delete(edfaMcuTable, Idx+1),
+    ok = mnesia:dirty_delete(smmMcuTable, Idx+1),
     bkfw_mcus_sup:terminate_mcu(element(Idx+1, Slots)),
     handle_slots(Mask, Idx+1, S#state{slots=setelement(Idx+1, Slots, false)});
 
@@ -198,13 +198,13 @@ handle_slots(Mask, Idx, #state{slots=Slots}=S) when
       Mask band (1 bsl Idx) /= 0, element(Idx+1, Slots) == false ->
     % slot is occupied, slot was not occupied
     {ok, Pid} = bkfw_mcus_sup:start_mcu(Idx+1),
-    ets:insert(?TID, {edfaNumber, ets:lookup_element(?TID, edfaNumber, 2)+1}),
+    ets:insert(?TID, {smmNumber, ets:lookup_element(?TID, smmNumber, 2)+1}),
     handle_slots(Mask, Idx+1, S#state{slots=setelement(Idx+1, Slots, Pid)});
 
 handle_slots(Mask, Idx, #state{slots=Slots}=S) when
       Mask band (1 bsl Idx) /= 0, is_pid(element(Idx+1, Slots)) ->
     % slot is occupied, slot was occupied
-    ets:insert(?TID, {edfaNumber, ets:lookup_element(?TID, edfaNumber, 2)+1}),
+    ets:insert(?TID, {smmNumber, ets:lookup_element(?TID, smmNumber, 2)+1}),
     handle_slots(Mask, Idx+1, S).
 
 
@@ -222,7 +222,7 @@ read_a(S) ->
 
 handle_alarms([], S) -> S;
 handle_alarms([Name  | Tail], #state{curInternalTemp=IT, powerSupply=PS}=S) -> 
-    gen_event:notify(bkfw_alarms, #edfaAlarm{index=0, name=Name, obj={IT, PS}}),
+    gen_event:notify(bkfw_alarms, #smmAlarm{index=0, name=Name, obj={IT, PS}}),
     handle_alarms(Tail, S).
 
 
