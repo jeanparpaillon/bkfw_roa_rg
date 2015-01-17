@@ -54,6 +54,7 @@ erl -sname agent \
     -bkfw upload_dir "\"/tmp\"" \
     -bkfw system_cmd "false" \
     -bkfw net "\"${BASEDIR}/priv/interfaces\"" \
+    -bkfw debug "true" \
     -config ${reldir}/files/sys \
     -s bkfw
 
