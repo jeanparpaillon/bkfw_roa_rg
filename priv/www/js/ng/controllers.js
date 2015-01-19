@@ -167,12 +167,20 @@ angular.module('bkfwApp.controllers', [])
 
 	this.networkSave = function() {
 
-	    this.network.$save()
+	    dialogs.confirm("Are you sure you want to change network settings ?")
 
-		.then(function() {
-		    dialogs.success("Network settings applied");
-		});
-
+		.then(angular.bind(this, function() {
+		    this.network.$save()
+		    
+			.then(function() {
+			    dialogs.modal("Network settings are being applied, please wait.");
+			    return edfa.waitUntilOnline(10000);
+			})
+			.then(function() {
+			    dialogs.close(true);
+			    dialogs.success("You should reload the page on the new network address.");
+			});
+		}));
 	};
 
 	this.password = {password: "", confirm: ""};
@@ -194,59 +202,58 @@ angular.module('bkfwApp.controllers', [])
 		$http.post('/api/sys/password', {password: this.password.confirm})
 		    .then(function() {
 			dialogs.modal("Settings are being applied, please wait...");
-			return edfa.waitUntilOnline(3).
+			return edfa.waitUntilOnline(3000).
 			    then(function() {
 				dialogs.close(true);
 				auth.disconnect();
 			    });
 		    });
 	    }
-	    
 	};
 	
 	this.protocolSave = function() {
 
-	    if($scope.protocol.$valid) {
-		this.protocol.$save()
-		    .then(function() {
-			dialogs.modal("Protocol settings are being applied, please wait...");
-			return edfa.waitUntilOnline(3).
-			    then(function() {
-				dialogs.close(true);
-			    });
-		    });
-	    }
-	    
+	    dialogs.confirm("Confirm setting protocols")
+		.then(angular.bind(this, function() {
+		    this.protocol.$save()
+			.then(function() {
+			    dialogs.modal("Protocol settings are being applied, please wait...");
+			    return edfa.waitUntilOnline(10000).
+				then(function() {
+				    dialogs.close(true);
+				});
+			});
+		}));
 	};
 	
 	this.communitySave = function() {
 
-	    if($scope.community.$valid) {
-		this.community.$save()
-		    .then(function() {
-			dialogs.modal("SNMPv1/v2c settings are being applied, please wait...");
-			return edfa.waitUntilOnline(3).
-			    then(function() {
-				dialogs.close(true);
-			    });
-		    });
-	    }
-	    
+	    dialogs.confirm("Confirm applying SNMPv1/v2c settings")
+	    	.then(angular.bind(this, function() {
+	    	    this.community.$save()
+	    		.then(function() {
+	    		    dialogs.modal("SNMPv1/v2c settings are being applied, please wait...");
+	    		    return edfa.waitUntilOnline(3000).
+	    			then(function() {
+	    			    dialogs.close(true);
+	    			});
+	    		});	
+	    	}));
 	};
 	
 	this.usmSave = function() {
 
-	    if($scope.usm.$valid) {
-		this.usm.$save()
-		    .then(function() {
-			dialogs.modal("SNMPv3 settings are being applied, please wait...");
-			return edfa.waitUntilOnline(3).
-			    then(function() {
-				dialogs.close(true);
-			    });
-		    });
-	    }
-	    
+	    dialogs.confirm("Confirm applying SNMPv3 settings")
+	    	.then(angular.bind(this, function() {
+	    	    this.usm.$save()
+	    		.then(function() {
+	    		    dialogs.modal("SNMPv3 settings are being applied, please wait...");
+	    		    return edfa.waitUntilOnline(3000)
+	    			.then(function() {
+	    			    dialogs.close(true);
+	    			});
+	    		});
+	    	}));
 	};
 
 	this.reboot = function() {
