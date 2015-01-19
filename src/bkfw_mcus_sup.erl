@@ -18,7 +18,7 @@
 %%% supervisor callback
 -export([init/1]).
 
--define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
+-define(CHILD(I, Type), {I, {I, start_link, []}, transient, 5000, Type, [I]}).
 
 %%%
 %%% API
@@ -31,7 +31,8 @@ start_mcu(Idx) ->
     bkfw_srv:flush(),
     supervisor:start_child(?MODULE, [Idx]).
 
-terminate_mcu(_Idx, Pid) ->
+terminate_mcu(Idx, Pid) ->
+    ?debug("Stop AMP monitor: ~p\n", [Idx]),
     bkfw_srv:flush(),
     ok = supervisor:terminate_child(?MODULE, Pid).
 

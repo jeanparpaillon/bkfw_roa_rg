@@ -162,6 +162,7 @@ read_n(#state{n=0}=S) ->
     ets:insert(?TID, {smmNumber, 0}),
     case bkfw_srv:command(0, rn, []) of
 	{ok, {0, n, [Mask]}} when is_integer(Mask) ->
+	    ?debug("Slots: ~p\n", [Mask]),
 	    handle_slots(Mask, 0, S#state{n=1});
 	{ok, _Ret} ->
 	    ?error("Unrecognized answer: ~p~n", [_Ret]),
@@ -189,8 +190,7 @@ handle_slots(Mask, Idx, #state{slots=Slots}=S) when
 handle_slots(Mask, Idx, #state{slots=Slots}=S) when 
       Mask band (1 bsl Idx) == 0, is_pid(element(Idx+1, Slots)) ->
     % slot is not occupied, slot was occupied
-    ?info("Stop MCU monitor (slot: ~p)~n", [Idx]),
-    ok = mnesia:dirty_delete(smmMcuTable, Idx+1),
+    ok = mnesia:dirty_delete(ampTable, Idx+1),
     bkfw_mcus_sup:terminate_mcu(Idx+1, element(Idx+1, Slots)),
     handle_slots(Mask, Idx+1, S#state{slots=setelement(Idx+1, Slots, false)});
 
