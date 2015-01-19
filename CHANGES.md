@@ -44,3 +44,8 @@
 # 0.3.2
 
 * Poll slots on every loop
+
+# 0.3.3
+
+* Improve slots detection
+* Improve dialogs and messages in system page
