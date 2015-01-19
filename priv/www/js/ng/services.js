@@ -366,6 +366,8 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
     community: $resource('/api/sys/community'),
 
+    usm: $resource('/api/sys/usm'),
+
     protocol: $resource('/api/sys/protocol'),
 
     firmware: $resource('/api/sys/firmware'),

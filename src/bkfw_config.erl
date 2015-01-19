@@ -30,7 +30,7 @@
 -define(USER_CONF, "/var/lib/bkfw/user.config").
 
 -define(SERVER, ?MODULE).
--type category() :: net | community | protocol | firmware.
+-type category() :: net | community | usm | protocol | firmware.
 -type net_opt() :: {type, static | dhcp} |
 		   {ip, string()} |
 		   {netmask, string()} |
@@ -138,12 +138,16 @@ handle_call({get_kv, community}, _From, State) ->
 	{error, Err} ->
 	    {reply, {error, Err}, State};
 	{ok, Com} ->
-	    case get_snmp_usm(Dir) of
-		{error, Err} ->
-		    {reply, {error, Err}, State};
-		{ok, Usm} ->
-		    {reply, Com ++ Usm, State}
-	    end
+	    {reply, Com, State}
+    end;
+
+handle_call({get_kv, usm}, _From, State) ->    
+    Dir = get_snmp_configdir(),
+    case get_snmp_usm(Dir) of
+	{error, Err} ->
+	    {reply, {error, Err}, State};
+	{ok, Usm} ->
+	    {reply, Usm, State}
     end;
 
 handle_call({get_kv, protocol}, _From, State) ->
@@ -201,11 +205,14 @@ handle_call({set_kv, community, Props}, _From, State) ->
     Dir = get_snmp_configdir(),
     case set_snmp_com(Dir, Props) of
 	ok ->
-	    %{reply, ok, State};
-	    case set_snmp_usm(Dir, Props) of
-	    	ok -> {reply, ok, State};
-	    	{error, Err} -> {reply, {error, Err}, State}
-	    end;
+	    {reply, ok, State};
+	{error, Err} -> {reply, {error, Err}, State}
+    end;
+
+handle_call({set_kv, usm, Props}, _From, State) ->
+    Dir = get_snmp_configdir(),
+    case set_snmp_usm(Dir, Props) of
+	ok -> {reply, ok, State};
 	{error, Err} -> {reply, {error, Err}, State}
     end;
 
@@ -628,7 +635,6 @@ set_snmp_usm(Dir, Props) ->
 			     AuthKey,                                                       % AuthKey
 			     PrivKey                                                        % PrivKey
 			   },
-		    ?debug("USM Props=~p\n", [Conf]),
 		    ok = snmpa_conf:write_usm_config(Dir, [?SEC_PUBLIC, Conf]),
 		    snmp_user_based_sm_mib:reconfigure(Dir);
 		{error, Err} -> {error, Err}

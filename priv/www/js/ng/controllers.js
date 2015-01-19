@@ -177,6 +177,7 @@ angular.module('bkfwApp.controllers', [])
 
 	this.password = {password: "", confirm: ""};
 	this.community = sys.community.get();
+	this.usm = sys.usm.get();
 	this.protocol = sys.protocol.get();
 	this.targets  = sys.targets.get();
 
@@ -189,29 +190,63 @@ angular.module('bkfwApp.controllers', [])
 
 	this.securitySave = function() {
 
-	    var actions = [ [this.protocol.$save(), "Protocol settings"] ];
-
-	    if ($scope.security.$valid) {
-		actions.push([this.community.$save(), "SNMP settings"]);
+	    if(this.password.confirm) {
+		$http.post('/api/sys/password', {password: this.password.confirm})
+		    .then(function() {
+			dialogs.modal("Settings are being applied, please wait...");
+			return edfa.waitUntilOnline(3).
+			    then(function() {
+				dialogs.close(true);
+				auth.disconnect();
+			    });
+		    });
 	    }
+	    
+	};
+	
+	this.protocolSave = function() {
 
-	    // check this.password.confirm because
-	    // only this field is validated and it's
-	    // empty if validation fails
-	    if (this.password.confirm) {
-		actions.push(
-		    [$http.post('/api/sys/password', {password: this.password.confirm}),
-		     "New password"]
-		);
+	    if($scope.protocol.$valid) {
+		this.protocol.$save()
+		    .then(function() {
+			dialogs.modal("Protocol settings are being applied, please wait...");
+			return edfa.waitUntilOnline(3).
+			    then(function() {
+				dialogs.close(true);
+			    });
+		    });
 	    }
+	    
+	};
+	
+	this.communitySave = function() {
 
-	    $q.all(actions.map(function(a) {
-		return a[0];
-	    }))
-		.then(function() {
-		    dialogs.modal("Settings are being applied, please wait...");
-		    return edfa.waitUntilOnline(3);
-		});
+	    if($scope.community.$valid) {
+		this.community.$save()
+		    .then(function() {
+			dialogs.modal("SNMPv1/v2c settings are being applied, please wait...");
+			return edfa.waitUntilOnline(3).
+			    then(function() {
+				dialogs.close(true);
+			    });
+		    });
+	    }
+	    
+	};
+	
+	this.usmSave = function() {
+
+	    if($scope.usm.$valid) {
+		this.usm.$save()
+		    .then(function() {
+			dialogs.modal("SNMPv3 settings are being applied, please wait...");
+			return edfa.waitUntilOnline(3).
+			    then(function() {
+				dialogs.close(true);
+			    });
+		    });
+	    }
+	    
 	};
 
 	this.reboot = function() {

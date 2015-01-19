@@ -32,7 +32,7 @@
 	  section   = undefined :: mcu | edfa | sys,
 	  index     = undefined :: integer() | undefined | badarg,
 	  mcu       = undefined,
-	  sys       = undefined :: login | net | password | community | protocol | 
+	  sys       = undefined :: login | net | password | community | usm | protocol | 
 				   firmware | reset | reboot | targets,
 	  firmware  = undefined :: undefined | string()
 	 }).
@@ -89,6 +89,7 @@ rest_init(Req, sys) ->
 	{<<"network">>, Req2} -> {ok, Req2, #state{section=sys, sys=net}};
 	{<<"password">>, Req2} -> {ok, Req2, #state{section=sys, sys=password}};
 	{<<"community">>, Req2} -> {ok, Req2, #state{section=sys, sys=community}};
+	{<<"usm">>, Req2} -> {ok, Req2, #state{section=sys, sys=usm}};
 	{<<"targets">>, Req2} -> {ok, Req2, #state{section=sys, sys=targets}};
 	{<<"protocol">>, Req2} -> {ok, Req2, #state{section=sys, sys=protocol}};
 	{<<"firmware">>, Req2} -> {ok, Req2, #state{section=sys, sys=firmware}};
@@ -155,6 +156,7 @@ resource_exists(Req, #state{section=sys, sys=Sys}=S) when Sys =:= login;
 							  Sys =:= reboot;
 							  Sys =:= password;
 							  Sys =:= community;
+							  Sys =:= usm;
 							  Sys =:= protocol;
 							  Sys =:= firmware;
 							  Sys =:= targets ->
@@ -183,11 +185,12 @@ to_json(Req, #state{section=edfa}=S) ->
     {jsx:encode(bkfw_edfa:get_kv(), ?JSX_OPTS), Req, S};
 
 to_json(Req, #state{section=sys, sys=Cat}=S) when Cat =:= login;
-						    Cat =:= net;
-						    Cat =:= community;
-						    Cat =:= protocol;
-						    Cat =:= targets;
-						    Cat =:= firmware ->
+						  Cat =:= net;
+						  Cat =:= community;
+						  Cat =:= usm;
+						  Cat =:= protocol;
+						  Cat =:= targets;
+						  Cat =:= firmware ->
     {jsx:encode(bkfw_config:get_kv(Cat)), Req, S};
 
 to_json(Req, #state{section=sys, sys=_}=S) ->
