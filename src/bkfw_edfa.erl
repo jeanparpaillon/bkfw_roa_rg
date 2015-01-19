@@ -4,47 +4,59 @@
 -module(bkfw_edfa).
 -author('jean.parpaillon@free.fr').
 
+-behaviour(gen_server).
+
 -include("bkfw.hrl").
 
 %%%
 %%% API
 %%%
 -export([start_link/0,
-	 get_kv/0]).
+	 get_kv/0,
+	 loop/1]).
 
 %% SNMP instrumentation
 -export([variable_func/2]).
 
-%% Internal
--export([init/1,
-	 read_it/1,
-	 read_v/1,
-	 read_n/1,
-	 read_a/1]).
+%% Internals
+-export([init_loop/0]).
+
+%% gen_server callbacks
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2,
+	 terminate/2, code_change/3]).
 
 -define(PERIOD, 1000).
 -define(SLOTS, 32).
--define(TID, ?MODULE).
+%-define(TID, ?MODULE).
 
--define(FUNS, [fun read_it/1,
-	       fun read_v/1,
-	       fun read_n/1,
-	       fun read_a/1]).
+-define(FUNS, [read_it, read_v, read_n, read_a]).
 
 -record(state, {
+	  tid,
 	  slots                    :: tuple(),
 	  curInternalTemp = 0.0,
-	  powerSupply = 0.0,
-	  n=0
+	  powerSupply = 0.0
 	 }).
 
 %%%
 %%% API
 %%%
 start_link() ->
-    Period = application:get_env(bkfw, edfa_period, ?PERIOD),
-    Pid = spawn_link(?MODULE, init, [Period]),
-    {ok, Pid}.
+    case gen_server:start_link({local, ?MODULE}, ?MODULE, [], []) of
+	{ok, Pid} ->
+	    spawn_link(?MODULE, init_loop, []),
+	    {ok, Pid};
+	ignore -> ignore;
+	{error, Err} -> {error, Err}
+    end.
+
+%% start_loop() ->
+%%     Pid = spawn_link(?MODULE, init_loop, []),
+%%     register(bkfw_edfa_loop, Pid),
+%%     {ok, Pid}.
+
+init_loop() -> 
+    loop([ read_infos | ?FUNS ]).
 
 get_kv() ->
     [
@@ -69,41 +81,39 @@ variable_func(delete, _) ->
     {value, ok};
 
 variable_func(get, Key) ->
-    case ets:lookup(?TID, Key) of
-	[{Key, V}] when is_float(V) -> {value, round(V)};
-	[{Key, V}] when is_binary(V) -> {value, binary_to_list(V)};
-	[{Key, V}] -> {value, V};
-	[] -> {value, noSuchName}
-    end.
+    gen_server:call(?MODULE, {get_snmp, Key}).
 
 %%%
-%%% Private
+%%% gen_server callbacks
 %%%
-init(Time) ->
+init([]) ->
     ?info("Starting SMM monitoring~n", []),
-    timer:sleep(1000),
-    _ = ets:new(?TID, [named_table]),
-    ets:insert(?TID, {smmNumber, 0}),
-    case init_state() of
-	{ok, #state{}=S} ->
-	    loop(Time, S);
-	{error, Err} ->
-	    {error, Err}
-    end.
-
-loop(Time, S) -> 
-    S2 = lists:foldl(fun (F, Acc) -> F(Acc) end, S, ?FUNS),
-    timer:sleep(Time),
-    loop(Time, S2).
+    Tid = ets:new(?MODULE, []),
+    ets:insert(Tid, {smmNumber, 0}),
+    {ok, #state{tid=Tid, slots=list_to_tuple(lists:duplicate(?SLOTS, false))}}.
 
 
-init_state() ->
-    init_infos(#state{slots=list_to_tuple(lists:duplicate(?SLOTS, false))}).
+handle_call({get_ets_value, Key, Default}, _From, #state{tid=Tid}=S) ->
+    Ret = try ets:lookup(Tid, Key) of
+	      [{Key, V}] -> V;
+	      [] -> Default
+	  catch _:_ -> Default
+	  end,
+    {reply, Ret, S};
 
-init_infos(S) ->
+handle_call({get_snmp, Key}, _From, #state{tid=Tid}=S) ->
+    Ret = case ets:lookup(Tid, Key) of
+	      [{Key, V}] when is_float(V) -> {value, round(V)};
+	      [{Key, V}] when is_binary(V) -> {value, binary_to_list(V)};
+	      [{Key, V}] -> {value, V};
+	      [] -> {value, noSuchName}
+	  end,
+    {reply, Ret, S};
+
+handle_call({call, read_infos}, _From, #state{tid=Tid}=S) ->
     case bkfw_srv:command(0, ri, []) of
 	{ok, {0, i, Infos}} ->
-	    ets:insert(?TID, 
+	    ets:insert(Tid,
 		       [
 			{smmVendor, get_info(vendor, Infos)},
 			{smmModuleType, get_info(moduleType, Infos)},
@@ -116,119 +126,154 @@ init_infos(S) ->
 			{smmProductDate, get_info(productDate, Infos)}
 		       ]
 		      ),
-	    {ok, S};
-	{ok, _Ret} ->
-	    ?error("[0] RI invalid answer: ~p~n", [_Ret]),
-	    {error, invalid_infos};
-	{error, {timeout, _}} ->
-	    ?debug("SMM RI timeout: retry in 2 seconds...\n"),
-	    timer:sleep(2000),
-	    init_infos(S);
+	    {reply, ok, S};
+	{ok, Ret} ->
+	    {reply, {error, {string, io_lib:format("RI invalid answer: ~p~n", [Ret])}}, S};
 	{error, Err} ->
-	    ?error("[0] Error monitoring SMM: ~p~n", [Err]),
-	    {error, Err}
-    end.
+	    {reply, {error, Err}, S}
+    end;
+
+handle_call({call, read_v}, _From, #state{tid=Tid}=S) ->
+    case bkfw_srv:command(0, rv, []) of
+	{ok, {0, v, [V, v]}} when is_float(V); is_integer(V) ->
+	    ets:insert(Tid, {smmPowerSupply, V}),
+	    {reply, ok, S#state{powerSupply=V}};
+	{ok, Ret} ->
+	    {reply, {error, {string, io_lib:format("RV invalid answer: ~p~n", [Ret])}}, S};
+	{error, Err} ->
+	    {reply, {error, Err}, S}
+    end;
+
+handle_call({call, read_it}, _From, #state{tid=Tid}=S) ->
+    case bkfw_srv:command(0, rit, []) of
+	{ok, {0, it, [T, <<"C">>]}} when is_float(T); is_integer(T) ->
+	    ets:insert(Tid, {smmCurInternalTemp, T}),
+	    {reply, ok, S#state{curInternalTemp=T}};
+	{ok, Ret} ->
+	    {reply, {error, {string, io_lib:format("RIT invalid answer: ~p~n", [Ret])}}, S};
+	{error, Err} ->
+	    {reply, {error, Err}, S}
+    end;
+
+handle_call({call, read_n}, _From, #state{tid=Tid}=S) ->
+    ets:insert(Tid, {smmNumber, 0}),
+    case bkfw_srv:command(0, rn, []) of
+	{ok, {0, n, [Mask]}} when is_integer(Mask) ->
+	    %?debug("Slots: ~p\n", [Mask]),
+	    handle_slots(Mask, 0, S);
+	{ok, Ret} ->
+	    {reply, {error, {string, io_lib:format("RN invalid answer: ~p~n", [Ret])}}, S};
+	{error, Err} ->
+	    {reply, {error, Err}, S}
+    end;
+
+handle_call({call, read_a}, _From, S) ->
+    case bkfw_srv:command(0, ra, []) of
+	{ok, {0, alarms, Alarms}} ->
+	    handle_alarms(Alarms, S);
+	{ok, Ret} ->
+	    {reply, {error, {string, io_lib:format("RA invalid answer: ~p~n", [Ret])}}, S};
+	{error, Err} ->
+	    {reply, {error, Err}, S}
+    end;
+
+handle_call(_Req, _From, State) ->
+    {reply, ok, State}.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Handling cast messages
+%%
+%% @spec handle_cast(Msg, State) -> {noreply, State} |
+%%                                  {noreply, State, Timeout} |
+%%                                  {stop, Reason, State}
+%% @end
+%%--------------------------------------------------------------------
+handle_cast(_Msg, State) ->
+    {noreply, State}.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Handling all non call/cast messages
+%%
+%% @spec handle_info(Info, State) -> {noreply, State} |
+%%                                   {noreply, State, Timeout} |
+%%                                   {stop, Reason, State}
+%% @end
+%%--------------------------------------------------------------------
+handle_info(_Info, State) ->
+    {noreply, State}.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% This function is called by a gen_server when it is about to
+%% terminate. It should be the opposite of Module:init/1 and do any
+%% necessary cleaning up. When it returns, the gen_server terminates
+%% with Reason. The return value is ignored.
+%%
+%% @spec terminate(Reason, State) -> void()
+%% @end
+%%--------------------------------------------------------------------
+terminate(_Reason, _State) ->
+    ok.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Convert process state when code is changed
+%%
+%% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
+%% @end
+%%--------------------------------------------------------------------
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
 
 get_info(Key, Infos) ->
     proplists:get_value(Key, Infos, <<>>).
 
-read_v(S) ->
-    case bkfw_srv:command(0, rv, []) of
-	{ok, {0, v, [V, v]}} when is_float(V); is_integer(V) ->
-	    ets:insert(?TID, {smmPowerSupply, V}),
-	    S#state{powerSupply=V};
-	{ok, _Ret} ->
-	    ?error("[0] RV invalid answer: ~p~n", [_Ret]),
-	    S;
-	{error, Err} ->
-	    ?error("[0] Error monitoring SMM: ~p~n", [Err]),
-	    S
-    end.
-
-read_it(S) ->
-    case bkfw_srv:command(0, rit, []) of
-	{ok, {0, it, [T, <<"C">>]}} when is_float(T); is_integer(T) ->
-	    ets:insert(?TID, {smmCurInternalTemp, T}),
-	    S#state{curInternalTemp=T};
-	{ok, _Ret} ->
-	    ?error("[0] RIT invalid answer: ~p~n", [_Ret]),
-	    S;
-	{error, Err} ->
-	    ?error("[0] Error monitoring SMM: ~p~n", [Err]),
-	    S
-    end.
-
-read_n(S) ->
-    ets:insert(?TID, {smmNumber, 0}),
-    case bkfw_srv:command(0, rn, []) of
-	{ok, {0, n, [Mask]}} when is_integer(Mask) ->
-	    ?debug("Slots: ~p\n", [Mask]),
-	    handle_slots(Mask, 0, S);
-	{ok, _Ret} ->
-	    ?error("Unrecognized answer: ~p~n", [_Ret]),
-	    S#state{n=0};
-	{error, Err} ->
-	    ?error("Error monitoring SMM: ~p~n", [Err]),
-	    S#state{n=0}
-    end.
-%read_n(#state{n=N}=S) when N<5 ->
-%    S#state{n=N+1};
-%read_n(#state{}=S) ->
-%    S#state{n=0}.
-
-
 % loop over all bits of mask and compare with old slots,
 % start or kill bkfw_mon if necessary
 handle_slots(_Mask, ?SLOTS, S) ->
-    S;
+    {reply, ok, S};
 
-handle_slots(Mask, Idx, #state{slots=Slots}=S) when 
-      Mask band (1 bsl Idx) == 0, element(Idx+1, Slots) == false ->
-    % slot is not occupied, slot was not occupied
+handle_slots(Mask, Idx, S) when Mask band (1 bsl Idx) == 0 ->
+    bkfw_mcus_sup:terminate_mcu(Idx+1),
     handle_slots(Mask, Idx+1, S);
 
-handle_slots(Mask, Idx, #state{slots=Slots}=S) when 
-      Mask band (1 bsl Idx) == 0, is_pid(element(Idx+1, Slots)) ->
-    % slot is not occupied, slot was occupied
-    ok = mnesia:dirty_delete(ampTable, Idx+1),
-    bkfw_mcus_sup:terminate_mcu(Idx+1, element(Idx+1, Slots)),
-    handle_slots(Mask, Idx+1, S#state{slots=setelement(Idx+1, Slots, false)});
-
-handle_slots(Mask, Idx, #state{slots=Slots}=S) when
-      Mask band (1 bsl Idx) /= 0, element(Idx+1, Slots) == false ->
-    % slot is occupied, slot was not occupied
-    {ok, Pid} = bkfw_mcus_sup:start_mcu(Idx+1),
-    ets:insert(?TID, {smmNumber, ets:lookup_element(?TID, smmNumber, 2)+1}),
-    handle_slots(Mask, Idx+1, S#state{slots=setelement(Idx+1, Slots, Pid)});
-
-handle_slots(Mask, Idx, #state{slots=Slots}=S) when
-      Mask band (1 bsl Idx) /= 0, is_pid(element(Idx+1, Slots)) ->
-    % slot is occupied, slot was occupied
-    ets:insert(?TID, {smmNumber, ets:lookup_element(?TID, smmNumber, 2)+1}),
+handle_slots(Mask, Idx, #state{tid=Tid}=S) when Mask band (1 bsl Idx) /= 0 ->
+    ok = bkfw_mcus_sup:start_mcu(Idx+1),
+    ets:insert(Tid, {smmNumber, ets:lookup_element(Tid, smmNumber, 2)+1}),
     handle_slots(Mask, Idx+1, S).
 
 
-read_a(S) ->
-    case bkfw_srv:command(0, ra, []) of
-	{ok, {0, alarms, Alarms}} ->
-	    handle_alarms(Alarms, S);
-	{ok, _Ret} ->
-	    ?error("[~p] RA invalid answer: ~p~n", [0, _Ret]),
-	    S;
-	{error, Err} ->
-	    ?error("[~p] Error monitoring MCU: ~p~n", [0, Err]),
-	    S
-    end.
-
-handle_alarms([], S) -> S;
+handle_alarms([], S) -> 
+    {reply, ok, S};
 handle_alarms([Name  | Tail], #state{curInternalTemp=IT, powerSupply=PS}=S) -> 
     gen_event:notify(bkfw_alarms, #smmAlarm{index=0, name=Name, obj={IT, PS}}),
     handle_alarms(Tail, S).
 
 
 get_ets_value(Key, Default) ->
-    try ets:lookup(?TID, Key) of
-	[{Key, V}] -> V;
-	[] -> Default
-    catch _:_ -> Default
+    gen_server:call(?MODULE, {get_ets_value, Key, Default}).
+
+loop([]) ->
+    timer:sleep(application:get_env(bkfw, edfa_period, ?PERIOD)),
+    loop(?FUNS);
+loop([Fun | Tail]) ->
+    case gen_server:call(?MODULE, {call, Fun}) of
+	ok ->
+	    loop(Tail);
+	{error, timeout} ->
+	    ?debug("SMM ~p timeout. Retrying in ~p ms~n", [Fun, 1000]),
+	    timer:sleep(1000),
+	    loop([ Fun | Tail ]);
+	{error, {string, Err}} ->
+	    ?error("SMM error: ~s~n", [Err]),
+	    loop([ Fun | Tail ]);
+	{error, Err} ->
+	    ?error("SMM error: ~p~n", [Err]),
+	    loop([ Fun | Tail ])
     end.

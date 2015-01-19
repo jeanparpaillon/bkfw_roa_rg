@@ -1,9 +1,12 @@
 -module(bkfw_mcu).
 -author('jean.parpaillon@free.fr').
 
+-behaviour(gen_server).
+
 -include("bkfw.hrl").
 
 -export([start_link/1,
+	 init_loop/2,
 	 get_kv/1,
 	 set_kv/2]).
 
@@ -11,48 +14,42 @@
 -export([table_func/2,
 	 table_func/4]).
 
-%%% Internals
--export([init/1,
-	 read_cc/1,
-	 read_gc/1,
+%% gen_server callbacks
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2,
+	 terminate/2, code_change/3]).
+
+%% internals
+-export([read_cc/1, 
+	 read_gc/1, 
 	 read_pc/1,
-	 read_mode/1,
-	 read_a/1,
-	 read_lt/1,
+	 read_mode/1, 
+	 read_lt/1, 
 	 read_lc/1,
 	 read_it/1,
-	 read_i/1,
 	 read_pm/1,
-	 read_v/1,
-	 read_li/1,
-	 read_lo/1]).
+	 read_i/1, 
+	 read_v/1, 
+	 read_li/1, 
+	 read_lo/1, 
+	 read_a/1]).
 
 -define(PERIOD, 1000).
--define(FUNS, [fun read_cc/1,
-	       fun read_gc/1,
-	       fun read_pc/1,
-	       fun read_mode/1,
-	       fun read_lt/1,
-	       fun read_lc/1,
-	       fun read_it/1,
-	       fun read_pm/1,
-	       fun read_i/1,
-	       fun read_v/1,
-	       fun read_li/1,
-	       fun read_lo/1,
-	       fun read_a/1
-	      ]).
+-define(FUNS, [read_cc, read_gc, read_pc, read_mode, read_lt, read_lc, read_it, read_pm,
+	       read_i, read_v, read_li, read_lo, read_a]).
 
 -record(state, {idx                        :: integer(),
-		period                     :: integer(),
 		positions   = 1            :: integer(),
 		entry       = #ampTable{} :: ampTable()
 	       }).
 
 start_link(Idx) ->
-    ?info("Start AMP monitor (slot: ~p)~n", [Idx]),
-    Pid = spawn_link(?MODULE, init, [Idx]),
-    {ok, Pid}.
+    case gen_server:start_link(?MODULE, Idx, []) of
+	{ok, Pid} ->
+	    spawn_link(?MODULE, init_loop, [Idx, Pid]),
+	    {ok, Pid};
+	ignore -> ignore;
+	{error, Err} -> {error, Err}
+    end.
 
 get_kv(#ampTable{}=T) ->
     [
@@ -135,68 +132,150 @@ table_func(Op, RowIndex, Cols, NameDb) ->
     snmp_generic:table_func(Op, RowIndex, Cols, NameDb).
 
 %%%
-%%% Internals
+%%% gen_server callbacks
 %%%
 init(Idx) ->
-    Period = application:get_env(bkfw, mcu_period, ?PERIOD),
-    loop(#state{idx=Idx, period=Period, entry=#ampTable{index=Idx}}).
+    ?info("Start AMP monitor (slot: ~p)~n", [Idx]),
+    {ok, #state{idx=Idx, entry=#ampTable{index=Idx}}}.
 
-loop(#state{period=Period}=S) ->
-    S2 = lists:foldl(fun (F, Acc) -> F(Acc) end, S, ?FUNS),
-    ok = mnesia:dirty_write(S2#state.entry),
-    timer:sleep(Period),
-    loop(S2).
+handle_call({call, Fun}, _From, S) ->
+    case apply(?MODULE, Fun, [S]) of
+	{ok, S2} ->
+	    {reply, ok, S2};
+	{error, Err} ->
+	    {reply, {error, Err}, S}
+    end;
+handle_call(commit, _From, #state{entry=E}=S) ->
+    ok = mnesia:dirty_write(E),
+    {reply, ok, S};
+handle_call(_Req, _From, State) ->
+    {reply, ok, State}.
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Handling cast messages
+%%
+%% @spec handle_cast(Msg, State) -> {noreply, State} |
+%%                                  {noreply, State, Timeout} |
+%%                                  {stop, Reason, State}
+%% @end
+%%--------------------------------------------------------------------
+handle_cast(_Msg, State) ->
+    {noreply, State}.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Handling all non call/cast messages
+%%
+%% @spec handle_info(Info, State) -> {noreply, State} |
+%%                                   {noreply, State, Timeout} |
+%%                                   {stop, Reason, State}
+%% @end
+%%--------------------------------------------------------------------
+handle_info(_Info, State) ->
+    {noreply, State}.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% This function is called by a gen_server when it is about to
+%% terminate. It should be the opposite of Module:init/1 and do any
+%% necessary cleaning up. When it returns, the gen_server terminates
+%% with Reason. The return value is ignored.
+%%
+%% @spec terminate(Reason, State) -> void()
+%% @end
+%%--------------------------------------------------------------------
+terminate(_Reason, _State) ->
+    ok.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Convert process state when code is changed
+%%
+%% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
+%% @end
+%%--------------------------------------------------------------------
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
+
+%%%
+%%% loop functions
+%%% 
+init_loop(Idx, Pid) ->
+    loop(?FUNS, {Idx, Pid}).
+
+loop([], {Idx, Pid}) ->
+    gen_server:call(Pid, commit),
+    timer:sleep(application:get_env(bkfw, mcu_period, ?PERIOD)),
+    loop(?FUNS, {Idx, Pid});
+loop([Fun | Tail], {Idx, Pid}) ->
+    case gen_server:call(Pid, {call, Fun}) of
+	ok ->
+	    loop(Tail, {Idx, Pid});
+	{error, timeout} ->
+	    ?error("[~p] AMP timeout~n", [Idx]),
+	    bkfw_mcus_sup:terminate_mcu(Idx),
+	    loop([], {Idx, Pid});
+	{error, {string, Err}} ->
+	    ?error("[~p] AMP error: ~s~n", [Idx, Err]),
+	    loop([ Fun | Tail ], {Idx, Pid});
+	{error, Err} ->
+	    ?error("[~p] AMP error: ~p~n", [Idx, Err]),
+	    loop([ Fun | Tail ], {Idx, Pid})
+    end.
+    
+
+%%%
+%%% Internals
+%%%
 read_cc(#state{idx=Idx, positions=P}=S) ->
-    F = fun(X, #state{entry=E}=Acc) ->
+    F = fun(X, {ok, #state{entry=E}=Acc}) ->
 		case bkfw_srv:command(Idx, rcc, [integer_to_binary(X)]) of
 		    {ok, {Idx, cc, [X, A, <<"mA">>]}} when is_float(A); is_integer(A) ->
-			Acc#state{entry=E#ampTable{ampConsign=A}};
+			{ok, Acc#state{entry=E#ampTable{ampConsign=A}}};
 		    {ok, _Ret} ->
-			?error("[~p] RCC invalid answer: ~p~n", [Idx, _Ret]),
-			Acc;
+			{error, {string, io_lib:format("RCC invalid answer: ~p~n", [_Ret])}};
 		    {error, Err} ->
-			?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
-			Acc
-		end
+			{error, Err}
+		end;
+	   (_, {error, Err}) ->
+		{error, Err}
 	end,
-    lists:foldl(F, S, lists:seq(1,P)).
+    lists:foldl(F, {ok, S}, lists:seq(1,P)).
 
 read_gc(#state{idx=Idx, entry=E}=S) ->
     case bkfw_srv:command(Idx, rgc, []) of
 	{ok, {Idx, gc, [Y, <<"dB">>]}} when is_float(Y); is_integer(Y) ->
-	    S#state{entry=E#ampTable{gainConsign=Y}};
+	   {ok, S#state{entry=E#ampTable{gainConsign=Y}}};
 	{ok, _Ret} ->
-	    ?error("[~p] RGC invalid answer: ~p~n", [Idx, _Ret]),
-	    S;
+	    {error, {string, io_lib:format("RGC invalid answer: ~p~n", [_Ret])}};
 	{error, Err} ->
-	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
-	    S
+	    {error, Err}
     end.
 
 read_pc(#state{idx=Idx, entry=E}=S) ->
     case bkfw_srv:command(Idx, rpc, []) of
 	{ok, {Idx, pc, [Y, <<"dBm">>]}} when is_float(Y); is_integer(Y) ->
-	    S#state{entry=E#ampTable{outputPowerConsign=Y}};
+	    {ok, S#state{entry=E#ampTable{outputPowerConsign=Y}}};
 	{ok, _Ret} ->
-	    ?error("[~p] RPC invalid answer: ~p~n", [Idx, _Ret]),
-	    S;
+	    {error, {string, io_lib:format("RPC invalid answer: ~p~n", [_Ret])}};
 	{error, Err} ->
-	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
-	    S
+	    {error, Err}
     end.
 
 read_mode(#state{idx=Idx, entry=E}=S) ->
     case bkfw_srv:command(Idx, rmode, []) of
 	{ok, {Idx, mode, [Mode]}} ->
 	    M = parse_mode(Mode, E#ampTable.operatingMode),
-	    S#state{entry=E#ampTable{operatingMode=M}};
+	    {ok, S#state{entry=E#ampTable{operatingMode=M}}};
 	{ok, _Ret} ->
-	    ?error("[~p] RMODE invalid answer: ~p~n", [Idx, _Ret]),
-	    S;
+	    {error, {string, io_lib:format("RMODE invalid answer: ~p~n", [_Ret])}};
 	{error, Err} ->
-	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
-	    S
+	    {error, Err}
     end.
 
 read_a(#state{idx=Idx}=S) ->
@@ -204,75 +283,67 @@ read_a(#state{idx=Idx}=S) ->
 	{ok, {Idx, alarms, Alarms}} ->
 	    handle_alarms(Alarms, S);
 	{ok, _Ret} ->
-	    ?error("[~p] RA invalid answer: ~p~n", [Idx, _Ret]),
-	    S;
+	    {error, {string, io_lib:format("RA invalid answer: ~p~n", [_Ret])}};
 	{error, Err} ->
-	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
-	    S
+	    {error, Err}
     end.
 
 read_lt(#state{idx=Idx, positions=P}=S) ->
-    F = fun(X, #state{entry=E}=Acc) ->
+    F = fun(X, {ok, #state{entry=E}=Acc}) ->
 		case bkfw_srv:command(Idx, rlt, [integer_to_binary(X)]) of
 		    {ok, {Idx, lt, [X, T, <<"C">>]}} when is_float(T); is_integer(T) ->
-			S#state{entry=E#ampTable{curLaserTemp=T}};
+			{ok, Acc#state{entry=E#ampTable{curLaserTemp=T}}};
 		    {ok, _Ret} ->
-			?error("[~p] RLT invalid answer: ~p~n", [Idx, _Ret]),
-			Acc;
+			{error, {string, io_lib:format("RLT invalid answer: ~p~n", [_Ret])}};
 		    {error, Err} ->
-			?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
-			Acc
-		end
+			{error, Err}
+		end;
+	   (_, {error, Err}) ->
+		{error, Err}
 	end,
-    lists:foldl(F, S, lists:seq(1,P)).
+    lists:foldl(F, {ok, S}, lists:seq(1,P)).
 
 read_lc(#state{idx=Idx, positions=P}=S) ->
-    F = fun(X, #state{entry=E}=Acc) ->
+    F = fun(X, {ok, #state{entry=E}=Acc}) ->
 		case bkfw_srv:command(Idx, rlc, [integer_to_binary(X)]) of
 		    {ok, {Idx, lc, [X, A, <<"mA">>]}} when is_float(A); is_integer(A) ->
-			S#state{entry=E#ampTable{curAmp=A}};
+			{ok, Acc#state{entry=E#ampTable{curAmp=A}}};
 		    {ok, _Ret} ->
-			?error("[~p] RLC invalid answer: ~p~n", [Idx, _Ret]),
-			Acc;
+			{error, {string, io_lib:format("RLC invalid answer: ~p~n", [_Ret])}};
 		    {error, Err} ->
-			?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
-			Acc
+			{error, Err}
 		end
 	end,
-    lists:foldl(F, S, lists:seq(1,P)).
+    lists:foldl(F, {ok, S}, lists:seq(1,P)).
 
 read_it(#state{idx=Idx, entry=E}=S) ->
     case bkfw_srv:command(Idx, rit, []) of
 	{ok, {Idx, it, [T, <<"C">>]}} when is_float(T); is_integer(T) ->
-	    S#state{entry=E#ampTable{curInternalTemp=T}};
+	    {ok, S#state{entry=E#ampTable{curInternalTemp=T}}};
 	{ok, _Ret} ->
-	    ?error("[~p] RIT invalid answer: ~p~n", [Idx, _Ret]),
-	    S;
+	    {error, {string, io_lib:format("RIT invalid answer: ~p~n", [_Ret])}};
 	{error, Err} ->
-	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
-	    S
+	    {error, Err}
     end.
 
 read_i(#state{idx=Idx, entry=E}=S) ->
     case bkfw_srv:command(Idx, ri, []) of
 	{ok, {Idx, i, Infos}} ->
-	    S#state{entry=E#ampTable{
-			    vendor=get_info(vendor, Infos, E#ampTable.vendor),
-			    moduleType=get_info(moduleType, Infos, E#ampTable.moduleType),
-			    hwVer=get_info(hwVer, Infos, E#ampTable.hwVer),
-			    hwRev=get_info(hwRev, Infos, E#ampTable.hwRev),
-			    swVer=get_info(swVer, Infos, E#ampTable.swVer),
-			    fwVer=get_info(fwVer, Infos, E#ampTable.fwVer),
-			    partNum=get_info(partNum, Infos, E#ampTable.partNum),
-			    serialNum=get_info(serialNum, Infos, E#ampTable.serialNum),
-			    productDate=get_info(productDate, Infos, E#ampTable.productDate)
-			   }};
+	    {ok, S#state{entry=E#ampTable{
+				 vendor=get_info(vendor, Infos, E#ampTable.vendor),
+				 moduleType=get_info(moduleType, Infos, E#ampTable.moduleType),
+				 hwVer=get_info(hwVer, Infos, E#ampTable.hwVer),
+				 hwRev=get_info(hwRev, Infos, E#ampTable.hwRev),
+				 swVer=get_info(swVer, Infos, E#ampTable.swVer),
+				 fwVer=get_info(fwVer, Infos, E#ampTable.fwVer),
+				 partNum=get_info(partNum, Infos, E#ampTable.partNum),
+				 serialNum=get_info(serialNum, Infos, E#ampTable.serialNum),
+				 productDate=get_info(productDate, Infos, E#ampTable.productDate)
+				}}};
 	{ok, _Ret} ->
-	    ?error("[~p] RI invalid answer: ~p~n", [Idx, _Ret]),
-	    S;
+	    {error, {string, io_lib:format("RI invalid answer: ~p~n", [_Ret])}};
 	{error, Err} ->
-	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
-	    S
+	    {error, Err}
     end.
 
 read_pm(#state{idx=Idx, entry=E}=S) ->
@@ -282,51 +353,43 @@ read_pm(#state{idx=Idx, entry=E}=S) ->
 			 E#ampTable.powerPd2,
 			 E#ampTable.powerPd3 },
 	    {Pd1, Pd2, Pd3} = parse_pd(Lines, Defaults),
-	    S#state{entry=E#ampTable{powerPd1=Pd1,
-					 powerPd2=Pd2,
-					 powerPd3=Pd3}};
+	    {ok, S#state{entry=E#ampTable{powerPd1=Pd1,
+					  powerPd2=Pd2,
+					  powerPd3=Pd3}}};
 	{ok, _Ret} ->
-	    ?error("[~p] RPM invalid answer: ~p~n", [Idx, _Ret]),
-	    S;
+	    {error, {string, io_lib:format("RPM invalid answer: ~p~n", [_Ret])}};
 	{error, Err} ->
-	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
-	    S
+	    {error, Err}
     end.
 
 read_v(#state{idx=Idx, entry=E}=S) ->
     case bkfw_srv:command(Idx, rv, []) of
 	{ok, {Idx, v, [V, v]}} when is_float(V); is_integer(V) ->
-	    S#state{entry=E#ampTable{powerSupply=V}};
+	    {ok, S#state{entry=E#ampTable{powerSupply=V}}};
 	{ok, _Ret} ->
-	    ?error("[~p] RV invalid answer: ~p~n", [Idx, _Ret]),
-	    S;
+	    {error, {string, io_lib:format("RV invalid answer: ~p~n", [_Ret])}};
 	{error, Err} ->
-	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
-	    S
+	    {error, Err}
     end.
 
 read_li(#state{idx=Idx, entry=E}=S) ->
     case bkfw_srv:command(Idx, rli, []) of
 	{ok, {Idx, li, [Y, <<"dBm">>]}} ->
-	    S#state{entry=E#ampTable{inputLossThreshold=Y}};
+	    {ok, S#state{entry=E#ampTable{inputLossThreshold=Y}}};
 	{ok, _Ret} ->
-	    ?error("[~p] RLI invalid answer: ~p~n", [Idx, _Ret]),
-	    S;
+	    {error, {string, io_lib:format("RLI invalid answer: ~p~n", [_Ret])}};
 	{error, Err} ->
-	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
-	    S
+	    {error, Err}
     end.
 
 read_lo(#state{idx=Idx, entry=E}=S) ->
     case bkfw_srv:command(Idx, rlo, []) of
 	{ok, {Idx, lo, [Y, <<"dBm">>]}} ->
-	    S#state{entry=E#ampTable{outputLossThreshold=Y}};
+	    {ok, S#state{entry=E#ampTable{outputLossThreshold=Y}}};
 	{ok, _Ret} ->
-	    ?error("[~p] RLO invalid answer: ~p~n", [Idx, _Ret]),
-	    S;
+	    {error, io_lib:format("RLO invalid answer: ~p~n", [_Ret])};
 	{error, Err} ->
-	    ?error("[~p] Error monitoring AMP: ~p~n", [Idx, Err]),
-	    S
+	    {error, Err}
     end.
 
 %%%
@@ -351,7 +414,7 @@ get_info(Key, Infos, Default) ->
     end.
 
 
-handle_alarms([], S) -> S;
+handle_alarms([], S) -> {ok, S};
 handle_alarms([Name  | Tail], #state{entry=E}=S) -> 
     gen_event:notify(bkfw_alarms, #smmAlarm{index=E#ampTable.index,
 					    name=Name,

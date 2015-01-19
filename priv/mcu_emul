@@ -162,163 +162,174 @@ loop(#state{port=Port, tid=Tid}=S, Acc) ->
 	    loop(S, Acc)
     end.
 
-handle_msg(#mcu{index=Addr}=Mcu, rcc, [Pos], #state{port=To}=S) when is_integer(Pos) ->
-    reply(To, Addr, io_lib:format("CC ~p ~.2f mA", [Pos, Mcu#mcu.ampConsign])),
+handle_msg(#mcu{index=Addr}=Mcu, rcc, [Pos], S) when is_integer(Pos) ->
+    reply(S, Addr, io_lib:format("CC ~p ~.2f mA", [Pos, Mcu#mcu.ampConsign])),
     {S, Mcu};
 
-handle_msg(#mcu{index=Addr}=Mcu, scc, [Pos, Cur], #state{port=To}=S) when is_integer(Pos), 
-									  Cur > 20 ->
-    reply(To, Addr, io_lib:format("SCC ~p OFR", [Pos])),
+handle_msg(#mcu{index=Addr}=Mcu, scc, [Pos, Cur], S) when is_integer(Pos), 
+							  Cur > 20 ->
+    reply(S, Addr, io_lib:format("SCC ~p OFR", [Pos])),
     {S, Mcu};
 
-handle_msg(#mcu{index=Addr}=Mcu, scc, [Pos, Cur], #state{port=To}=S) when is_integer(Pos), 
-									  is_float(Cur) ->
-    reply(To, Addr, io_lib:format("SCC ~p ~.2f", [Pos, Cur])),
+handle_msg(#mcu{index=Addr}=Mcu, scc, [Pos, Cur], S) when is_integer(Pos), 
+							  is_float(Cur) ->
+    reply(S, Addr, io_lib:format("SCC ~p ~.2f", [Pos, Cur])),
     {S, Mcu#mcu{ampConsign=Cur}};
 
-handle_msg(#mcu{index=Addr}=Mcu, rgc, [], #state{port=To}=S) ->
-    reply(To, Addr, io_lib:format("GC ~.2f dB", [Mcu#mcu.gainConsign])),
+handle_msg(#mcu{index=Addr}=Mcu, rgc, [], S) ->
+    reply(S, Addr, io_lib:format("GC ~.2f dB", [Mcu#mcu.gainConsign])),
     {S, Mcu};
 
-handle_msg(#mcu{index=Addr}=Mcu, sgc, [Gain], #state{port=To}=S) when Gain > 20 ->
-    reply(To, Addr, "SGC OFR"),
+handle_msg(#mcu{index=Addr}=Mcu, sgc, [Gain], S) when Gain > 20 ->
+    reply(S, Addr, "SGC OFR"),
     {S, Mcu};
 
-handle_msg(#mcu{index=Addr}=Mcu, sgc, [Gain], #state{port=To}=S) when is_float(Gain) ->
-    reply(To, Addr, io_lib:format("SGC ~.2f", [Gain])),
+handle_msg(#mcu{index=Addr}=Mcu, sgc, [Gain], S) when is_float(Gain) ->
+    reply(S, Addr, io_lib:format("SGC ~.2f", [Gain])),
     {S, Mcu#mcu{gainConsign=Gain}};
 
-handle_msg(#mcu{index=Addr}=Mcu, rpc, [], #state{port=To}=S) ->
-    reply(To, Addr, io_lib:format("PC ~.2f dBm", [Mcu#mcu.outputPowerConsign])),
+handle_msg(#mcu{index=Addr}=Mcu, rpc, [], S) ->
+    reply(S, Addr, io_lib:format("PC ~.2f dBm", [Mcu#mcu.outputPowerConsign])),
     {S, Mcu};
 
-handle_msg(#mcu{index=Addr}=Mcu, spc, [Pow], #state{port=To}=S) when Pow > 20 ->
-    reply(To, Addr, "SPC OFR"),
+handle_msg(#mcu{index=Addr}=Mcu, spc, [Pow], S) when Pow > 20 ->
+    reply(S, Addr, "SPC OFR"),
     {S, Mcu};
 
-handle_msg(#mcu{index=Addr}=Mcu, spc, [Pow], #state{port=To}=S) ->
-    reply(To, Addr, io_lib:format("SPC ~.2f", [Pow])),
+handle_msg(#mcu{index=Addr}=Mcu, spc, [Pow], S) ->
+    reply(S, Addr, io_lib:format("SPC ~.2f", [Pow])),
     {S, Mcu#mcu{outputPowerConsign=Pow}};
 
-handle_msg(#mcu{index=Addr}=Mcu, rmode, [], #state{port=To}=S) ->
-    reply(To, Addr, ["MODE ", Mcu#mcu.operatingMode]),
+handle_msg(#mcu{index=Addr}=Mcu, rmode, [], S) ->
+    reply(S, Addr, ["MODE ", Mcu#mcu.operatingMode]),
     {S, Mcu};
 
-handle_msg(#mcu{index=Addr}=Mcu, smode, [Mode], #state{port=To}=S) when Mode == pc;
-									Mode == gc;
-									Mode == cc;
-									Mode == off ->
+handle_msg(#mcu{index=Addr}=Mcu, smode, [Mode], S) when Mode == pc;
+							Mode == gc;
+							Mode == cc;
+							Mode == off ->
     ModeStr = mode_to_list(Mode),
-    reply(To, Addr, ["SMODE ", ModeStr]),
+    reply(S, Addr, ["SMODE ", ModeStr]),
     {S, Mcu#mcu{operatingMode=ModeStr}};
 
-handle_msg(#edfa{}=Edfa, ra, [], #state{port=To}=S) ->
+handle_msg(#edfa{}=Edfa, ra, [], S) ->
     case random:uniform(4) of
 	1 ->
 	    Alarm = element(random:uniform(size(?edfa_alarms)), ?edfa_alarms),
-	    reply(To, 0, ["ALARMS: ", Alarm]);
+	    reply(S, 0, ["ALARMS: ", Alarm]);
 	_ ->
-	    reply(To, 0, "ALARMS:")
+	    reply(S, 0, "ALARMS:")
     end,
     {S, Edfa};
 
-handle_msg(#mcu{index=Addr}=Mcu, ra, [], #state{port=To}=S) ->
+handle_msg(#mcu{index=Addr}=Mcu, ra, [], S) ->
     case random:uniform(4) of
 	1 ->
 	    Alarm = element(random:uniform(size(?mcu_alarms)), ?mcu_alarms),
-	    reply(To, Addr, ["ALARMS: ", Alarm]);
+	    reply(S, Addr, ["ALARMS: ", Alarm]);
 	_ ->
-	    reply(To, Addr, "ALARMS:")
+	    reply(S, Addr, "ALARMS:")
     end,
     {S, Mcu};
 
-handle_msg(#mcu{index=Addr, curLaserTemp=LT}=Mcu, rlt, [Pos], #state{port=To}=S) when is_integer(Pos) ->
-    reply(To, Addr, io_lib:format("LT ~p ~.2f C", [Pos, LT])),
+handle_msg(#mcu{index=Addr, curLaserTemp=LT}=Mcu, rlt, [Pos], S) when is_integer(Pos) ->
+    reply(S, Addr, io_lib:format("LT ~p ~.2f C", [Pos, LT])),
     {S, Mcu#mcu{curLaserTemp=ran(LT)}};
 
-handle_msg(#mcu{index=Addr, curAmp=LC}=Mcu, rlc, [Pos], #state{port=To}=S) when is_integer(Pos) ->
-    reply(To, Addr, io_lib:format("LC ~p ~.2f mA", [Pos, LC])),
+handle_msg(#mcu{index=Addr, curAmp=LC}=Mcu, rlc, [Pos], S) when is_integer(Pos) ->
+    reply(S, Addr, io_lib:format("LC ~p ~.2f mA", [Pos, LC])),
     {S, Mcu#mcu{curAmp=ran(LC)}};
 
-handle_msg(#edfa{internalTemp=IT}=Edfa, rit, [], #state{port=To}=S) ->
-    reply(To, 0, io_lib:format("IT ~.2f C", [IT])),
+handle_msg(#edfa{internalTemp=IT}=Edfa, rit, [], S) ->
+    reply(S, 0, io_lib:format("IT ~.2f C", [IT])),
     {S, Edfa#edfa{internalTemp=ran(IT)}};
 
-handle_msg(#mcu{index=Addr, curInternalTemp=IT}=Mcu, rit, [], #state{port=To}=S) ->
-    reply(To, Addr, io_lib:format("IT ~.2f C", [IT])),
+handle_msg(#mcu{index=Addr, curInternalTemp=IT}=Mcu, rit, [], S) ->
+    reply(S, Addr, io_lib:format("IT ~.2f C", [IT])),
     {S, Mcu#mcu{curInternalTemp=ran(IT)}};
 
-handle_msg(#edfa{}=Edfa, ri, [], #state{port=To}=S) ->
-    reply(To, 0, ["I", $\r, $\n, $\r, $\n, 
-		  "Vendor= ", Edfa#edfa.vendor, $\r, $\n, $\r, $\n, 
-		     "Module= ", Edfa#edfa.moduleType, $\r, $\n, $\r, $\n,
-		     "HW Ver= ", Edfa#edfa.hwVer, $\r, $\n, $\r, $\n,
-		     "HW Rev= ", Edfa#edfa.hwRev, $\r, $\n, $\r, $\n,
-		     "SW Ver= ", Edfa#edfa.swVer, $\r, $\n, $\r, $\n,
-		     "FW Ver= ", Edfa#edfa.fwVer, $\r, $\n, $\r, $\n,
-		     "Part Num= ", Edfa#edfa.partNum, $\r, $\n, $\r, $\n,
-		     "Ser. Num= ", Edfa#edfa.serialNum, $\r, $\n, $\r, $\n,
-		     "Prod. Date= ", Edfa#edfa.productDate, $\r, $\n, $\r, $\n]),
+handle_msg(#edfa{}=Edfa, ri, [], S) ->
+    reply(S, 0, ["I", $\r, $\n, $\r, $\n, 
+		 "Vendor= ", Edfa#edfa.vendor, $\r, $\n, $\r, $\n, 
+		 "Module= ", Edfa#edfa.moduleType, $\r, $\n, $\r, $\n,
+		 "HW Ver= ", Edfa#edfa.hwVer, $\r, $\n, $\r, $\n,
+		 "HW Rev= ", Edfa#edfa.hwRev, $\r, $\n, $\r, $\n,
+		 "SW Ver= ", Edfa#edfa.swVer, $\r, $\n, $\r, $\n,
+		 "FW Ver= ", Edfa#edfa.fwVer, $\r, $\n, $\r, $\n,
+		 "Part Num= ", Edfa#edfa.partNum, $\r, $\n, $\r, $\n,
+		 "Ser. Num= ", Edfa#edfa.serialNum, $\r, $\n, $\r, $\n,
+		 "Prod. Date= ", Edfa#edfa.productDate, $\r, $\n, $\r, $\n]),
     {S, Edfa};
 
-handle_msg(#mcu{index=Addr}=Mcu, ri, [], #state{port=To}=S) ->
-    reply(To, Addr, ["I", $\r, $\n, $\r, $\n,
-		     "Vendor= ", Mcu#mcu.vendor, $\r, $\n, $\r, $\n,
-		     "Module= ", Mcu#mcu.moduleType, $\r, $\n, $\r, $\n,
-		     "HW Ver= ", Mcu#mcu.hwVer, $\r, $\n, $\r, $\n,
-		     "HW Rev= ", Mcu#mcu.hwRev, $\r, $\n, $\r, $\n,
-		     "SW Ver= ", Mcu#mcu.swVer, $\r, $\n, $\r, $\n,
-		     "FW Ver= ", Mcu#mcu.fwVer, $\r, $\n, $\r, $\n,
-		     "Part Num= ", Mcu#mcu.partNum, $\r, $\n, $\r, $\n,
-		     "Ser. Num= ", Mcu#mcu.serialNum, $\r, $\n, $\r, $\n,
-		     "Prod. Date= ", Mcu#mcu.productDate, $\r, $\n, $\r, $\n]),
+handle_msg(#mcu{index=Addr}=Mcu, ri, [], S) ->
+    reply(S, Addr, ["I", $\r, $\n, $\r, $\n,
+		    "Vendor= ", Mcu#mcu.vendor, $\r, $\n, $\r, $\n,
+		    "Module= ", Mcu#mcu.moduleType, $\r, $\n, $\r, $\n,
+		    "HW Ver= ", Mcu#mcu.hwVer, $\r, $\n, $\r, $\n,
+		    "HW Rev= ", Mcu#mcu.hwRev, $\r, $\n, $\r, $\n,
+		    "SW Ver= ", Mcu#mcu.swVer, $\r, $\n, $\r, $\n,
+		    "FW Ver= ", Mcu#mcu.fwVer, $\r, $\n, $\r, $\n,
+		    "Part Num= ", Mcu#mcu.partNum, $\r, $\n, $\r, $\n,
+		    "Ser. Num= ", Mcu#mcu.serialNum, $\r, $\n, $\r, $\n,
+		    "Prod. Date= ", Mcu#mcu.productDate, $\r, $\n, $\r, $\n]),
     {S, Mcu};
 
-handle_msg(#mcu{index=Addr, powerPd1=PD1, powerPd2=PD2}=Mcu, rpm, [], #state{port=To}=S) ->
-    reply(To, Addr, [io_lib:format("PD1 ~.2f dBm", [PD1]), $\r, $\n, $\r, $\n,
-		     io_lib:format("PD2 ~.2f dBm", [PD2]), $\r, $\n, $\r, $\n]),
+handle_msg(#mcu{index=Addr, powerPd1=PD1, powerPd2=PD2}=Mcu, rpm, [], S) ->
+    reply(S, Addr, [io_lib:format("PD1 ~.2f dBm", [PD1]), $\r, $\n, $\r, $\n,
+		    io_lib:format("PD2 ~.2f dBm", [PD2]), $\r, $\n, $\r, $\n]),
     {S, Mcu#mcu{powerPd1=ran(PD1), powerPd2=ran(PD2)}};
 
-handle_msg(#edfa{index=Addr, powerSupply=V}=Edfa, rv, [], #state{port=To}=S) ->
-    reply(To, Addr, io_lib:format("V ~.2f V", [V])),
+handle_msg(#edfa{index=Addr, powerSupply=V}=Edfa, rv, [], S) ->
+    reply(S, Addr, io_lib:format("V ~.2f V", [V])),
     {S, Edfa#edfa{powerSupply=ran(V)}};
 
-handle_msg(#mcu{index=Addr, powerSupply=V}=Mcu, rv, [], #state{port=To}=S) ->
-    reply(To, Addr, io_lib:format("V ~.2f V", [V])),
+handle_msg(#mcu{index=Addr, powerSupply=V}=Mcu, rv, [], S) ->
+    reply(S, Addr, io_lib:format("V ~.2f V", [V])),
     {S, Mcu#mcu{powerSupply=ran(V)}};
 
-handle_msg(#mcu{index=Addr}=Mcu, rli, [], #state{port=To}=S) ->
-    reply(To, Addr, io_lib:format("LI ~.2f dBm", [Mcu#mcu.inputLossThreshold])),
+handle_msg(#mcu{index=Addr}=Mcu, rli, [], S) ->
+    reply(S, Addr, io_lib:format("LI ~.2f dBm", [Mcu#mcu.inputLossThreshold])),
     {S, Mcu};
 
-handle_msg(#mcu{index=Addr}=Mcu, sli, [Pow], #state{port=To}=S) when is_float(Pow) ->
-    reply(To, Addr, io_lib:format("SLI ~.2f", [Pow])),
+handle_msg(#mcu{index=Addr}=Mcu, sli, [Pow], S) when is_float(Pow) ->
+    reply(S, Addr, io_lib:format("SLI ~.2f", [Pow])),
     {S, Mcu#mcu{inputLossThreshold=Pow}};
 
-handle_msg(#mcu{index=Addr}=Mcu, rlo, [], #state{port=To}=S) ->
-    reply(To, Addr, io_lib:format("LO ~.2f dBm", [Mcu#mcu.outputLossThreshold])),
+handle_msg(#mcu{index=Addr}=Mcu, rlo, [], S) ->
+    reply(S, Addr, io_lib:format("LO ~.2f dBm", [Mcu#mcu.outputLossThreshold])),
     {S, Mcu};
 
-handle_msg(#mcu{index=Addr}=Mcu, slo, [Loss], #state{port=To}=S) when is_float(Loss) ->
-    reply(To, Addr, io_lib:format("SLO ~.2f", [Loss])),
+handle_msg(#mcu{index=Addr}=Mcu, slo, [Loss], S) when is_float(Loss) ->
+    reply(S, Addr, io_lib:format("SLO ~.2f", [Loss])),
     {S, Mcu#mcu{outputLossThreshold=Loss}};
 
-handle_msg(#edfa{}=Edfa, rn, [], #state{port=To, slots=Slots}=S) ->
-    reply(To, 0, ["N 0x", Slots]),
+handle_msg(#edfa{}=Edfa, rn, [], #state{slots=Slots}=S) ->
+    reply(S, 0, ["N 0x", Slots]),
     {S, Edfa};
 
-handle_msg(#edfa{}=Edfa, Cmd, Args, #state{port=To}=S) ->
+handle_msg(#edfa{}=Edfa, Cmd, Args, S) ->
     ?error("Invalid command: ~p(~p)~n", [Cmd, Args]),
-    reply(To, 0, "INVALID CMD"),
+    reply(S, 0, "INVALID CMD"),
     {S, Edfa};
 
-handle_msg(#mcu{index=Addr}=Mcu, Cmd, Args, #state{port=To}=S) ->
+handle_msg(#mcu{index=Addr}=Mcu, Cmd, Args, S) ->
     ?error("Invalid command: ~p(~p)~n", [Cmd, Args]),
-    reply(To, Addr, "INVALID CMD"),
+    reply(S, Addr, "INVALID CMD"),
     {S, Mcu}.
 
 
-reply(To, Addr, Ans) ->
+reply(#state{port=To}, 0, Ans) ->
+    do_reply(To, 0, Ans);
+reply(#state{port=To, slots=Slots}, Addr, Ans) ->
+    Mask = binary_to_integer(Slots, 16),
+    case Mask band (1 bsl Addr-1) of
+	0 -> 
+	    ?debug("No answer to ~p\n", [Addr]);
+	_ ->
+	    do_reply(To, Addr, Ans)
+    end.
+
+do_reply(To, Addr, Ans) ->
     ?WAIT,
     HexAddr = ["0x", io_lib:format("~2.16.0b", [Addr])],
     Msg = iolist_to_binary([HexAddr, " ", Ans, $\r, $\n, $\r, $\n]),

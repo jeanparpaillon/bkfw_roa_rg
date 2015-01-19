@@ -35,6 +35,7 @@ stop(Com) ->
 
 -spec send(Com :: pid(), To :: integer(), Msg :: iolist()) -> {ok, Reply :: term()} | {error, Err :: term()}.
 send(Com, To, Msg) when is_integer(To) ->
+    %bkfw_mutex:wait(),
     gen_server:call(Com, {To, Msg}).
 
 %%%
@@ -91,7 +92,7 @@ init(Owner) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call({To, Msg}, {Pid, _Tag}, #state{owner=Pid, port=Port, trace=Trace}=S) ->
-    bkfw_mutex:wait(),
+    %bkfw_mutex:wait(),
     debug_com(Trace, "[COM] Send command\n"),
     Bin = ["0x", io_lib:format("~2.16.0b", [To]), " ", Msg, $\r, $\n],
     debug_com(Trace, ["[RPI -> CPU] ", Bin]),
@@ -143,13 +144,13 @@ handle_info({Port, {data, {eol, Bin}}}, #state{msg=Msg, owner=Owner, crlf=$\r,
 	{ok, Msg2, Rest} ->
 	    Owner ! {msg, Msg2},
 	    debug_com(Trace, "[COM] Answer received\n"),
-	    bkfw_mutex:signal(),
+	    %bkfw_mutex:signal(),
 	    {noreply, S#state{msg=undefined, data=Rest, crlf=$\n}};
 	{more, Msg2, Rest} ->
 	    {noreply, S#state{msg=Msg2, data=Rest, crlf=$\n}};
 	{error, Err, Rest} ->
 	    Owner ! {error, Err},
-	    bkfw_mutex:signal(),
+	    %bkfw_mutex:signal(),
 	    {noreply, S#state{msg=undefined, data=Rest, crlf=$\n}}
     end;
 

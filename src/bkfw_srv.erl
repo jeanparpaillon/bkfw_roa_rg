@@ -8,7 +8,7 @@
 % API
 -export([start_link/0,
 	 command/3,
-	 flush/0]).
+	 flush/1]).
 
 % gen_fsm callbacks
 -export([init/1, handle_event/3, handle_sync_event/4, handle_info/3, terminate/3, code_change/4]).
@@ -46,25 +46,23 @@ command(Idx, Cmd, Args) when is_integer(Idx), is_atom(Cmd) ->
     try gen_fsm:sync_send_event(?FSM, {cmd, Idx, [CmdName, ArgsStr]}) of
 	{ok, Ref} ->
 	    receive
-		{Ref, Ret} -> {ok, Ret};
-		Ret -> 
+		{Ref, Ret} -> {ok, Ret}
+	    after Timeout ->
 		    gen_fsm:send_all_state_event(?FSM, {flush, Idx}),
-		    {error, {unexpected, Ret}}
-	    after 
-		Timeout ->
-		    gen_fsm:send_all_state_event(?FSM, flush),
 		    {error, timeout}
 	    end;
 	{error, Err} ->
-	    ?debug("<2> error: ~p~n", [Err]),
 	    {error, Err}
-    catch _:Err ->
-	    ?debug("<3> exception: ~p~n", [Err]),
+    catch 
+	_:{timeout, _} ->
+	    gen_fsm:send_all_state_event(?FSM, {flush, Idx}),
+	    {error, timeout};
+	_:Err ->
 	    {error, Err}
     end.
 
-flush() ->
-    gen_fsm:send_all_state_event(?FSM, flush).
+flush(Idx) ->
+    gen_fsm:send_all_state_event(?FSM, {flush, Idx}).
 
 
 %%%===================================================================
