@@ -36,3 +36,7 @@
 * Update MIB
 * Enable multiple amps setting
 * Improve query time when amps are added/removed
+
+# 0.3.1
+
+* Fix bug after changing MIB

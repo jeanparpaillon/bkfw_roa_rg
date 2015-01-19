@@ -1,3 +1,9 @@
+bkfw (0.3.1) UNRELEASED; urgency=medium
+
+  * Fix slot handling after MIB change
+
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Mon, 19 Jan 2015 10:53:03 +0100
+
 bkfw (0.3) wheezy; urgency=medium
 
   * Add SNMPv3 support
