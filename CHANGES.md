@@ -40,3 +40,7 @@
 # 0.3.1
 
 * Fix bug after changing MIB
+
+# 0.3.2
+
+* Poll slots on every loop

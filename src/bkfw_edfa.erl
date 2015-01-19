@@ -158,23 +158,23 @@ read_it(S) ->
 	    S
     end.
 
-read_n(#state{n=0}=S) ->
+read_n(S) ->
     ets:insert(?TID, {smmNumber, 0}),
     case bkfw_srv:command(0, rn, []) of
 	{ok, {0, n, [Mask]}} when is_integer(Mask) ->
 	    ?debug("Slots: ~p\n", [Mask]),
-	    handle_slots(Mask, 0, S#state{n=1});
+	    handle_slots(Mask, 0, S);
 	{ok, _Ret} ->
 	    ?error("Unrecognized answer: ~p~n", [_Ret]),
 	    S#state{n=0};
 	{error, Err} ->
 	    ?error("Error monitoring SMM: ~p~n", [Err]),
 	    S#state{n=0}
-    end;
-read_n(#state{n=N}=S) when N<5 ->
-    S#state{n=N+1};
-read_n(#state{}=S) ->
-    S#state{n=0}.
+    end.
+%read_n(#state{n=N}=S) when N<5 ->
+%    S#state{n=N+1};
+%read_n(#state{}=S) ->
+%    S#state{n=0}.
 
 
 % loop over all bits of mask and compare with old slots,
