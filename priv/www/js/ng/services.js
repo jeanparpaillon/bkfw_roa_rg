@@ -199,7 +199,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
     timeout: function() {
       $timeout(angular.bind(this, function() {
         $rootScope.$broadcast('alarm-expired', this);
-      }), 3000);
+      }), 15000);
     }
   };
 
