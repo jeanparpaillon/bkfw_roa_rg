@@ -49,3 +49,8 @@
 
 * Improve slots detection
 * Improve dialogs and messages in system page
+
+# 0.3.4
+
+* Fix slots detection
+* Improve latency times

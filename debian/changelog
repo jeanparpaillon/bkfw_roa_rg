@@ -1,3 +1,10 @@
+bkfw (0.3.4) UNRELEASED; urgency=medium
+
+  * Fix slots detection
+  * Improve latency
+
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Tue, 20 Jan 2015 15:49:38 +0100
+
 bkfw (0.3.3) wheezy; urgency=medium
 
   * Improve slots polling
