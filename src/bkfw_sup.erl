@@ -24,13 +24,10 @@ start_link() ->
 
 restart() ->
     lists:foreach(fun ({_Id, restarting, _, _}) ->
-			  %?debug("Child ~p: restarting~n", [Id]);
 			  true;
 		      ({_Id, undefined, _, _}) ->
-			  %?debug("Child ~p: undefined~n", [Id]);
 			  true;
 		      ({_Id, Child, _, _}) ->
-			  %?debug("Child ~p: about to restart ~p~n", [Id, Child]),
 			  try supervisor:restart_child(Child) catch _:_ -> exit(Child, kill) end
 		  end, supervisor:which_children(?SRV)).
 

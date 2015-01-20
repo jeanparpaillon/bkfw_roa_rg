@@ -40,7 +40,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Priv
 %%%
 send_trap(Trap, Varbinds) ->
-    %Recv = {{notify, Trap}, self()},
     Recv = no_receiver,
     case snmpa:send_notification(snmp_master_agent, Trap, Recv, "", "", Varbinds) of
 	{error, _Err} ->
