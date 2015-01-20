@@ -54,3 +54,8 @@
 
 * Fix slots detection
 * Improve latency times
+
+# 0.3.5
+
+* Fix network settings
+* Fix SNMP traps

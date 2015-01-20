@@ -1,9 +1,16 @@
-bkfw (0.3.4) UNRELEASED; urgency=medium
+bkfw (0.3.5) wheezy; urgency=medium
+
+  * Fix network settings 
+  * Fix SNMP traps
+
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Tue, 20 Jan 2015 18:08:01 +0100
+
+bkfw (0.3.4) wheezy; urgency=medium
 
   * Fix slots detection
   * Improve latency
 
- -- Jean Parpaillon <jean.parpaillon@free.fr>  Tue, 20 Jan 2015 15:49:38 +0100
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Tue, 20 Jan 2015 18:07:38 +0100
 
 bkfw (0.3.3) wheezy; urgency=medium
 
