@@ -37,6 +37,7 @@
 	 {com, "/dev/ttyAMA0"},
 	 {edfa_period, 2000},
 	 {mcu_period, 2000},
+	 {cmd_period, 100},
 	 {timeout, 2000},
 	 {max_queue, 1000},
 	 {http, [{port, 80}]},

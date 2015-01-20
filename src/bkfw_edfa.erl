@@ -25,11 +25,11 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--define(PERIOD, 1000).
+-define(PERIOD, 100).
 -define(SLOTS, 32).
 %-define(TID, ?MODULE).
 
--define(FUNS, [read_it, read_v, read_n, read_a]).
+-define(FUNS, [read_n, read_it, read_v, read_a]).
 
 -record(state, {
 	  tid,
@@ -49,11 +49,6 @@ start_link() ->
 	ignore -> ignore;
 	{error, Err} -> {error, Err}
     end.
-
-%% start_loop() ->
-%%     Pid = spawn_link(?MODULE, init_loop, []),
-%%     register(bkfw_edfa_loop, Pid),
-%%     {ok, Pid}.
 
 init_loop() -> 
     loop([ read_infos | ?FUNS ]).
@@ -240,11 +235,19 @@ handle_slots(_Mask, ?SLOTS, S) ->
     {reply, ok, S};
 
 handle_slots(Mask, Idx, S) when Mask band (1 bsl Idx) == 0 ->
-    bkfw_mcus_sup:terminate_mcu(Idx+1),
+    mnesia:transaction(fun () -> mnesia:delete({ampTable, Idx+1}) end),
     handle_slots(Mask, Idx+1, S);
 
 handle_slots(Mask, Idx, #state{tid=Tid}=S) when Mask band (1 bsl Idx) /= 0 ->
-    ok = bkfw_mcus_sup:start_mcu(Idx+1),
+    case mnesia:dirty_match_object(#ampTable{index=Idx+1, _='_'}) of
+	[] ->
+	    % Amp was not there
+	    Amp = #ampTable{index=Idx+1},
+	    mnesia:transaction(fun() -> mnesia:write(Amp) end);
+	_ ->
+	    % Amp is already there
+	    ok
+    end,
     ets:insert(Tid, {smmNumber, ets:lookup_element(Tid, smmNumber, 2)+1}),
     handle_slots(Mask, Idx+1, S).
 
@@ -260,9 +263,16 @@ get_ets_value(Key, Default) ->
     gen_server:call(?MODULE, {get_ets_value, Key, Default}).
 
 loop([]) ->
-    timer:sleep(application:get_env(bkfw, edfa_period, ?PERIOD)),
-    loop(?FUNS);
+    case mnesia:transaction(fun () -> mnesia:first(ampTable) end) of
+	{atomic, Key} ->
+	    loop_mcu(Key),
+	    timer:sleep(application:get_env(bkfw, edfa_period, ?PERIOD)),
+	    loop(?FUNS);
+	{aborted, Err} ->
+	    ?error("Error reading AMP table: ~p~n", [Err])
+    end;
 loop([Fun | Tail]) ->
+    timer:sleep(application:get_env(bkfw, cmd_period, ?PERIOD)),
     case gen_server:call(?MODULE, {call, Fun}) of
 	ok ->
 	    loop(Tail);
@@ -276,4 +286,34 @@ loop([Fun | Tail]) ->
 	{error, Err} ->
 	    ?error("SMM error: ~p~n", [Err]),
 	    loop([ Fun | Tail ])
+    end.
+
+loop_mcu('$end_of_table') ->
+    loop(?FUNS);
+loop_mcu(Key) ->
+    case mnesia:transaction(fun () -> mnesia:read(ampTable, Key) end) of
+	{atomic, []} ->
+	    ok;
+	{atomic, [Amp]} -> 
+	    case bkfw_mcu:loop(Amp) of
+		{ok, Amp2} ->
+		    {atomic, ok} = mnesia:transaction(fun() -> mnesia:write(Amp2) end),
+		    case mnesia:transaction(fun() -> mnesia:next(ampTable, Key) end) of
+			{atomic, Key2} -> loop_mcu(Key2);
+			{aborted, Err} -> ?error("Error reading AMP table: ~p~n", [Err])
+		    end;
+		{error, timeout} ->
+		    ?error("AMP ~p not responding~n", [Key]),
+		    loop(?FUNS);
+		{error, Err, Amp2} ->
+		    case Err of
+			{string, E} -> ?error("Error monitoring AMP ~p: ~s~n", [Key, E]);
+			E -> ?error("Error monitoring AMP ~p: ~p~n", [Key, E])
+		    end,
+		    mnesia:transaction(fun() -> mnesia:write(Amp2) end),
+		    case mnesia:transaction(fun() -> mnesia:next(ampTable, Key) end) of
+			{atomic, Key2} -> loop_mcu(Key2);
+			{aborted, Err} -> ?error("Error reading AMP table: ~p~n", [Err])
+		    end
+	    end
     end.

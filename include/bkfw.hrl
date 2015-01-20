@@ -40,7 +40,7 @@
 		   ampConsign         = 0                        :: float(),
 		   gainConsign        = 0                        :: float(),
 		   outputPowerConsign = 0                        :: float(),
-		   operatingMode      = ?ampOperatingMode_off:: integer(),
+		   operatingMode      = ?ampOperatingMode_off    :: integer(),
 		   curLaserTemp       = 0                        :: float(),
 		   curAmp             = 0                        :: float(),
 		   curInternalTemp    = 0                        :: float(),
@@ -50,15 +50,15 @@
 		   powerSupply        = 0                        :: float(),
 		   inputLossThreshold = 0                        :: float(),
 		   outputLossThreshold= 0                        :: float(),
-		   vendor             = ""                       :: string(),
-		   moduleType         = ""                       :: string(),
-		   hwVer              = ""                       :: string(),
-		   hwRev              = ""                       :: string(),
-		   swVer              = ""                       :: string(),
-		   fwVer              = ""                       :: string(),
-		   partNum            = ""                       :: string(),
-		   serialNum          = ""                       :: string(),
-		   productDate        = ""                       :: string()
+		   vendor             = "N/A"                    :: string(),
+		   moduleType         = "N/A"                    :: string(),
+		   hwVer              = "N/A"                    :: string(),
+		   hwRev              = "N/A"                    :: string(),
+		   swVer              = "N/A"                    :: string(),
+		   fwVer              = "N/A"                    :: string(),
+		   partNum            = "N/A"                    :: string(),
+		   serialNum          = "N/A"                    :: string(),
+		   productDate        = "N/A"                    :: string()
 		  }).
 -type ampTable() :: #ampTable{}.
 

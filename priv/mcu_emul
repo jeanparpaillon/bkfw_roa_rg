@@ -24,7 +24,7 @@
 -define(edfa_alarms, {"EDFA_TEMP", "EDFA_PSU"}).
 
 -define(WAIT, true).
-%-define(WAIT, timer:sleep(500)).
+%-define(WAIT, timer:sleep(100)).
 
 -record(mcu, {index              ,
 	      ampConsign         ,
@@ -97,7 +97,6 @@ start(Opts) ->
 	Pty ->
 	    ?info("Opening ~p~n", [Pty]),
 	    {ok, Fd} = cereal:open_tty(Pty),
-	    %ok = cereal:set_raw_tty_mode(Fd),
 	    Port = open_port({fd, Fd, Fd}, [binary, stream, {line, 80}]),
 	    Slots = list_to_binary(proplists:get_value(slots, Opts)),
 	    ?info("Slots: ~.2b~n", [binary_to_integer(Slots, 16)]),

@@ -27,7 +27,7 @@
 %%% API
 %%%
 start_link() ->
-    gen_server:start_link(?MODULE, self(), []).
+    gen_server:start_link(?MODULE, [], []).
 
 stop(Com) ->
     ?debug("Stopping COM~n", []),
@@ -35,7 +35,6 @@ stop(Com) ->
 
 -spec send(Com :: pid(), To :: integer(), Msg :: iolist()) -> {ok, Reply :: term()} | {error, Err :: term()}.
 send(Com, To, Msg) when is_integer(To) ->
-    %bkfw_mutex:wait(),
     gen_server:call(Com, {To, Msg}).
 
 %%%
@@ -53,8 +52,8 @@ send(Com, To, Msg) when is_integer(To) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
--spec init(pid()) -> {ok, term()} | {error, term()} | ignore.
-init(Owner) ->
+-spec init([]) -> {ok, term()} | {error, term()} | ignore.
+init([]) ->
     Trace = case application:get_env(bkfw, debug, true) of
 		true -> 
 		    {ok, Dev} = file:open(?TRACE, [append]),
@@ -70,7 +69,7 @@ init(Owner) ->
 	    case cereal:open_tty(Com) of
 		{ok, Fd} ->
 		    Port = open_port({fd, Fd, Fd}, [binary, stream, {line, 80}]),
-		    {ok, #state{owner=Owner, com=Fd, port=Port, trace=Trace, crlf=$\n}};
+		    {ok, #state{com=Fd, port=Port, trace=Trace, crlf=$\n}};
 		{error, Err} ->
 		    ?error("Error opening com port: ~p~n", [Err]),
 		    {stop, {error, Err}}
@@ -91,13 +90,12 @@ init(Owner) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({To, Msg}, {Pid, _Tag}, #state{owner=Pid, port=Port, trace=Trace}=S) ->
-    %bkfw_mutex:wait(),
+handle_call({To, Msg}, {Pid, _Tag}, #state{port=Port, trace=Trace}=S) ->
     debug_com(Trace, "[COM] Send command\n"),
     Bin = ["0x", io_lib:format("~2.16.0b", [To]), " ", Msg, $\r, $\n],
     debug_com(Trace, ["[RPI -> CPU] ", Bin]),
     Port ! {self(), {command, iolist_to_binary(Bin)}},
-    {reply, ok, S};
+    {reply, ok, S#state{owner=Pid}};
 
 handle_call(stop, _From, S) ->
     {stop, stop, S};
@@ -129,6 +127,9 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_info({Port, {data, {_, Bin}}}, #state{port=Port, owner=undefined}=S) ->
+    ?debug("Garbage data: ~p~n", [Bin]),
+    {noreply, S#state{data= <<>>, msg=undefined}};
 handle_info({Port, {data, {noeol, Bin}}}, #state{port=Port, data=Acc, trace=Trace}=S) ->
     debug_com(Trace, ["[RPI <- CPU] ", Bin]),
     {noreply, S#state{data= << Acc/binary, Bin/binary >>}};
@@ -142,16 +143,14 @@ handle_info({Port, {data, {eol, Bin}}}, #state{msg=Msg, owner=Owner, crlf=$\r,
     debug_com(Trace, ["[RPI <- CPU] ", Bin, "\n"]),
     case bkfw_parser:parse(<< Data/binary, Bin/binary, $\r, $\n >>, Msg) of
 	{ok, Msg2, Rest} ->
+	    debug_com(Trace, io_lib:format("[COM] Answer received: ~p ! ~p\n", [Owner, Msg2])),
 	    Owner ! {msg, Msg2},
-	    debug_com(Trace, "[COM] Answer received\n"),
-	    %bkfw_mutex:signal(),
-	    {noreply, S#state{msg=undefined, data=Rest, crlf=$\n}};
+	    {noreply, S#state{owner=undefined, msg=undefined, data=Rest, crlf=$\n}};
 	{more, Msg2, Rest} ->
 	    {noreply, S#state{msg=Msg2, data=Rest, crlf=$\n}};
 	{error, Err, Rest} ->
 	    Owner ! {error, Err},
-	    %bkfw_mutex:signal(),
-	    {noreply, S#state{msg=undefined, data=Rest, crlf=$\n}}
+	    {noreply, S#state{owner=undefined, msg=undefined, data=Rest, crlf=$\n}}
     end;
 
 handle_info(_Info, State) ->
