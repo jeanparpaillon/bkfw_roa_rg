@@ -433,7 +433,7 @@ set_network_dhcp(Iface)  when is_list(Iface) ->
     NewConfig = os:cmd(Cmd), 
     case file:write_file(File, NewConfig) of
 	ok ->
-	    case apply_network() of
+	    case apply_network(Iface) of
 		ok ->
 		    {ok, [{type, dhcp}]};
 		{error, Err} ->
@@ -457,7 +457,7 @@ set_network_static(Iface, Props) when is_list(Iface), is_list(Props) ->
 	    NewConfig = os:cmd(Cmd),
 	    case file:write_file(File, NewConfig) of
 		ok ->
-		    case apply_network() of
+		    case apply_network(Iface) of
 			ok ->
 			    {ok, [{type, static},
 				  {ip, list_to_binary(inet:ntoa(Ip))},
@@ -472,8 +472,8 @@ set_network_static(Iface, Props) when is_list(Iface), is_list(Props) ->
 	    {error, Err}
     end.
 
-apply_network() ->
-    script("commit_network.sh", []).
+apply_network(Iface) ->
+    script("commit_network.sh", [Iface]).
 
 clean(Text, Char) ->
     string:strip(string:strip(Text, right, Char), left, Char).
