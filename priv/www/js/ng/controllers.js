@@ -147,7 +147,7 @@ angular.module('bkfwApp.controllers', [])
 	    removeAfterUpload: true,
 	    onBeforeUploadItem: function() {
 		dialogs.modal("Firmare is upgrading",
-			      "Device should be online is a few minutes");
+			      "Do not power off or shutdown the device !");
 	    },
 	    onErrorItem: function() {
 		dialogs.close(true);
@@ -158,7 +158,7 @@ angular.module('bkfwApp.controllers', [])
 
 		    .then(function() {
 			dialogs.close(true);
-			dialogs.success("Firmware updated");
+			dialogs.success("Firmware updated, please restart the device.");
 		    });
 	    })
 	});
