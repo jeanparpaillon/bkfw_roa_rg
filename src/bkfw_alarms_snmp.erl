@@ -61,20 +61,15 @@ alarm_to_trap(adi, _) -> ampAdiTrap;
 alarm_to_trap(mute, _) -> ampMuteTrap;
 alarm_to_trap(_, _) -> undefined.
 
-alarm_to_vars(pin, E) ->       [{ampPowerPd1, [E#ampTable.index], 
-				 round(E#ampTable.powerPd1)}];
-alarm_to_vars(pout, E) ->      [{ampPowerPd2, [E#ampTable.index], 
-				 round(E#ampTable.powerPd2)}];
-alarm_to_vars(pump_temp, E) -> [{ampCurLaserTemp, [E#ampTable.index], 
-				 round(E#ampTable.curLaserTemp)}];
-alarm_to_vars(pump_bias, E) -> [{ampCurAmp, [E#ampTable.index], 
-				 round(E#ampTable.curAmp)}];
-alarm_to_vars(edfa_temp, #ampTable{index=Idx, curInternalTemp=T}) -> [{ampCurInternalTemp, [Idx],
-								       round(T)}];
-alarm_to_vars(edfa_psu, #ampTable{index=Idx, powerSupply=P}) ->  [{ampPowerSupply, [Idx],
-								   round(P)}];
-alarm_to_vars(edfa_temp, {IT, _}) -> [{smmCurInternalTemp,  round(IT)}];
-alarm_to_vars(edfa_psu, {_, PS}) ->  [{smmPowerSupply, round(PS)}];
-alarm_to_vars(bref, _E) ->     [];
-alarm_to_vars(adi, _E) ->      [];
-alarm_to_vars(mute, _E) ->     [].
+alarm_to_vars(pin, #ampTable{index=Idx}=E) ->                        [{ampPowerPd1,     [Idx], round(E#ampTable.powerPd1)}];
+alarm_to_vars(pout, #ampTable{index=Idx}=E) ->                       [{ampPowerPd2,     [Idx], round(E#ampTable.powerPd2)}];
+alarm_to_vars(pump_temp, #ampTable{index=Idx}=E) ->                  [{ampCurLaserTemp, [Idx], round(E#ampTable.curLaserTemp)}];
+alarm_to_vars(pump_bias, #ampTable{index=Idx}=E) ->                  [{ampCurAmp,       [Idx], round(E#ampTable.curAmp)}];
+alarm_to_vars(edfa_temp, #ampTable{index=Idx, curInternalTemp=T}) -> [{ampCurInternalTemp, [Idx], round(T)}];
+alarm_to_vars(edfa_psu, #ampTable{index=Idx, powerSupply=P}) ->      [{ampPowerSupply, [Idx], round(P)}];
+alarm_to_vars(edfa_temp, {IT, _}) ->                                 [{smmCurInternalTemp, round(IT)}];
+alarm_to_vars(edfa_psu, {_, PS}) ->                                  [{smmPowerSupply, round(PS)}];
+alarm_to_vars(bref, #ampTable{index=Idx}=E) ->                       [{ampPowerPd2, [Idx], round(E#ampTable.powerPd2)},
+								      {ampPowerPd3, [Idx], round(E#ampTable.powerPd3)}];
+alarm_to_vars(adi, #ampTable{index=Idx}) ->                          [{ampIndex, Idx}];
+alarm_to_vars(mute, #ampTable{index=Idx}) ->                         [{ampIndex, Idx}].

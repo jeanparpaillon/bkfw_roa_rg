@@ -83,6 +83,7 @@ variable_func(get, Key) ->
 %%%
 init([]) ->
     ?info("Starting SMM monitoring~n", []),
+    gen_event:add_handler(bkfw_alarms, bkfw_alarms_snmp, []),
     Tid = ets:new(?MODULE, []),
     ets:insert(Tid, {smmNumber, 0}),
     {ok, #state{tid=Tid, slots=list_to_tuple(lists:duplicate(?SLOTS, false))}}.
