@@ -247,12 +247,13 @@ from_json(Req, #state{section=sys, sys=login}=S) ->
 	{error, Err, Req2} ->
 	    {false, ?set_error(Err, Req2), S};
 	{ok, Json, Req2} ->
-        case auth_user(proplists:get_value(login, Json),
-               proplists:get_value(password, Json)) of
+	    case auth_user(proplists:get_value(login, Json),
+			   proplists:get_value(password, Json)) of
 		true ->
 		    {true, Req2, S};
 		false ->
-		    {false, ?set_error(invalid_login, Req2), S}
+		    {ok, Req3} = cowboy_req:reply(401, Req2),
+		    {halt, ?set_error(invalid_login, Req3), S}
 	    end
     end;
 from_json(Req, #state{section=sys, sys=Cat}=S) ->
