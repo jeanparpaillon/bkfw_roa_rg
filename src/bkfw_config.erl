@@ -340,22 +340,15 @@ script(Cmd, Args) ->
     cmd(get_script(Cmd) ++ " " ++ Args).
 
 cmd(Cmd) ->
-    case application:get_env(bkfw, system_cmd) of
-	{ok, true} -> 
-	    case os:cmd(binary_to_list(iolist_to_binary(Cmd))) of
-		"ok\n" ->
-		    ok;
-		"err_" ++ Err ->
-		    {error, clean(Err, $\n)};
-		Else ->
-		    {error, {unexpected, Else}}
-	    end;
-	{ok, false} -> 
-	    ?info("(fake) running: ~s~n", [iolist_to_binary(Cmd)]),
+    FullCmd = binary_to_list(iolist_to_binary(Cmd)),
+    ?debug("execute: ~p~n", [FullCmd]),
+    case os:cmd(FullCmd) of
+	"ok\n" ->
 	    ok;
-	undefined -> 
-	    ?info("(fake) running: ~s~n", [iolist_to_binary(Cmd)]),
-	    ok
+	"err_" ++ Err ->
+	    {error, clean(Err, $\n)};
+	Else ->
+	    {error, {unexpected, Else}}
     end.
 
 hexstring(<<X:128/big-unsigned-integer>>) ->
