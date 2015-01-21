@@ -59,3 +59,7 @@
 
 * Fix network settings
 * Fix SNMP traps
+
+# 0.3.6
+
+* Set default network to 10.0.0.3
