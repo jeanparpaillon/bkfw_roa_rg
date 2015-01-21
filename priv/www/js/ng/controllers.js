@@ -154,11 +154,11 @@ angular.module('bkfwApp.controllers', [])
 		dialogs.error("Failed to update the firmware");
 	    },
 	    onCompleteItem: angular.bind(this, function() {
-		edfa.waitUntilOnline(10000)
+		edfa.waitUntilOnline(30000)
 
 		    .then(function() {
 			dialogs.close(true);
-			dialogs.success("Firmware updated, please restart the device.");
+			dialogs.success("Firmware updated.");
 		    });
 	    })
 	});
@@ -266,10 +266,10 @@ angular.module('bkfwApp.controllers', [])
 
 		.then(function() {
 		    dialogs.modal("Device is rebooting",
-				  "If the device isn't online in 10 minutes check if the device IP has changed.");
+				  "If the device isn't online in 2 minutes check if the device IP has changed.");
 		    // wait edfa to come back
 		    // start polling in 20 secs
-		    return edfa.waitUntilOnline(20000);
+		    return edfa.waitUntilOnline(10000);
 		})
 
 		.then(function() {
@@ -288,8 +288,13 @@ angular.module('bkfwApp.controllers', [])
 		})
 
 		.then(function() {
-		    dialogs.success("Device has beeing reseted",
-				    "If you can't contact the device check if its IP has changed.");
+		    dialogs.modal("Device has beeing reseted",
+				  "If you can't contact the device check if its IP has changed.");
+		    return edfa.waitUntilOnline(10000);
+		})
+		.then(function() {
+		    dialogs.close(true);
+		    dialogs.success("Factory settings have been applied.")
 		});
 
 	};

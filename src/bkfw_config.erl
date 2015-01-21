@@ -112,7 +112,7 @@ init([]) ->
 		    {ok, Config}  -> Config;
 		    {error, Err} ->
 			?debug("Invalid net config: ~p~n", [Err]),
-			case set_network_dhcp(Iface) of
+			case set_network_static(Iface, ?DEFAULT_NETCONF) of
 			    {ok, Config} -> Config;
 			    {error, Err} ->
 				throw(Err)
