@@ -66,49 +66,53 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
   return {
 
     responseError: function(rejection) {
-      // don't handle 401
-      if (rejection.status !== 401 && apiErrorsConfig.intercept) {
-        var errors = "";
+	var errors = "";
         if (rejection.data) {
-          errors = rejection.data.join("<br/>");
+            errors = rejection.data.join("<br/>");
         }
         else if (rejection.statusText) {
-          errors = rejection.statusText;
+            errors = rejection.statusText;
         }
         else {
-          errors = "Connection lost with the API";
+            errors = "Connection lost with the API";
         }
-
-        dialogs.error("An error occured", errors);
-      }
-      // pass it through the chain
-      return $q.reject(rejection);
+	
+	// don't handle 401	
+	if (rejection.status !== 401 && apiErrorsConfig.intercept) {
+            dialogs.error("An error occured", errors);
+	}
+	
+	// pass it through the chain
+	return $q.reject(rejection);
     }
   };
 
 }])
 
-.factory('auth', ['$http', '$rootScope', 'authService', 'AUTH_EVENTS', 'session', '$base64', 'md5', function($http, $rootScope, authService, AUTH_EVENTS, session, $base64, md5) {
+    .factory('auth', ['$http', '$rootScope', 'authService', 'AUTH_EVENTS', 'session', '$base64', 'md5', 'apiErrorsConfig', function($http, $rootScope, authService, AUTH_EVENTS, session, $base64, md5, apiErrorsConfig) {
 
   return {
 
-    authenticate: function(user, password) {
-
-      return $http.post('/api/sys/login', {login: user, password: md5.createHash(password)})
-
-      .success(function() {
-        var hash = $base64.encode(user + ':' + md5.createHash(password));
-        session.create(user, hash);
-        console.debug('Auth confirmed, proceed..');
-        // the login is successfull, fire buffered
-        // http requests!
-        authService.loginConfirmed(user + "logged in.");
-      })
-
-      .error(function(errors) {
-        $rootScope.$broadcast(AUTH_EVENTS.loginFailed, errors.join('<br/>'));
-      });
-
+      authenticate: function(user, password) {
+	  apiErrorsConfig.intercept = false;
+	  
+	  return $http.post('/api/sys/login', {login: user, password: md5.createHash(password)})
+	  
+	      .success(function() {
+		  var hash = $base64.encode(user + ':' + md5.createHash(password));
+		  session.create(user, hash);
+		  console.debug('Auth confirmed, proceed..');
+		  // the login is successfull, fire buffered
+		  // http requests!
+		  authService.loginConfirmed(user + "logged in.");
+		  apiErrorsConfig.intercept = true;
+	      })
+	  
+	      .error(function(errors) {
+		  console.debug("Auth failed: " + errors);
+		  $rootScope.$broadcast(AUTH_EVENTS.loginFailed, errors.join('<br/>'));
+	      });
+	  
     },
 
     cancelAuthenticate: function() {
