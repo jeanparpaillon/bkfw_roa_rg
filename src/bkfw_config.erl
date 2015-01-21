@@ -28,6 +28,8 @@
 	 terminate/2, code_change/3]).
 
 -define(USER_CONF, "/var/lib/bkfw/user.config").
+-define(DEFAULT_NETCONF, [{ip, "10.0.0.3",
+			   netmask, "255.0.0.0"}]).
 
 -define(SERVER, ?MODULE).
 -type category() :: net | community | usm | protocol | firmware.
@@ -243,7 +245,8 @@ handle_call({set_kv, reset, Props}, _From, State) ->
 	true ->
 	    case file:write_file(?USER_CONF, <<"[].">>) of
 		ok ->
-		    set_network_dhcp(application:get_env(bkfw, netif, "eth0")),
+		    set_network_static(application:get_env(bkfw, netif, "eth0"),
+				       ?DEFAULT_NETCONF),
 		    bkfw_app:restart(),
 		    {reply, ok, State};
 		{error, eacces} ->
