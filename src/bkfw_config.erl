@@ -28,8 +28,10 @@
 	 terminate/2, code_change/3]).
 
 -define(USER_CONF, "/var/lib/bkfw/user.config").
--define(DEFAULT_NETCONF, [{ip, "10.0.0.3",
-			   netmask, "255.0.0.0"}]).
+-define(DEFAULT_NETCONF, [{ip, "10.0.0.3"},
+			  {netmask, "255.0.0.0"}]).
+-define(DEFAULT_COMMUNITY, [{public, <<"public">>},
+			    {restricted, <<"private">>}]).
 
 -define(SERVER, ?MODULE).
 -type category() :: net | community | usm | protocol | firmware.
@@ -247,6 +249,7 @@ handle_call({set_kv, reset, Props}, _From, State) ->
 		ok ->
 		    set_network_static(application:get_env(bkfw, netif, "eth0"),
 				       ?DEFAULT_NETCONF),
+		    set_snmp_com(get_snmp_configdir(), ?DEFAULT_COMMUNITY),
 		    bkfw_app:restart(),
 		    {reply, ok, State};
 		{error, eacces} ->
