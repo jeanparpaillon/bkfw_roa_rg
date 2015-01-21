@@ -146,7 +146,7 @@ angular.module('bkfwApp.controllers', [])
 	    headers: $http.defaults.headers.common,
 	    removeAfterUpload: true,
 	    onBeforeUploadItem: function() {
-		dialogs.modal("Firmare is upgrading",
+		dialogs.modal("Firmware is upgrading",
 			      "Do not power off or shutdown the device !");
 	    },
 	    onErrorItem: function() {
