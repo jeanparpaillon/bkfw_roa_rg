@@ -252,8 +252,7 @@ from_json(Req, #state{section=sys, sys=login}=S) ->
 		true ->
 		    {true, Req2, S};
 		false ->
-		    {ok, Req3} = cowboy_req:reply(401, Req2),
-		    {halt, ?set_error(invalid_login, Req3), S}
+		    {false, ?set_error(invalid_login, Req2), S}
 	    end
     end;
 from_json(Req, #state{section=sys, sys=Cat}=S) ->
