@@ -1,3 +1,10 @@
+bkfw (0.3.7) wheezy; urgency=medium
+
+  * Fix settings factory defaults
+  * Reboot the device after upgrade
+
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Wed, 21 Jan 2015 11:38:31 +0100
+
 bkfw (0.3.6) wheezy; urgency=medium
 
   * Set default network to static/10.0.0.3

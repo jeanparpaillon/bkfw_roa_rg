@@ -63,3 +63,7 @@
 # 0.3.6
 
 * Set default network to 10.0.0.3
+
+# 0.3.7
+
+* Fix setting defaults (network and SNMP communities)
