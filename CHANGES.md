@@ -67,3 +67,7 @@
 # 0.3.7
 
 * Fix setting defaults (network and SNMP communities)
+
+# 0.3.8
+
+* Fix network config
