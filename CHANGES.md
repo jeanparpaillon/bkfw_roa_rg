@@ -71,3 +71,7 @@
 # 0.3.8
 
 * Fix network config
+
+# 0.4
+
+* Fix restarting
