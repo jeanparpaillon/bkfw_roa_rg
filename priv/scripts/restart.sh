@@ -1,6 +1,5 @@
 #!/bin/sh
 
-/opt/bkfw/bin/bkfw stop
-/opt/bkfw/bin/bkfw start
+/opt/bkfw/bin/bkfw resstart
 
 exit 0
