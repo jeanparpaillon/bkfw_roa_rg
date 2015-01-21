@@ -11,9 +11,9 @@ if [ `id -u` != 0 ]; then
 fi
 
 ifdown $1 > /dev/null 2>&1
-ifup $1 > /dev/null 2>&1 \
-    && echo "ok" \
-    || echo "err_network"
+ifup $1 > /dev/null 2>&1 &
+
+echo "ok"
 
 exit 0
 

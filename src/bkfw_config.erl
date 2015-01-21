@@ -28,7 +28,8 @@
 	 terminate/2, code_change/3]).
 
 -define(USER_CONF, "/var/lib/bkfw/user.config").
--define(DEFAULT_NETCONF, [{ip, "10.0.0.3"},
+-define(DEFAULT_NETCONF, [{type, static},
+			  {ip, "10.0.0.3"},
 			  {netmask, "255.0.0.0"}]).
 -define(DEFAULT_COMMUNITY, [{public, <<"public">>},
 			    {restricted, <<"private">>}]).
@@ -109,8 +110,13 @@ init([]) ->
     Iface = application:get_env(bkfw, netif, ""),
     NetConfig = case get_network_config(Iface) of
 		    {ok, Config}  -> Config;
-		    {error, _} ->
-			set_network_dhcp(Iface)
+		    {error, Err} ->
+			?debug("Invalid net config: ~p~n", [Err]),
+			case set_network_dhcp(Iface) of
+			    {ok, Config} -> Config;
+			    {error, Err} ->
+				throw(Err)
+			end
 		end,
     {ok, #state{net=NetConfig, firmware=load_resources()}}.
 

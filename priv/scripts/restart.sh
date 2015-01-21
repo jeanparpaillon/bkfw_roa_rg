@@ -6,8 +6,8 @@ if [ `id -u` != 0 ]; then
     exit 0
 fi
 
-#/opt/bkfw/bin/bkfw resstart
-reboot > /dev/null &
+/opt/bkfw/bin/bkfw stop > /dev/null || true
+/opt/bkfw/bin/bkfw start > /dev/null
 
 echo "ok"
 
