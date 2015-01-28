@@ -75,3 +75,7 @@
 # 0.4
 
 * Fix restarting
+
+# 0.4.1
+
+* Add network gateway in system config page

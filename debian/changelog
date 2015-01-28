@@ -1,3 +1,9 @@
+bkfw (0.4.1) wheezy; urgency=medium
+
+  * Add network gateway in settings
+
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Wed, 28 Jan 2015 12:55:03 +0100
+
 bkfw (0.4) wheezy; urgency=medium
 
   * Shorten time for restarting
