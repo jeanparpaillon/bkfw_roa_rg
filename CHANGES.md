@@ -79,3 +79,7 @@
 # 0.4.1
 
 * Add network gateway in system config page
+
+# 0.4.2
+
+* Fix scripts loading

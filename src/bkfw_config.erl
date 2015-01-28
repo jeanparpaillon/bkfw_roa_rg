@@ -341,7 +341,7 @@ load_resources() ->
     end.
 
 get_script(Name) ->
-    filename:join([code:priv_dir(bkfw), "scripts", Name]).
+    filename:join([application:get_env(bkfw, scripts_dir, "priv/scripts"), Name]).
 
 script(Cmd, Args) ->
     cmd(get_script(Cmd) ++ " " ++ Args).
