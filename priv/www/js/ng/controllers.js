@@ -154,7 +154,7 @@ angular.module('bkfwApp.controllers', [])
 		dialogs.error("Failed to update the firmware");
 	    },
 	    onCompleteItem: angular.bind(this, function() {
-		edfa.waitUntilOnline(30000)
+		edfa.waitUntilOnline(60000)
 
 		    .then(function() {
 			dialogs.close(true);
