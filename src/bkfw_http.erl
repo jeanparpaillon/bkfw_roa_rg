@@ -473,6 +473,7 @@ err_to_string(missing_net_type) -> <<"Missing value: network type">>;
 err_to_string(invalid_net_config) -> <<"Invalid network configuration">>;
 err_to_string(invalid_net_address) -> <<"Invalid value: network address">>;
 err_to_string(invalid_net_mask) -> <<"Invalid value: network mask">>;
+err_to_string(invalid_net_gw) -> <<"Invalid value: network gateway">>;
 err_to_string(invalid_community) -> <<"Invalid value: community name">>;
 err_to_string(invalid_target) -> <<"Invalid value: target address">>;
 err_to_string(invalid_thresholds) -> <<"Invalid value: thresholds">>;

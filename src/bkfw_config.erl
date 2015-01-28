@@ -30,7 +30,8 @@
 -define(USER_CONF, "/var/lib/bkfw/user.config").
 -define(DEFAULT_NETCONF, [{type, static},
 			  {ip, "10.0.0.3"},
-			  {netmask, "255.0.0.0"}]).
+			  {netmask, "255.0.0.0"},
+			  {gateway, "10.0.0.1"}]).
 -define(DEFAULT_COMMUNITY, [{public, <<"public">>},
 			    {restricted, <<"private">>}]).
 
@@ -396,31 +397,46 @@ get_network_config(Iface) when is_list(Iface) ->
     case os:cmd(Cmd) of
 	"dhcp\n" -> {ok, [{type, dhcp}]};
 	Str ->
-	    case string:tokens(clean(Str, $\n), " ") of
-		[Addr, Mask] ->
-		    case valid_ip(Addr, Mask) of
-			{ok,  IpAddr, IpMask}  ->
-			    {ok, [{type, static},
-				  {ip, list_to_binary(inet:ntoa(IpAddr))},
-				  {netmask, list_to_binary(inet:ntoa(IpMask))}]};
-			{error, Err} ->
-			    {error, Err}
-		    end;
-		_ -> {error, invalid_net_config}
+	    [Addr, Mask, Gw] = case string:tokens(clean(Str, $\n), " ") of
+				   [ReadAddr, ReadMask] -> 
+				       [ReadAddr, ReadMask, proplists:get_value(gateway, ?DEFAULT_NETCONF)];
+				   [ReadAddr, ReadMask, ReadGw] -> 
+				       [ReadAddr, ReadMask, ReadGw];
+				   _ -> 
+				       [proplists:get_value(ip, ?DEFAULT_NETCONF),
+					proplists:get_value(netmask, ?DEFAULT_NETCONF),
+					proplists:get_value(gateway, ?DEFAULT_NETCONF)]
+			       end,
+	    case valid_ip(Addr, Mask, Gw) of
+		{ok,  IpAddr, IpMask, IpGw}  ->
+		    {ok, [{type, static},
+			  {ip, list_to_binary(inet:ntoa(IpAddr))},
+			  {netmask, list_to_binary(inet:ntoa(IpMask))},
+			  {gateway, list_to_binary(inet:ntoa(IpGw))}]};
+		{error, Err} ->
+		    {error, Err}
 	    end
     end.
 
--spec valid_ip(binary() | list(), binary() | list()) -> {ok, inet:ip_address(), inet:ip_address()}.
-valid_ip(Addr, Mask) when is_binary(Addr) ->
-    valid_ip(binary_to_list(Addr), Mask);
-valid_ip(Addr, Mask) when is_binary(Mask) ->
-    valid_ip(Addr, binary_to_list(Mask));
-valid_ip(Addr, Mask) ->
+-spec valid_ip(binary() | list(), binary() | list(), binary() | list()) -> 
+		      {ok, inet:ip_address(), inet:ip_address(), inet:ip_address()}.
+valid_ip(Addr, Mask, Gw) when is_binary(Addr) ->
+    valid_ip(binary_to_list(Addr), Mask, Gw);
+valid_ip(Addr, Mask, Gw) when is_binary(Mask) ->
+    valid_ip(Addr, binary_to_list(Mask), Gw);
+valid_ip(Addr, Mask, Gw) when is_binary(Gw) ->
+    valid_ip(Addr, Mask, binary_to_list(Gw));
+valid_ip(Addr, Mask, Gw) ->
     case inet:parse_address(Addr) of
 	{ok, IpAddr} ->
 	    case inet:parse_address(Mask) of
 		{ok, IpMask} ->
-		    {ok, IpAddr, IpMask};
+		    case inet:parse_address(Gw) of
+			{ok, IpGw} ->
+			    {ok, IpAddr, IpMask, IpGw};
+			{error, einval}  ->
+			    {error, invalid_net_gw}
+		    end;
 		{error, einval} ->
 		    {error, invalid_net_mask}
 	    end;
@@ -431,11 +447,12 @@ valid_ip(Addr, Mask) ->
 
 set_network_dhcp(Iface)  when is_list(Iface) ->
     File = application:get_env(bkfw, net, ""),
-    Cmd = get_script("changeInterface.awk")
-	++ "  " ++ File
-	++ " device=" ++ Iface
-	++ " mode=dhcp",
-    NewConfig = os:cmd(Cmd), 
+    NewConfig = io_lib:format("auto lo~n"
+			      ++ "iface lo inet loopback~n"
+			      ++ "~n"
+			      ++ "auto ~s~n"
+			      ++ "iface ~s inet dhcp~n", 
+			      [Iface, Iface]),
     case file:write_file(File, NewConfig) of
 	ok ->
 	    case apply_network(Iface) of
@@ -450,23 +467,27 @@ set_network_dhcp(Iface)  when is_list(Iface) ->
 
 set_network_static(Iface, Props) when is_list(Iface), is_list(Props) ->
     case valid_ip(proplists:get_value(ip, Props, ""),
-		  proplists:get_value(netmask, Props, "")) of
-	{ok, Ip, Mask} ->
+		  proplists:get_value(netmask, Props, ""),
+		  proplists:get_value(gateway, Props, "")) of
+	{ok, Ip, Mask, Gw} ->
 	    File = application:get_env(bkfw, net, ""),
-	    Cmd = get_script("changeInterface.awk")
-		++ " " ++  File
-		++ " device=" ++ Iface
-		++ " mode=static"
-		++ " address=" ++ inet:ntoa(Ip)
-		++ " netmask=" ++ inet:ntoa(Mask),
-	    NewConfig = os:cmd(Cmd),
+	    NewConfig = io_lib:format("auto lo~n"
+				      ++ "iface lo inet loopback~n"
+				      ++ "~n"
+				      ++ "auto ~s~n"
+				      ++ "iface ~s inet static~n"
+				      ++ "\taddress ~s~n"
+				      ++ "\tnetmask ~s~n"
+				      ++ "\tgateway ~s~n",
+				     [Iface, Iface, inet:ntoa(Ip), inet:ntoa(Mask), inet:ntoa(Gw)]),
 	    case file:write_file(File, NewConfig) of
 		ok ->
 		    case apply_network(Iface) of
 			ok ->
 			    {ok, [{type, static},
 				  {ip, list_to_binary(inet:ntoa(Ip))},
-				  {netmask, list_to_binary(inet:ntoa(Mask))}]};
+				  {netmask, list_to_binary(inet:ntoa(Mask))},
+				  {gateway, list_to_binary(inet:ntoa(Gw))}]};
 			{error, Err} ->
 			    {error, Err}
 		    end;
