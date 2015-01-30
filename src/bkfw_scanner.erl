@@ -236,6 +236,8 @@ kw_to_atom(<<"PIN">>)       -> pin;
 kw_to_atom(<<"POUT">>)      -> pout;
 kw_to_atom(<<"PUMP_BIAS">>) -> pump_bias;
 kw_to_atom(<<"PUMP_TEMP">>) -> pump_temp;
+kw_to_atom(<<"PSU1">>)      -> psu1;
+kw_to_atom(<<"PSU2">>)      -> psu2;
 kw_to_atom(<<"RA">>)        -> ra;
 kw_to_atom(<<"RCC">>)       -> rcc;
 kw_to_atom(<<"RGC">>)       -> rgc;

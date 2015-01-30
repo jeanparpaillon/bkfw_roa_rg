@@ -56,6 +56,8 @@ alarm_to_trap(edfa_temp, #ampTable{}) -> ampInternalTempTrap;
 alarm_to_trap(edfa_temp, {_,_}) -> smmInternalTempTrap;
 alarm_to_trap(edfa_psu, #ampTable{}) -> ampPowerSupplyTrap;
 alarm_to_trap(edfa_psu, {_,_}) -> smmPowerSupplyTrap;
+alarm_to_trap(psu1, {_,_}) -> smmPsu1Trap;
+alarm_to_trap(psu2, {_,_}) -> smmPsu2Trap;
 alarm_to_trap(bref, _) -> ampBrefTrap;
 alarm_to_trap(adi, _) -> ampAdiTrap;
 alarm_to_trap(mute, _) -> ampMuteTrap;
@@ -67,6 +69,8 @@ alarm_to_vars(pump_temp, #ampTable{index=Idx}=E) ->                  [{ampCurLas
 alarm_to_vars(pump_bias, #ampTable{index=Idx}=E) ->                  [{ampCurAmp,       [Idx], round(E#ampTable.curAmp)}];
 alarm_to_vars(edfa_temp, #ampTable{index=Idx, curInternalTemp=T}) -> [{ampCurInternalTemp, [Idx], round(T)}];
 alarm_to_vars(edfa_psu, #ampTable{index=Idx, powerSupply=P}) ->      [{ampPowerSupply, [Idx], round(P)}];
+alarm_to_vars(psu1, {_, _}) ->                                       [];
+alarm_to_vars(psu2, {_, _}) ->                                       [];
 alarm_to_vars(edfa_temp, {IT, _}) ->                                 [{smmCurInternalTemp, round(IT)}];
 alarm_to_vars(edfa_psu, {_, PS}) ->                                  [{smmPowerSupply, round(PS)}];
 alarm_to_vars(bref, #ampTable{index=Idx}=E) ->                       [{ampPowerPd2, [Idx], round(E#ampTable.powerPd2)},
