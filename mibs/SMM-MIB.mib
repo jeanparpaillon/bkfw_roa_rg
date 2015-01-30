@@ -35,6 +35,9 @@ smmModule MODULE-IDENTITY
     REVISION	"201501170000Z"
     DESCRIPTION
 	"Fix trap names (regarding SMM and AMP)."
+    REVISION	"201501300000Z"
+    DESCRIPTION
+	"Add traps: smmPsu1Trap and smmPsu2Trap."
     ::= { bktelPhotonics 1 }
 
 smmMIB	OBJECT IDENTIFIER ::= { smmModule 1 }
@@ -493,6 +496,18 @@ smmGenericTrap NOTIFICATION-TYPE
 	"Generic SMM trap (for testing purpose mainly)"
     ::= { smmMIBTraps 12 }
 
+smmPsu1Trap NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+	"Default detected on PSU nr. 1"
+    ::= { smmMIBTraps 13 }
+
+smmPsu2Trap NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+	"Default detected on PSU nr. 1"
+    ::= { smmMIBTraps 14 }
+
 smmMIBTrapGroups OBJECT IDENTIFIER ::= { smmMIBConformance 1 }
 
 smmMIBTrapGroup NOTIFICATION-GROUP
@@ -508,7 +523,9 @@ smmMIBTrapGroup NOTIFICATION-GROUP
 	ampBrefTrap,
 	ampAdiTrap,
 	ampMuteTrap,
-	smmGenericTrap
+	smmGenericTrap,
+	smmPsu1Trap,
+	smmPsu2Trap
     }
     STATUS current
     DESCRIPTION
