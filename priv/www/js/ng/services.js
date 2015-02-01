@@ -273,7 +273,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
   var showAlarms = function() {
     //console.debug(JSON.stringify(alarms.list));
     console.debug(JSON.stringify(alarms.forIndex(0)));
-    $timeout(showAlarms, 3000);
+    $timeout(showAlarms, 10000);
   };
   //showAlarms();
 
