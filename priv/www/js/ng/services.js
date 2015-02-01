@@ -245,6 +245,14 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
       },
       mute: {
         msg: "Mute input is active"
+      },
+      psu1: {
+	  msg: "Power Supply Unit #1 default",
+	  field: "powerSupply"
+      },
+      psu2: {
+	  msg: "Power Supply Unit #2 default",
+	  field: "powerSupply"	  
       }
     },
 
@@ -269,7 +277,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
   };
   //showAlarms();
 
-  ws.on('message', function(event) {
+    ws.on('message', function(event) {
     var data = JSON.parse(event.data);
     data.msg = alarms.type[data.name].msg;
     alarms.list.push(new Alarm(data));
