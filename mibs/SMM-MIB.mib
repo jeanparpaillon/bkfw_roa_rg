@@ -436,7 +436,7 @@ ampInternalTempTrap NOTIFICATION-TYPE
 ampPowerSupplyTrap NOTIFICATION-TYPE
     OBJECTS {
         ampIndex,
-	smmPowerSupply
+	ampPowerSupply
     }
     STATUS current
     DESCRIPTION
