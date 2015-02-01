@@ -25,7 +25,7 @@
 % scan & parse structs
 -type terminal() :: adi | alarms | bref | cc | 'edfa_temp' | 'edfa_psu' | fwVer | gc | hwRev | 
 		    hwVer | it | i | lc | li | lo | lt | mode | moduleType | mute | n | off | partNum | pc | pd | 
-		    pin | pout | productDate | 'pump_bias' | 'pump_temp' | ra | 
+		    pin | pout | productDate | psu1 | psu2 | 'pump_bias' | 'pump_temp' | ra | 
 		    rcc | rgc | ri | rit | rlc | rli | rlo | rlt | rmode | rn | rpc | rpm |
 		    rv | scc | sgc | sli | slo | smode | spc | swVer | vendor | v.
 -type token() :: integer() | float() | terminal() | binary().

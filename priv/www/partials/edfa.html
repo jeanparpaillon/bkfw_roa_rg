@@ -3,7 +3,7 @@
   <h2>Management Controller info</h2>
 
   <table class="table table-hover">
-    <tr>
+    <tr> 
       <td ng-class="{'danger text-danger': edfa.info.hasAlarmOn('curInternalTemp')}">
         <strong>{{ edfa.label.curInternalTemp }}</strong>
       </td>
@@ -58,7 +58,21 @@
     </tr>
     <tr>
       <td><strong>{{ edfa.label.productDate }}</strong></td>
-      <td colspan="3">{{ edfa.info.productDate }}</td>
+      <td>{{ edfa.info.productDate }}</td>
+
+      <td ng-class="{'danger text-danger': edfa.info.hasAlarmOn('psu1') || edfa.info.hasAlarmOn('psu2')}" colspan="2">
+        <span
+          ng-show="edfa.info.hasAlarmOn('psu1') || edfa.info.hasAlarmOn('psu2')"
+          class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
+          aria-hidden="true">
+        </span>
+	<span ng-show="edfa.info.hasAlarmOn('psu1')">
+          <strong>Default on Power Supply Unit #1</strong>
+	</span>
+	<span ng-show="edfa.info.hasAlarmOn('psu2')">
+          <strong>Default on Power Supply Unit #2</strong>
+	</span>
+      </td>
     </tr>
   </table>
 

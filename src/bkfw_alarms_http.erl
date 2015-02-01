@@ -18,9 +18,8 @@ init([Handler]) ->
     {ok, #state{handler=Handler}}.
 
 handle_event(#smmAlarm{index=Idx, name=Name}, #state{handler=To}=S) ->
-    To ! {alarm, [{index, Idx},
-		  {name, Name},
-		  {var, alarm_to_var(Name)}]},
+    Alarm = {alarm, [{index, Idx}, {name, Name}, {var, alarm_to_var(Name)}]},
+    To ! Alarm,
     {ok, S}.
 
 handle_call(_Call, State) ->
@@ -44,6 +43,8 @@ alarm_to_var(pump_temp) -> curLaserTemp;
 alarm_to_var(pump_bias) -> curAmp;
 alarm_to_var(edfa_temp) -> curInternalTemp;
 alarm_to_var(edfa_psu) -> powerSupply;
+alarm_to_var(psu1) -> psu1;
+alarm_to_var(psu2) -> psu2;
 alarm_to_var(bref) -> powerInput;
 alarm_to_var(adi) -> undefined;
 alarm_to_var(mute) -> undefined;

@@ -248,11 +248,11 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
       },
       psu1: {
 	  msg: "Power Supply Unit #1 default",
-	  field: "powerSupply"
+	  field: "psu1"
       },
       psu2: {
 	  msg: "Power Supply Unit #2 default",
-	  field: "powerSupply"	  
+	  field: "psu2"	  
       }
     },
 
