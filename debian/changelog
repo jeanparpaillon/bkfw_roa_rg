@@ -1,3 +1,9 @@
+bkfw (0.5) wheezy; urgency=medium
+
+  * Add new traps: smmPsu1Trap and smmPsu2Trap
+
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Sun, 01 Feb 2015 12:18:37 +0100
+
 bkfw (0.4.2) wheezy; urgency=medium
 
   * Fix scripts loading

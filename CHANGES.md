@@ -83,3 +83,7 @@
 # 0.4.2
 
 * Fix scripts loading
+
+# 0.5
+
+* Add new traps: smmPsu1Trap and smmPsu2Trap
