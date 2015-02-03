@@ -38,6 +38,9 @@ smmModule MODULE-IDENTITY
     REVISION	"201501300000Z"
     DESCRIPTION
 	"Add traps: smmPsu1Trap and smmPsu2Trap."
+    REVISION	"201502300000Z"
+    DESCRIPTION
+	"Fix typo in smmPsu2Trap description."
     ::= { bktelPhotonics 1 }
 
 smmMIB	OBJECT IDENTIFIER ::= { smmModule 1 }
@@ -505,7 +508,7 @@ smmPsu1Trap NOTIFICATION-TYPE
 smmPsu2Trap NOTIFICATION-TYPE
     STATUS current
     DESCRIPTION
-	"Default detected on PSU nr. 1"
+	"Default detected on PSU nr. 2"
     ::= { smmMIBTraps 14 }
 
 smmMIBTrapGroups OBJECT IDENTIFIER ::= { smmMIBConformance 1 }
