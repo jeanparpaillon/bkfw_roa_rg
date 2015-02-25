@@ -1,3 +1,9 @@
+bkfw (0.6) wheezy; urgency=medium
+
+  * Increase max slots to 128
+
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Wed, 25 Feb 2015 21:11:57 +0100
+
 bkfw (0.5) wheezy; urgency=medium
 
   * Add new traps: smmPsu1Trap and smmPsu2Trap

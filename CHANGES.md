@@ -87,3 +87,7 @@
 # 0.5
 
 * Add new traps: smmPsu1Trap and smmPsu2Trap
+
+# 0.6
+
+* Increase maximum slots allowed: 128
