@@ -66,3 +66,7 @@ Example:
 * HTTP login/password: admin / admin
 * SNMP v3: 
 
+# Major versions
+
+* 0: initial firmware
+* 1: CPU/laser firmware upgrades, USB comm
