@@ -29,11 +29,11 @@
 -define(set_errors(E, Req), set_errors(E, Req)).
 
 -record(state, {
-	  section   = undefined :: mcu | edfa | sys,
+	  section   = undefined :: mcu | edfa | sys | {firmware, string()},
 	  index     = undefined :: integer() | undefined | badarg,
 	  mcu       = undefined,
 	  sys       = undefined :: login | net | password | community | usm | protocol | 
-				   firmware | reset | reboot | targets,
+				   reset | reboot | targets,
 	  firmware  = undefined :: undefined | string()
 	 }).
 
@@ -46,12 +46,13 @@ get_config() ->
     DftLogo = filename:join(code:priv_dir(bkfw), "logo.png"),
     Logo = application:get_env(bkfw, logo, DftLogo),
     Handlers = [
-		{"/api/mcu/[:index]", bkfw_http, mcu},
-		{"/api/edfa",         bkfw_http, edfa},
-		{"/api/alarms",       bkfw_http_ws, []},
-		{"/api/sys/:name",    bkfw_http, sys},
-		{"/logo",             cowboy_static, {file, Logo, [{mimetypes, cow_mimetypes, all}]}},
-		{"/[...]",            cowboy_static, {dir, Dir, [{mimetypes, cow_mimetypes, all}]}}
+		{"/api/mcu/[:index]",       bkfw_http, mcu},
+		{"/api/edfa",               bkfw_http, edfa},
+		{"/api/alarms",             bkfw_http_ws, []},
+		{"/api/sys/firmware/[:fw]", bkfw_http, firmware},
+		{"/api/sys/:name",          bkfw_http, sys},
+		{"/logo",                   cowboy_static, {file, Logo, [{mimetypes, cow_mimetypes, all}]}},
+		{"/[...]",                  cowboy_static, {dir, Dir, [{mimetypes, cow_mimetypes, all}]}}
 	       ],
     Args = [http, 1,
 	    [{port, proplists:get_value(port, Opts, ?PORT)}],
@@ -92,20 +93,29 @@ rest_init(Req, sys) ->
 	{<<"usm">>, Req2} -> {ok, Req2, #state{section=sys, sys=usm}};
 	{<<"targets">>, Req2} -> {ok, Req2, #state{section=sys, sys=targets}};
 	{<<"protocol">>, Req2} -> {ok, Req2, #state{section=sys, sys=protocol}};
-	{<<"firmware">>, Req2} -> {ok, Req2, #state{section=sys, sys=firmware}};
 	{_, Req2} -> {ok, Req2, #state{section=sys, sys=undefined}}
     end;
+rest_init(Req, firmware) ->
+    % /api/sys/firmware/[fw|cpu|amp]
+    case cowboy_req:binding(fw, Req) of
+	{<<"fw">>, Req2} -> {ok, Req2, #state{section={firmware, "fw"}}};
+	{<<"cpu">>, Req2} -> {ok, Req2, #state{section={firmware, "cpu"}}};
+	{<<"amp">>, Req2} -> {ok, Req2, #state{section={firmware, "amp"}}};
+	{_, Req2} -> {ok, Req2, #state{section=firmware}}
+    end;	
 rest_init(Req, _Sec) ->
     {ok, Req, #state{section=undefined}}.
 
 
 allowed_methods(Req, #state{section=edfa}=S) ->
     {[<<"GET">>, <<"HEAD">>, <<"OPTIONS">>], Req, S};
+allowed_methods(Req, #state{section=firmware}=S) ->
+    {[<<"GET">>, <<"HEAD">>, <<"OPTIONS">>], Req, S};
 allowed_methods(Req, State) ->
     {[<<"GET">>, <<"HEAD">>, <<"POST">>, <<"OPTIONS">>], Req, State}.
 
 
-content_types_accepted(Req, #state{section=sys, sys=firmware}=State) ->
+content_types_accepted(Req, #state{section={firmware, _}}=State) ->
     {[
       {{<<"multipart">>, <<"form-data">>, '*'}, from_multipart}
      ], Req, State};
@@ -128,7 +138,9 @@ content_types_provided(Req, State) ->
 
 is_authorized(Req, #state{section=sys, sys=login}=State) ->
     {true, Req, State};
-is_authorized(Req, #state{section=sys}=State) ->
+is_authorized(Req, #state{section=Sec}=State) when Sec =:= sys; Sec =:= firmware ->
+    require_auth(Req, State);
+is_authorized(Req, #state{section={firmware, _}}=State) ->
     require_auth(Req, State);
 is_authorized(Req, State) ->
     case cowboy_req:method(Req) of
@@ -158,11 +170,14 @@ resource_exists(Req, #state{section=sys, sys=Sys}=S) when Sys =:= login;
 							  Sys =:= community;
 							  Sys =:= usm;
 							  Sys =:= protocol;
-							  Sys =:= firmware;
 							  Sys =:= targets ->
     {true, Req, S};
 resource_exists(Req, #state{section=sys}=S) ->
     {false, Req, S};
+resource_exists(Req, #state{section=firmware}=S) ->
+    {true, Req, S};
+resource_exists(Req, #state{section={firmware, _}}=S) ->
+    {true, Req, S};
 resource_exists(Req, #state{section=undefined}=S) ->
     {false, Req, S};
 resource_exists(Req, S) ->
@@ -189,9 +204,11 @@ to_json(Req, #state{section=sys, sys=Cat}=S) when Cat =:= login;
 						  Cat =:= community;
 						  Cat =:= usm;
 						  Cat =:= protocol;
-						  Cat =:= targets;
-						  Cat =:= firmware ->
+						  Cat =:= targets ->
     {jsx:encode(bkfw_config:get_kv(Cat)), Req, S};
+
+to_json(Req, #state{section=firmware}=S) ->
+    {jsx:encode(bkfw_config:get_kv(firmware)), Req, S};
 
 to_json(Req, #state{section=sys, sys=_}=S) ->
     {<<"{}">>, Req, S}.
@@ -272,15 +289,15 @@ from_json(Req, #state{section=sys, sys=Cat}=S) ->
 	    end
     end.
 
-from_multipart(Req, #state{section=sys, sys=firmware, firmware=Path}=S) ->
+from_multipart(Req, #state{section={firmware, Fw}, firmware=Path}=S) ->
     case cowboy_req:part(Req) of
 	{ok, Hdr, Req2} ->
 	    case cow_multipart:form_data(Hdr) of
 		{data, _Name} ->
 		    {ok, _Body, Req3} = cowboy_req:part_body(Req2),
 		    from_multipart(Req3, S);
-		{file, _Field, Filename, _ContentType, _Enc} ->
-		    Fullpath = filename:join(application:get_env(bkfw, upload_dir, ""), Filename),
+		{file, _Field, _Filename, _ContentType, _Enc} ->
+		    Fullpath = filename:join(application:get_env(bkfw, upload_dir, ""), Fw ++ ".bin"),
 		    case stream_file(Fullpath, Req2) of
 			{ok, Req3} ->
 			    from_multipart(Req3, S#state{firmware=Fullpath});
@@ -290,11 +307,11 @@ from_multipart(Req, #state{section=sys, sys=firmware, firmware=Path}=S) ->
 		    end
 	    end;
 	{done, Req2} ->
-	    case bkfw_config:upgrade(Path) of
-		ok ->
-		    {true, Req2, S};
-		{error, _Err} ->
-		    {false, Req2, S}
+	    case bkfw_config:upgrade(Fw, Path) of
+	    	ok ->
+	    	    {true, Req2, S};
+	    	{error, _Err} ->
+	    	    {false, Req2, S}
 	    end
     end.
 

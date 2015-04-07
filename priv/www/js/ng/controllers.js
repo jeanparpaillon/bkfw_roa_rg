@@ -135,34 +135,18 @@ angular.module('bkfwApp.controllers', [])
 	}
     }])
 
-    .controller('systemCtrl', ['$q', '$http', '$timeout', '$state', 'sys', 'auth', 'FileUploader', 'dialogs', 'edfa', 'apiErrorsConfig', '$scope', function($q, $http, $timeout, $state, sys, auth, FileUploader, dialogs, edfa, apiErrorsConfig, $scope) {
+    .controller('systemCtrl', ['$q', '$http', '$timeout', '$state', 'sys', 'auth', 'uploaders', 'dialogs', 'edfa', 'apiErrorsConfig', '$scope', function($q, $http, $timeout, $state, sys, auth, uploaders, dialogs, edfa, apiErrorsConfig, $scope) {
 
 	function getError(response) {
 	}
 
 	this.firmware = sys.firmware.get();
 
-	this.uploader = new FileUploader({
-	    url: '/api/sys/firmware',
-	    headers: $http.defaults.headers.common,
-	    removeAfterUpload: true,
-	    onBeforeUploadItem: function() {
-		dialogs.modal("Firmware is upgrading",
-			      "Do not power off or shutdown the device !");
-	    },
-	    onErrorItem: function() {
-		dialogs.close(true);
-		dialogs.error("Failed to update the firmware");
-	    },
-	    onCompleteItem: angular.bind(this, function() {
-		edfa.waitUntilOnline(60000)
-
-		    .then(function() {
-			dialogs.close(true);
-			dialogs.success("Firmware updated.");
-		    });
-	    })
-	});
+	// fw | cpu | amp
+	this.uploader = [];
+	this.uploader['fw'] = uploaders.create('fw', 'Web & SNMP Firmware', 60000);
+	this.uploader['cpu'] = uploaders.create('cpu', 'Management Module Firmware', 0);
+	this.uploader['amp'] = uploaders.create('amp', 'Units Firmware', 0);
 
 	this.network = sys.net.get();
 

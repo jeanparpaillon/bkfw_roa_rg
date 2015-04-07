@@ -19,7 +19,7 @@
 	 get_kv/1,
 	 set_kv/2]).
 
--export([upgrade/1,
+-export([upgrade/2,
 	 cmd/1,
 	 script/2]).
 
@@ -77,15 +77,18 @@ get_kv(Cat) ->
 set_kv(Cat, Props) ->
     gen_server:call(?SERVER, {set_kv, Cat, Props}).
 
--spec upgrade(string()) -> ok | {error, term()}.
-upgrade(Filename) ->
+-spec upgrade(string(), string()) -> ok | {error, term()}.
+upgrade("fw", Filename) ->
     case script("check_pkg.sh", Filename) of
 	ok ->
 	    script("upgrade.sh", Filename),
 	    bkfw_app:reboot(),
 	    ok;
 	{error, Err} -> {error, Err}
-    end.
+    end;
+upgrade(Name, Filename) ->
+    ?debug("Upgrading ~s firmware from ~s [fake]", [Name, Filename]),
+    ok.
 
 -spec encode_password(iolist()) -> string().
 encode_password(Passwd) when is_list(Passwd); is_binary(Passwd) ->

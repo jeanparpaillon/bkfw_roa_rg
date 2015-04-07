@@ -43,17 +43,17 @@
         <div class="form-group">
           <label>Web &amp; SNMP Firmware <span class="text-info">(current version: <strong>{{ system.firmware.version }}</strong>)</span></label>
 	  
-          <input type="file" nv-file-select="" uploader="system.uploader" class="form-control"
-		 ng-show="!system.uploader.queue.length"/>
+          <input type="file" nv-file-select="" uploader="system.uploader['fw']" class="form-control"
+		 ng-show="!system.uploader['fw'].queue.length"/>
 	  
-          <div ng-repeat="item in system.uploader.queue">
+          <div ng-repeat="item in system.uploader['fw'].queue">
             <div >
               <span class="push-left">
                 <strong>{{ item.file.name }}</strong>
-                <span ng-show="system.uploader.isHTML5" nowrap>{{ item.file.size/1024/1024|number:2 }} MB</span>
+                <span ng-show="system.uploader['fw'].isHTML5" nowrap>{{ item.file.size/1024/1024|number:2 }} MB</span>
               </span>
               <span class="push-right">
-                <span ng-show="system.uploader.isHTML5">
+                <span ng-show="system.uploader['fw'].isHTML5">
                   <div class="progress" style="margin-bottom: 0;">
                     <div class="progress-bar" role="progressbar" ng-style="{ 'width': item.progress + '%' }"></div>
                   </div>
@@ -79,19 +79,19 @@
       <!-- CPU microcode -->
       <form role="form" >
         <div class="form-group">
-          <label>Management Module Microcode <span class="text-info">(current version: <strong>{{ global.edfa.info.fwVer }}</strong>)</span></label>
+          <label>Management Module Firmware <span class="text-info">(current version: <strong>{{ global.edfa.info.fwVer }}</strong>)</span></label>
 	  
-          <input type="file" nv-file-select="" uploader="system.uploader" class="form-control"
-		 ng-show="!system.uploader.queue.length"/>
+          <input type="file" nv-file-select="" uploader="system.uploader['cpu']" class="form-control"
+		 ng-show="!system.uploader['cpu'].queue.length"/>
 	  
-          <div ng-repeat="item in system.uploader.queue">
+          <div ng-repeat="item in system.uploader['cpu'].queue">
             <div >
               <span class="push-left">
                 <strong>{{ item.file.name }}</strong>
-                <span ng-show="system.uploader.isHTML5" nowrap>{{ item.file.size/1024/1024|number:2 }} MB</span>
+                <span ng-show="system.uploader['cpu'].isHTML5" nowrap>{{ item.file.size/1024/1024|number:2 }} MB</span>
               </span>
               <span class="push-right">
-                <span ng-show="system.uploader.isHTML5">
+                <span ng-show="system.uploader['cpu'].isHTML5">
                   <div class="progress" style="margin-bottom: 0;">
                     <div class="progress-bar" role="progressbar" ng-style="{ 'width': item.progress + '%' }"></div>
                   </div>
@@ -118,19 +118,19 @@
       <!-- Units microcode -->
       <form role="form" >
         <div class="form-group">
-          <label>Units 1 to {{ global.mcu.maxIndex }} Microcode <span class="text-info">(current version: <strong>{{ global.mcu.list[0].fwVer }}</strong>)</span></label>
+          <label>Units 1 to {{ global.mcu.maxIndex }} Firmware <span class="text-info">(current version: <strong>{{ global.mcu.list[0].fwVer }}</strong>)</span></label>
 	  
-          <input type="file" nv-file-select="" uploader="system.uploader" class="form-control"
-		 ng-show="!system.uploader.queue.length"/>
+          <input type="file" nv-file-select="" uploader="system.uploader['amp']" class="form-control"
+		 ng-show="!system.uploader['amp'].queue.length"/>
 	  
-          <div ng-repeat="item in system.uploader.queue">
+          <div ng-repeat="item in system.uploader['amp'].queue">
             <div >
               <span class="push-left">
                 <strong>{{ item.file.name }}</strong>
-                <span ng-show="system.uploader.isHTML5" nowrap>{{ item.file.size/1024/1024|number:2 }} MB</span>
+                <span ng-show="system.uploader['amp'].isHTML5" nowrap>{{ item.file.size/1024/1024|number:2 }} MB</span>
               </span>
               <span class="push-right">
-                <span ng-show="system.uploader.isHTML5">
+                <span ng-show="system.uploader['amp'].isHTML5">
                   <div class="progress" style="margin-bottom: 0;">
                     <div class="progress-bar" role="progressbar" ng-style="{ 'width': item.progress + '%' }"></div>
                   </div>

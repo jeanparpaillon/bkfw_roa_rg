@@ -1,6 +1,43 @@
 'use strict';
 
 angular.module('bkfwApp.utils', [])
+    .factory('uploaders', ['$http', '$q', 'FileUploader', 'dialogs', 'edfa', function($http, $q, FileUploader, dialogs, edfa) {
+	return {
+	    create: function(name, label, wait) {
+		this.u = new FileUploader({
+		    url: '/api/sys/firmware/' + name,
+		    headers: $http.defaults.headers.common,
+		    removeAfterUpload: true,
+		    onBeforeUploadItem: function() {
+			dialogs.modal(label + " is upgrading",
+				      "Do not power off or shutdown the device !");
+		    },
+		    onErrorItem: function() {
+			dialogs.close(true);
+			dialogs.error("Failed to update " + label);
+		    }
+		});
+
+		if (wait == 0) {
+		    this.u.onCompleteItem = angular.bind(this, function() {
+			dialogs.close(true);
+			dialogs.success(label + " updated.");
+		    });
+		} else {
+		    this.u.onCompleteItem = angular.bind(this, function() {
+			edfa.waitUntilOnline(wait)
+			
+			    .then(function() {
+				dialogs.close(true);
+				dialogs.success(label + " updated.");
+			    });
+		    })
+		};
+		
+		return this.u;
+	    }
+	};
+}])
 
 .factory('dialogs', function($q) {
 
