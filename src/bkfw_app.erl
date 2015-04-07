@@ -42,7 +42,7 @@ init_db() ->
 
 load_mibs(App, Mibs) ->
     Paths = lists:map(fun (Path) ->
-			      ?info("Loading MIB: ~p~n", [Path]),
+			      ?info("Loading MIB: ~p", [Path]),
 			      Dir = code:priv_dir(App) ++ "/mibs/",
 			      Dir ++ Path
 		      end, Mibs),

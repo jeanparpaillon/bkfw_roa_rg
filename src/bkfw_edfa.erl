@@ -50,7 +50,7 @@ start_link() ->
 	{error, Err} -> {error, Err}
     end.
 
-init_loop() -> 
+init_loop() ->
     loop([ read_infos | ?FUNS ]).
 
 get_kv() ->
@@ -82,7 +82,7 @@ variable_func(get, Key) ->
 %%% gen_server callbacks
 %%%
 init([]) ->
-    ?info("Starting SMM monitoring~n", []),
+    ?info("Starting SMM monitoring", []),
     gen_event:add_handler(bkfw_alarms, bkfw_alarms_snmp, []),
     Tid = ets:new(?MODULE, []),
     ets:insert(Tid, {smmNumber, 0}),

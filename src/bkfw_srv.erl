@@ -66,15 +66,17 @@ wait_answer(Idx, Ans, Ref, T) ->
     end.
 
 init() ->
-    ?info("Starting command server~n", []),
-    case bkfw_com:start_link() of
+    ?info("Starting command server", []),
+    Dev = application:get_env(bkfw, com, undefined),
+    case bkfw_com:start_link(Dev) of
 	{ok, Com} ->
+	    ?info("Command server started: ~p", [Com]),
 	    free(Com);
 	ignore ->
-	    ?error("Error starting COM port: ignore~n", []),
+	    ?error("Error starting COM port: ignore", []),
 	    ok;
 	{error, Err} -> 
-	    ?error("Error starting COM port: ~p~n", [Err]),
+	    ?error("Error starting COM port: ~p", [Err]),
 	    ok
     end.
 

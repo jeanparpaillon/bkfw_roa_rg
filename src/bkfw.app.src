@@ -47,6 +47,7 @@
 	 {net, "/etc/network/interfaces"},
 	 {netif, "eth0"},
 	 {scripts_dir, "/var/lib/bkfw/scripts"},
-	 {debug, false}
+	 {debug, false},
+	 {usbtty, undefined}
 	]}
  ]}.

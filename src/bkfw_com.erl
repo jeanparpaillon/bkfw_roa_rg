@@ -5,7 +5,7 @@
 
 -include("bkfw.hrl").
 
--export([start_link/0,
+-export([start_link/1,
 	 stop/1,
 	 send/3]).
 
@@ -13,8 +13,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	terminate/2, code_change/3]).
 
--define(TRACE, "/tmp/bkfw.trace").
--define(SERVER, ?MODULE).
+-define(TRACE, "/tmp/bkfw").
 -record(state, {owner                 :: pid(),
 		com                   :: term(),
 		port    = undefined   :: port(),
@@ -26,8 +25,8 @@
 %%%
 %%% API
 %%%
-start_link() ->
-    gen_server:start_link(?MODULE, [], []).
+start_link(Dev) ->
+    gen_server:start_link(?MODULE, Dev, []).
 
 stop(Com) ->
     ?debug("Stopping COM~n", []),
@@ -52,29 +51,31 @@ send(Com, To, Msg) when is_integer(To) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
--spec init([]) -> {ok, term()} | {error, term()} | ignore.
-init([]) ->
+-spec init(Com :: string() | undefined) -> {ok, term()} | {error, term()} | ignore.
+init(undefined) ->
+    ?error("COM port undefined"),
+    {stop, {undefined_com}};
+init(Com) when is_list(Com) ->
+    ?info("Opening com port: ~p", [Com]),
     Trace = case application:get_env(bkfw, debug, true) of
 		true -> 
-		    {ok, Dev} = file:open(?TRACE, [append]),
+		    Tracepath = get_trace_path(0),
+		    {ok, Dev} = file:open(Tracepath, [append]),
 		    file:write(Dev, ["[COM] Reopening COM port\n"]),
 		    Dev;
 		false -> undefined
 	    end,
-    case application:get_env(bkfw, com) of
-	undefined ->
-	    {stop, {missing_parameter, com}};
-	{ok, Com} ->
-	    ?info("Opening com port: ~p~n", [Com]),
-	    case cereal:open_tty(Com) of
-		{ok, Fd} ->
-		    Port = open_port({fd, Fd, Fd}, [binary, stream, {line, 80}]),
-		    {ok, #state{com=Fd, port=Port, trace=Trace, crlf=$\n}};
-		{error, Err} ->
-		    ?error("Error opening com port: ~p~n", [Err]),
-		    {stop, {error, Err}}
-	    end
-    end.
+    case cereal:open_tty(Com) of
+	{ok, Fd} ->
+	    Port = open_port({fd, Fd, Fd}, [binary, stream, {line, 80}]),
+	    {ok, #state{com=Fd, port=Port, trace=Trace, crlf=$\n}};
+	{error, Err} ->
+	    ?error("Error opening com port: ~p", [Err]),
+	    {stop, {error, Err}}
+    end;
+init(_Args) ->
+    ?error("Invalid args: ~p", [_Args]),
+    {stop, {error, badarg}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -194,3 +195,10 @@ debug_com(Dev, Bytes) ->
     {{_Y,_M,_D},{H,M,S}} = calendar:now_to_universal_time(Now),
     {_,_,MS} = Now,
     file:write(Dev, [io_lib:format("[~p:~p:~p.~p]", [H,M,S,MS]), Bytes]).
+
+get_trace_path(I) ->
+    Filename = io_lib:format("~s-~b.trace", [?TRACE, I]),
+    case filelib:is_file(Filename) of
+	true -> get_trace_path(I+1);
+	false -> Filename
+    end.

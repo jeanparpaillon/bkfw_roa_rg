@@ -36,10 +36,16 @@ restart() ->
 %% ===================================================================
 
 init([]) ->
-    Config = ?CHILD(bkfw_config, worker),
-    Mutex = ?CHILD(bkfw_mutex, worker),
-    Srv = ?CHILD(bkfw_srv, worker),
-    EdfaMon = ?CHILD(bkfw_edfa, worker),
-    Http = bkfw_http:get_config(),
-    Alarms = {bkfw_alarms, {gen_event, start_link, [{local, bkfw_alarms}]}, permanent, 5000, worker, [gen_event]},
-    {ok, { {one_for_one, 5, 10}, [Config, Mutex, Alarms, Srv, EdfaMon, Http]} }.
+    Children = [
+		?CHILD(bkfw_config, worker),
+		?CHILD(bkfw_mutex, worker),
+		{bkfw_alarms, {gen_event, start_link, [{local, bkfw_alarms}]}, permanent, 5000, worker, [gen_event]},
+		?CHILD(bkfw_srv, worker),
+		?CHILD(bkfw_edfa, worker),
+		bkfw_http:get_config()
+	       ],
+    C2 = case application:get_env(bkfw, usbtty, undefined) of
+	     undefined -> Children;
+	     _ -> [?CHILD(bkfw_usb, worker) | Children]
+	 end,
+    {ok, { {one_for_one, 5, 10}, C2} }.

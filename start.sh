@@ -11,15 +11,20 @@ cmd="${BASEDIR}/$(basename $0) $*"
 USERCONF=/var/tmp/bkfw_user.conf
 
 usage() {
-    echo "Usage: $0 [-p XXXX] /path/to/com"
+    echo "Usage: $0 [-p XXXX] [-u /path/to/usbtty] /path/to/com"
 }
 
 port=8000
-while getopts ":p:" opt; do
+usbtty=
+while getopts ":p:u:" opt; do
     case $opt in
 	p)
 	    shift $((OPTIND -1))
 	    port=$OPTARG
+	    ;;
+	u)
+	    shift $((OPTIND -1))
+	    usbtty=$OPTARG
 	    ;;
 	:)
 	    usage
@@ -51,6 +56,7 @@ erl -sname agent \
     -pa ${depsdir} \
     -bkfw http "[{port, $port}]" \
     -bkfw com "\"$com\"" \
+    -bkfw usbtty "\"$usbtty\"" \
     -bkfw upload_dir "\"/tmp\"" \
     -bkfw system_cmd "false" \
     -bkfw net "\"${BASEDIR}/priv/interfaces\"" \
