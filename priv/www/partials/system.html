@@ -79,7 +79,7 @@
       <!-- CPU microcode -->
       <form role="form" >
         <div class="form-group">
-          <label>Management Module Microcode <span class="text-info">(current version: <strong>{{ system.firmware.version }}</strong>)</span></label>
+          <label>Management Module Microcode <span class="text-info">(current version: <strong>{{ global.edfa.info.fwVer }}</strong>)</span></label>
 	  
           <input type="file" nv-file-select="" uploader="system.uploader" class="form-control"
 		 ng-show="!system.uploader.queue.length"/>
@@ -118,7 +118,7 @@
       <!-- Units microcode -->
       <form role="form" >
         <div class="form-group">
-          <label>Units 1 to {{ global.mcu.maxIndex }} Microcode <span class="text-info">(current version: <strong>{{ system.firmware.version }}</strong>)</span></label>
+          <label>Units 1 to {{ global.mcu.maxIndex }} Microcode <span class="text-info">(current version: <strong>{{ global.mcu.list[0].fwVer }}</strong>)</span></label>
 	  
           <input type="file" nv-file-select="" uploader="system.uploader" class="form-control"
 		 ng-show="!system.uploader.queue.length"/>

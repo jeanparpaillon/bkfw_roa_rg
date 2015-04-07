@@ -4,10 +4,11 @@
 
 angular.module('bkfwApp.controllers', [])
 
-    .controller('globalCtrl', ['$scope', '$state', 'AUTH_EVENTS', 'mcu', 'session', function($scope, $state, AUTH_EVENTS, mcu, session) {
+    .controller('globalCtrl', ['$scope', '$state', 'AUTH_EVENTS', 'mcu', 'session', 'edfa', function($scope, $state, AUTH_EVENTS, mcu, session, edfa) {
 
 	this.mcu = mcu;
 	this.session = session;
+	this.edfa = edfa;
 
 	this.isLoginPage = function() {
 	    return $state.is('login');
