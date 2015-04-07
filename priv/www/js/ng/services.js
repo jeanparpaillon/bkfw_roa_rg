@@ -454,6 +454,8 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
     list: [],
 
+    maxIndex: 1,
+
     get: function(index) {
       return this.list.filter(function(mcu) {
         return mcu.index == index;
@@ -462,12 +464,14 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
     save: function(mcu) {
       return $http.post('/api/mcu/' + mcu.index, mcu);
+
     },
 
     onList: function(list) {
       this.list = list.sort(function(a, b) {
         return a.index > b.index;
       });
+      this.maxIndex = this.list[this.list.length-1].index;
       this.list.map(angular.bind(this, function(mcu) {
         // inject methods to get alarms info for each mcu
         mcu.hasAlarmOn = angular.bind(mcu, function(fieldName) {
