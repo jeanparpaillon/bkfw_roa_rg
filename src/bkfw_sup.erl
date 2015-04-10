@@ -46,6 +46,7 @@ init([]) ->
 	       ],
     C2 = case application:get_env(bkfw, usbtty, undefined) of
 	     undefined -> Children;
+	     [] -> Children;
 	     _ -> [?CHILD(bkfw_usb, worker) | Children]
 	 end,
     {ok, { {one_for_one, 5, 10}, C2} }.

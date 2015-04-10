@@ -55,6 +55,9 @@ send(Com, To, Msg) when is_integer(To) ->
 init(undefined) ->
     ?error("COM port undefined"),
     {stop, {undefined_com}};
+init([]) ->
+    ?error("COM port undefined"),
+    {stop, {undefined_com}};
 init(Com) when is_list(Com) ->
     ?info("Opening com port: ~p", [Com]),
     Trace = case application:get_env(bkfw, debug, true) of
