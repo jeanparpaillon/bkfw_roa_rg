@@ -284,7 +284,7 @@ angular.module('bkfwApp.controllers', [])
 
 	};
 
-
+	this.usbmode = false;
     }])
 
     .directive('compareTo', function() {
