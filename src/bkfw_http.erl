@@ -33,7 +33,7 @@
 	  index     = undefined :: integer() | undefined | badarg,
 	  mcu       = undefined,
 	  sys       = undefined :: login | net | password | community | usm | protocol | 
-				   reset | reboot | targets,
+				   reset | reboot | targets | usb,
 	  firmware  = undefined :: undefined | string()
 	 }).
 
@@ -93,6 +93,7 @@ rest_init(Req, sys) ->
 	{<<"usm">>, Req2} -> {ok, Req2, #state{section=sys, sys=usm}};
 	{<<"targets">>, Req2} -> {ok, Req2, #state{section=sys, sys=targets}};
 	{<<"protocol">>, Req2} -> {ok, Req2, #state{section=sys, sys=protocol}};
+	{<<"usb">>, Req2} -> {ok, Req2, #state{section=sys, sys=usb}};
 	{_, Req2} -> {ok, Req2, #state{section=sys, sys=undefined}}
     end;
 rest_init(Req, firmware) ->
@@ -170,7 +171,8 @@ resource_exists(Req, #state{section=sys, sys=Sys}=S) when Sys =:= login;
 							  Sys =:= community;
 							  Sys =:= usm;
 							  Sys =:= protocol;
-							  Sys =:= targets ->
+							  Sys =:= targets;
+							  Sys =:= usb ->
     {true, Req, S};
 resource_exists(Req, #state{section=sys}=S) ->
     {false, Req, S};
@@ -204,7 +206,8 @@ to_json(Req, #state{section=sys, sys=Cat}=S) when Cat =:= login;
 						  Cat =:= community;
 						  Cat =:= usm;
 						  Cat =:= protocol;
-						  Cat =:= targets ->
+						  Cat =:= targets;
+						  Cat =:= usb->
     {jsx:encode(bkfw_config:get_kv(Cat)), Req, S};
 
 to_json(Req, #state{section=firmware}=S) ->

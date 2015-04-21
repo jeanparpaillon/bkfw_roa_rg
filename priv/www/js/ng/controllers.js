@@ -284,7 +284,8 @@ angular.module('bkfwApp.controllers', [])
 
 	};
 
-	this.usbmode = false;
+	this.usbmode = sys.usb.get();
+	
     }])
 
     .directive('compareTo', function() {

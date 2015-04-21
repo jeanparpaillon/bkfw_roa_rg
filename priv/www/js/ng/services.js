@@ -370,7 +370,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
 }])
 
-.factory('sys', ['$resource', function($resource) {
+    .factory('sys', ['$resource', function($resource) {
 
   return {
 
@@ -384,7 +384,9 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
     firmware: $resource('/api/sys/firmware'),
 
-    targets: $resource('/api/sys/targets')
+      targets: $resource('/api/sys/targets'),
+
+      usb: $resource('/api/sys/usb')
   };
 
 }])

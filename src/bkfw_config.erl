@@ -182,6 +182,10 @@ handle_call({get_kv, targets}, _From, State) ->
 	    {reply, {error, Err}, State}
     end;
 
+handle_call({get_kv, usb}, _From, State) ->
+    Kv = [{enable, bkfw_usb:get_status()}],
+    {reply, Kv, State};
+
 handle_call({get_kv, firmware}, _From, #state{firmware=FW}=S) ->
     {reply, [
 	     {id, list_to_binary(proplists:get_value(description, FW, ""))},
@@ -279,6 +283,12 @@ handle_call({set_kv, reboot, Props}, _From, State) ->
 	    {reply, ok, State};
 	false ->
 	    {reply, ok, State}
+    end;
+handle_call({set_kv, usb, Props}, _From, State) ->
+    case proplists:get_value(enable, Props, undefined) of
+	undefined -> {reply, ok, State};
+	V when is_boolean(V) -> {reply, bkfw_usb:set_status(V), State};
+	_ -> {reply, {error, invalid_value}, State}
     end;
 handle_call(_Req, _From, State) ->
     {reply, ok, State}.

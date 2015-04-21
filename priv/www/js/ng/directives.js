@@ -80,7 +80,7 @@ angular.module('bkfwApp.directives', [])
 			message += "disable USB mode ?";
 		    }
 		    if (message && !confirm(message)) {
-			ngModelCtrl.$setViewValue(!ngModelCtrl.$modelValue);
+			ngModelCtrl.$setModelValue(!ngModelCtrl.$modelValue);
 			e.stopImmediatePropagation();
 			e.preventDefault();
 		    }
