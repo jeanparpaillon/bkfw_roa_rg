@@ -4,324 +4,324 @@
 
 angular.module('bkfwApp.controllers', [])
 
-    .controller('globalCtrl', ['$scope', '$state', 'AUTH_EVENTS', 'mcu', 'session', 'edfa', function($scope, $state, AUTH_EVENTS, mcu, session, edfa) {
+.controller('globalCtrl', ['$scope', '$state', 'AUTH_EVENTS', 'mcu', 'session', 'edfa', function($scope, $state, AUTH_EVENTS, mcu, session, edfa) {
 
-	this.mcu = mcu;
-	this.session = session;
-	this.edfa = edfa;
+  this.mcu = mcu;
+  this.session = session;
+  this.edfa = edfa;
 
-	this.isLoginPage = function() {
-	    return $state.is('login');
-	};
+  this.isLoginPage = function() {
+    return $state.is('login');
+  };
 
-	$scope.$on(AUTH_EVENTS.logoutSuccess, function() {
-	    $state.go('dashboard');
-	});
+  $scope.$on(AUTH_EVENTS.logoutSuccess, function() {
+    $state.go('dashboard');
+  });
 
-    }])
+}])
 
-    .controller('mcuCtrl', ['$http', '$scope', '$stateParams', 'mcu', 'dialogs', function($http, $scope, $stateParams, mcu, dialogs) {
+.controller('mcuCtrl', ['$http', '$scope', '$stateParams', 'mcu', 'dialogs', function($http, $scope, $stateParams, mcu, dialogs) {
 
-	this.mode = mcu.mode;
-	this.modeID = mcu.modeID;
-	this.label = mcu.label;
-	
-	this.detail = {};
-	this.controlMode = null;
-	this.controlValue = null;
-	
-	this.inputLossThreshold = null;
-	this.outputLossThreshold = null;
-	
-	this.applyAllControl = false;
-	this.applyAllThreshold = false;
+  this.mode = mcu.mode;
+  this.modeID = mcu.modeID;
+  this.label = mcu.label;
 
-	$scope.$watch(
-	    function() {
-		return mcu.get($stateParams.mcuIndex);
-	    },
-	    angular.bind(this, function(newVal) {
-		if (newVal) {
-		    this.detail = newVal;
-		    // setup initial values
-		    if (this.controlMode === null) {
-			this.controlMode = this.detail.operatingMode.toString();
-			console.debug("Current control mode is " + this.controlMode);
-		    }
-		    if (this.controlValue === null) {
-			this.controlValue = mcu.getControlValue(this.detail, this.controlMode);
-			console.debug("Control value is " + this.controlValue);
-		    }
+  this.detail = {};
+  this.controlMode = null;
+  this.controlValue = null;
 
-		    if (this.inputLossThreshold === null) {
-			this.inputLossThreshold = this.detail.inputLossThreshold;
-		    }	
-		    if (this.outputLossThreshold === null) {
-			this.outputLossThreshold = this.detail.outputLossThreshold;
-		    }	
-		}
-	    })
-	);
+  this.inputLossThreshold = null;
+  this.outputLossThreshold = null;
 
-	this.updateControlValue = function() {
-	    this.controlValue = mcu.getControlValue(this.detail, this.controlMode);
-	};
+  this.applyAllControl = false;
+  this.applyAllThreshold = false;
 
-	this.setThresholds = function() {
-	    if (this.applyAllThreshold) {
-		dialogs.confirm("Confirm setting thresholds on all amps:")
-		    .then(angular.bind(this, function() {
-			var infos = { inputLossThreshold: this.inputLossThreshold,
-				      outputLossThreshold: this.outputLossThreshold };
-			$http.post('/api/mcu/', infos)
-			    .then(angular.bind(this, function() {
-				dialogs.success("Thresholds set on all amps");
-			    }));
-		    }));
-	    } else {
-		dialogs.confirm("Confirm setting thresholds:")
-		
-		    .then(angular.bind(this, function() {
-			
-			var newMcu = angular.copy(this.detail);
-			delete newMcu.operatingMode;
-			newMcu.inputLossThreshold = this.inputLossThreshold;
-			newMcu.outputLossThreshold = this.outputLossThreshold;
-			
-			mcu.save(newMcu)
-			
-			    .then(angular.bind(this, function() {
-				dialogs.success("Thresholds set");
-			    }));
-		    }));
-	    }
-	};
-	
-	this.setOperatingMode = function() {
-	    if (this.applyAllControl) {
-		dialogs.confirm("Confirm setting operating mode on all amps:")
-		    .then(angular.bind(this, function() {
-			var infos = { operatingMode: this.controlMode };
-			infos[mcu.getControlValueName(this.controlMode)] = this.controlValue;
-			$http.post('/api/mcu/', infos)
-			    .then(angular.bind(this, function() {
-				dialogs.success("Operating mode set on all amps");
-			    }));
-		    }));
-		
-	    } else {
-		dialogs.confirm("Confirm setting operating mode:")
-		
-		    .then(angular.bind(this, function() {
-			console.debug("Setting operating mode to " + this.controlMode);
-			
-			var newMcu  = angular.copy(this.detail);
-			newMcu.operatingMode = this.controlMode;
-			newMcu[mcu.getControlValueName(this.controlMode)] = this.controlValue;
-			
-			console.debug("Save mcu " + JSON.stringify(newMcu));
-			
-			mcu.save(newMcu)
-			
-			    .then(angular.bind(this, function() {
-				
-				this.controlMode = null;
-				this.controlValue = null;
-				
-				dialogs.success("Consign applied");
-			    }));
-		    }));
-	    };
-	}
-    }])
+  $scope.$watch(
+    function() {
+    return mcu.get($stateParams.mcuIndex);
+  },
+  angular.bind(this, function(newVal) {
+    if (newVal) {
+      this.detail = newVal;
+      // setup initial values
+      if (this.controlMode === null) {
+        this.controlMode = this.detail.operatingMode.toString();
+        console.debug("Current control mode is " + this.controlMode);
+      }
+      if (this.controlValue === null) {
+        this.controlValue = mcu.getControlValue(this.detail, this.controlMode);
+        console.debug("Control value is " + this.controlValue);
+      }
 
-    .controller('systemCtrl', ['$q', '$http', '$timeout', '$state', 'sys', 'auth', 'uploaders', 'dialogs', 'edfa', 'apiErrorsConfig', '$scope', function($q, $http, $timeout, $state, sys, auth, uploaders, dialogs, edfa, apiErrorsConfig, $scope) {
+      if (this.inputLossThreshold === null) {
+        this.inputLossThreshold = this.detail.inputLossThreshold;
+      }
+      if (this.outputLossThreshold === null) {
+        this.outputLossThreshold = this.detail.outputLossThreshold;
+      }
+    }
+  })
+  );
 
-	function getError(response) {
-	}
+  this.updateControlValue = function() {
+    this.controlValue = mcu.getControlValue(this.detail, this.controlMode);
+  };
 
-	this.firmware = sys.firmware.get();
+  this.setThresholds = function() {
+    if (this.applyAllThreshold) {
+      dialogs.confirm("Confirm setting thresholds on all amps:")
+      .then(angular.bind(this, function() {
+        var infos = { inputLossThreshold: this.inputLossThreshold,
+          outputLossThreshold: this.outputLossThreshold };
+          $http.post('/api/mcu/', infos)
+          .then(angular.bind(this, function() {
+            dialogs.success("Thresholds set on all amps");
+          }));
+      }));
+    } else {
+      dialogs.confirm("Confirm setting thresholds:")
 
-	// fw | cpu | amp
-	this.uploader = [];
-	this.uploader['fw'] = uploaders.create('fw', 'Web & SNMP Firmware', 60000);
-	this.uploader['cpu'] = uploaders.create('cpu', 'Management Module Firmware', 0);
-	this.uploader['amp'] = uploaders.create('amp', 'Units Firmware', 0);
+      .then(angular.bind(this, function() {
 
-	this.network = sys.net.get();
+        var newMcu = angular.copy(this.detail);
+        delete newMcu.operatingMode;
+        newMcu.inputLossThreshold = this.inputLossThreshold;
+        newMcu.outputLossThreshold = this.outputLossThreshold;
 
-	this.networkSave = function() {
+        mcu.save(newMcu)
 
-	    dialogs.confirm("Are you sure you want to change network settings ?")
+        .then(angular.bind(this, function() {
+          dialogs.success("Thresholds set");
+        }));
+      }));
+    }
+  };
 
-		.then(angular.bind(this, function() {
-		    this.network.$save()
-		    
-			.then(function() {
-			    dialogs.modal("Network settings are being applied, please wait.");
-			    return edfa.waitUntilOnline(10000);
-			})
-			.then(function() {
-			    dialogs.close(true);
-			    dialogs.success("You should reload the page on the new network address.");
-			});
-		}));
-	};
+  this.setOperatingMode = function() {
+    if (this.applyAllControl) {
+      dialogs.confirm("Confirm setting operating mode on all amps:")
+      .then(angular.bind(this, function() {
+        var infos = { operatingMode: this.controlMode };
+        infos[mcu.getControlValueName(this.controlMode)] = this.controlValue;
+        $http.post('/api/mcu/', infos)
+        .then(angular.bind(this, function() {
+          dialogs.success("Operating mode set on all amps");
+        }));
+      }));
 
-	this.password = {password: "", confirm: ""};
-	this.community = sys.community.get();
-	this.usm = sys.usm.get();
-	this.protocol = sys.protocol.get();
-	this.targets  = sys.targets.get();
+    } else {
+      dialogs.confirm("Confirm setting operating mode:")
 
-	this.targetsSave = function() {
-	    this.targets.$save()
-		.then(function() {
-		    dialogs.success("SNMP targets saved");
-		});
-	};
+      .then(angular.bind(this, function() {
+        console.debug("Setting operating mode to " + this.controlMode);
 
-	this.securitySave = function() {
+        var newMcu  = angular.copy(this.detail);
+        newMcu.operatingMode = this.controlMode;
+        newMcu[mcu.getControlValueName(this.controlMode)] = this.controlValue;
 
-	    if(this.password.confirm) {
-		$http.post('/api/sys/password', {password: this.password.confirm})
-		    .then(function() {
-			dialogs.modal("Settings are being applied, please wait...");
-			return edfa.waitUntilOnline(3000).
-			    then(function() {
-				dialogs.close(true);
-				auth.disconnect();
-			    });
-		    });
-	    }
-	};
-	
-	this.protocolSave = function() {
+        console.debug("Save mcu " + JSON.stringify(newMcu));
 
-	    dialogs.confirm("Confirm setting protocols")
-		.then(angular.bind(this, function() {
-		    this.protocol.$save()
-			.then(function() {
-			    dialogs.modal("Protocol settings are being applied, please wait...");
-			    return edfa.waitUntilOnline(10000).
-				then(function() {
-				    dialogs.close(true);
-				});
-			});
-		}));
-	};
-	
-	this.communitySave = function() {
+        mcu.save(newMcu)
 
-	    dialogs.confirm("Confirm applying SNMPv1/v2c settings")
-	    	.then(angular.bind(this, function() {
-	    	    this.community.$save()
-	    		.then(function() {
-	    		    dialogs.modal("SNMPv1/v2c settings are being applied, please wait...");
-	    		    return edfa.waitUntilOnline(3000).
-	    			then(function() {
-	    			    dialogs.close(true);
-	    			});
-	    		});	
-	    	}));
-	};
-	
-	this.usmSave = function() {
+        .then(angular.bind(this, function() {
 
-	    dialogs.confirm("Confirm applying SNMPv3 settings")
-	    	.then(angular.bind(this, function() {
-	    	    this.usm.$save()
-	    		.then(function() {
-	    		    dialogs.modal("SNMPv3 settings are being applied, please wait...");
-	    		    return edfa.waitUntilOnline(3000)
-	    			.then(function() {
-	    			    dialogs.close(true);
-	    			});
-	    		});
-	    	}));
-	};
+          this.controlMode = null;
+          this.controlValue = null;
 
-	this.reboot = function() {
+          dialogs.success("Consign applied");
+        }));
+      }));
+    }
+  };
+}])
 
-	    dialogs.confirm("The device will reboot")
+.controller('systemCtrl', ['$q', '$http', '$timeout', '$state', 'sys', 'auth', 'uploaders', 'dialogs', 'edfa', 'apiErrorsConfig', '$scope', function($q, $http, $timeout, $state, sys, auth, uploaders, dialogs, edfa, apiErrorsConfig, $scope) {
 
-		.then(function() {
-		    return $http.post('/api/sys/reboot', {reboot: true});
-		})
+  function getError(response) {
+  }
 
-		.then(function() {
-		    dialogs.modal("Device is rebooting",
-				  "If the device isn't online in 2 minutes check if the device IP has changed.");
-		    // wait edfa to come back
-		    // start polling in 20 secs
-		    return edfa.waitUntilOnline(10000);
-		})
+  this.firmware = sys.firmware.get();
 
-		.then(function() {
-		    dialogs.close(true);
-		    dialogs.success("Device is online");
-		});
+  // fw | cpu | amp
+  this.uploader = [];
+  this.uploader['fw'] = uploaders.create('fw', 'Web & SNMP Firmware', 60000);
+  this.uploader['cpu'] = uploaders.create('cpu', 'Management Module Firmware', 0);
+  this.uploader['amp'] = uploaders.create('amp', 'Units Firmware', 0);
 
-	};
+  this.network = sys.net.get();
 
-	this.reset = function() {
+  this.networkSave = function() {
 
-	    dialogs.confirm("The device will be reset to factory defaults")
+    dialogs.confirm("Are you sure you want to change network settings ?")
 
-		.then(function() {
-		    return $http.post('/api/sys/reset', {reset: true});
-		})
+    .then(angular.bind(this, function() {
+      this.network.$save()
 
-		.then(function() {
-		    dialogs.modal("Device has beeing reseted",
-				  "If you can't contact the device check if its IP has changed.");
-		    return edfa.waitUntilOnline(10000);
-		})
-		.then(function() {
-		    dialogs.close(true);
-		    dialogs.success("Factory settings have been applied.")
-		});
+      .then(function() {
+        dialogs.modal("Network settings are being applied, please wait.");
+        return edfa.waitUntilOnline(10000);
+      })
+      .then(function() {
+        dialogs.close(true);
+        dialogs.success("You should reload the page on the new network address.");
+      });
+    }));
+  };
 
-	};
+  this.password = {password: "", confirm: ""};
+  this.community = sys.community.get();
+  this.usm = sys.usm.get();
+  this.protocol = sys.protocol.get();
+  this.targets  = sys.targets.get();
 
-	this.usbmode = sys.usb.get();
-	
-    }])
+  this.targetsSave = function() {
+    this.targets.$save()
+    .then(function() {
+      dialogs.success("SNMP targets saved");
+    });
+  };
 
-    .directive('compareTo', function() {
-	return {
-	    require: "ngModel",
-	    scope: {
-		otherModelValue: "=compareTo"
-	    },
-	    link: function(scope, element, attributes, ngModel) {
+  this.securitySave = function() {
 
-		ngModel.$validators.compareTo = function(modelValue) {
-		    return modelValue == scope.otherModelValue;
-		};
+    if(this.password.confirm) {
+      $http.post('/api/sys/password', {password: this.password.confirm})
+      .then(function() {
+        dialogs.modal("Settings are being applied, please wait...");
+        return edfa.waitUntilOnline(3000)
+        .then(function() {
+          dialogs.close(true);
+          auth.disconnect();
+        });
+      });
+    }
+  };
 
-		scope.$watch("otherModelValue", function() {
-		    ngModel.$validate();
-		});
-	    }
-	};
+  this.protocolSave = function() {
+
+    dialogs.confirm("Confirm setting protocols")
+    .then(angular.bind(this, function() {
+      this.protocol.$save()
+      .then(function() {
+        dialogs.modal("Protocol settings are being applied, please wait...");
+        return edfa.waitUntilOnline(10000)
+        .then(function() {
+          dialogs.close(true);
+        });
+      });
+    }));
+  };
+
+  this.communitySave = function() {
+
+    dialogs.confirm("Confirm applying SNMPv1/v2c settings")
+    .then(angular.bind(this, function() {
+      this.community.$save()
+      .then(function() {
+        dialogs.modal("SNMPv1/v2c settings are being applied, please wait...");
+        return edfa.waitUntilOnline(3000)
+        .then(function() {
+          dialogs.close(true);
+        });
+      });
+    }));
+  };
+
+  this.usmSave = function() {
+
+    dialogs.confirm("Confirm applying SNMPv3 settings")
+    .then(angular.bind(this, function() {
+      this.usm.$save()
+      .then(function() {
+        dialogs.modal("SNMPv3 settings are being applied, please wait...");
+        return edfa.waitUntilOnline(3000)
+        .then(function() {
+          dialogs.close(true);
+        });
+      });
+    }));
+  };
+
+  this.reboot = function() {
+
+    dialogs.confirm("The device will reboot")
+
+    .then(function() {
+      return $http.post('/api/sys/reboot', {reboot: true});
     })
 
-    .controller('loginCtrl', ['$scope', '$state', 'auth', 'AUTH_EVENTS', function($scope, $state, auth, AUTH_EVENTS) {
+    .then(function() {
+      dialogs.modal("Device is rebooting",
+                    "If the device isn't online in 2 minutes check if the device IP has changed.");
+                    // wait edfa to come back
+                    // start polling in 20 secs
+                    return edfa.waitUntilOnline(10000);
+    })
 
-	this.user = "admin";
-	this.password = null;
-	this.error = "";
+    .then(function() {
+      dialogs.close(true);
+      dialogs.success("Device is online");
+    });
 
-	this.authenticate = function(user, pass) {
-	    auth.authenticate(user, pass).then(angular.bind(this, function() {
-		this.error = "";
-		if ($state.is('login')) $state.go('dashboard');
-	    }));
-	};
+  };
 
-	$scope.$on(AUTH_EVENTS.loginFailed, angular.bind(this, function(event, msg) {
-	    this.error = msg;
-	}));
+  this.reset = function() {
 
-    }]);
+    dialogs.confirm("The device will be reset to factory defaults")
+
+    .then(function() {
+      return $http.post('/api/sys/reset', {reset: true});
+    })
+
+    .then(function() {
+      dialogs.modal("Device has beeing reseted",
+                    "If you can't contact the device check if its IP has changed.");
+                    return edfa.waitUntilOnline(10000);
+    })
+    .then(function() {
+      dialogs.close(true);
+      dialogs.success("Factory settings have been applied.");
+    });
+
+  };
+
+  this.usbmode = sys.usb.get();
+
+}])
+
+.directive('compareTo', function() {
+  return {
+    require: "ngModel",
+    scope: {
+      otherModelValue: "=compareTo"
+    },
+    link: function(scope, element, attributes, ngModel) {
+
+      ngModel.$validators.compareTo = function(modelValue) {
+        return modelValue == scope.otherModelValue;
+      };
+
+      scope.$watch("otherModelValue", function() {
+        ngModel.$validate();
+      });
+    }
+  };
+})
+
+.controller('loginCtrl', ['$scope', '$state', 'auth', 'AUTH_EVENTS', function($scope, $state, auth, AUTH_EVENTS) {
+
+  this.user = "admin";
+  this.password = null;
+  this.error = "";
+
+  this.authenticate = function(user, pass) {
+    auth.authenticate(user, pass).then(angular.bind(this, function() {
+      this.error = "";
+      if ($state.is('login')) $state.go('dashboard');
+    }));
+  };
+
+  $scope.$on(AUTH_EVENTS.loginFailed, angular.bind(this, function(event, msg) {
+    this.error = msg;
+  }));
+
+}]);

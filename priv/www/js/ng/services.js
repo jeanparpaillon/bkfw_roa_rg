@@ -66,53 +66,53 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
   return {
 
     responseError: function(rejection) {
-	var errors = "";
-        if (rejection.data) {
-            errors = rejection.data.join("<br/>");
-        }
-        else if (rejection.statusText) {
-            errors = rejection.statusText;
-        }
-        else {
-            errors = "Connection lost with the API";
-        }
-	
-	// don't handle 401	
-	if (rejection.status !== 401 && apiErrorsConfig.intercept) {
-            dialogs.error("An error occured", errors);
-	}
-	
-	// pass it through the chain
-	return $q.reject(rejection);
+      var errors = "";
+      if (rejection.data) {
+        errors = rejection.data.join("<br/>");
+      }
+      else if (rejection.statusText) {
+        errors = rejection.statusText;
+      }
+      else {
+        errors = "Connection lost with the API";
+      }
+
+      // don't handle 401
+      if (rejection.status !== 401 && apiErrorsConfig.intercept) {
+        dialogs.error("An error occured", errors);
+      }
+
+      // pass it through the chain
+      return $q.reject(rejection);
     }
   };
 
 }])
 
-    .factory('auth', ['$http', '$rootScope', 'authService', 'AUTH_EVENTS', 'session', '$base64', 'md5', 'apiErrorsConfig', function($http, $rootScope, authService, AUTH_EVENTS, session, $base64, md5, apiErrorsConfig) {
+.factory('auth', ['$http', '$rootScope', 'authService', 'AUTH_EVENTS', 'session', '$base64', 'md5', 'apiErrorsConfig', function($http, $rootScope, authService, AUTH_EVENTS, session, $base64, md5, apiErrorsConfig) {
 
   return {
 
-      authenticate: function(user, password) {
-	  apiErrorsConfig.intercept = false;
-	  
-	  return $http.post('/api/sys/login', {login: user, password: md5.createHash(password)})
-	  
-	      .success(function() {
-		  var hash = $base64.encode(user + ':' + md5.createHash(password));
-		  session.create(user, hash);
-		  console.debug('Auth confirmed, proceed..');
-		  // the login is successfull, fire buffered
-		  // http requests!
-		  authService.loginConfirmed(user + "logged in.");
-		  apiErrorsConfig.intercept = true;
-	      })
-	  
-	      .error(function(errors) {
-		  console.debug("Auth failed: " + errors);
-		  $rootScope.$broadcast(AUTH_EVENTS.loginFailed, errors.join('<br/>'));
-	      });
-	  
+    authenticate: function(user, password) {
+      apiErrorsConfig.intercept = false;
+
+      return $http.post('/api/sys/login', {login: user, password: md5.createHash(password)})
+
+      .success(function() {
+        var hash = $base64.encode(user + ':' + md5.createHash(password));
+        session.create(user, hash);
+        console.debug('Auth confirmed, proceed..');
+        // the login is successfull, fire buffered
+        // http requests!
+        authService.loginConfirmed(user + "logged in.");
+        apiErrorsConfig.intercept = true;
+      })
+
+      .error(function(errors) {
+        console.debug("Auth failed: " + errors);
+        $rootScope.$broadcast(AUTH_EVENTS.loginFailed, errors.join('<br/>'));
+      });
+
     },
 
     cancelAuthenticate: function() {
@@ -175,17 +175,17 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
   return {
 
-      start: function(url, isArray, delaySeconds, onSuccess, onError) {
-        if (!pollers[url]) {
-          pollers[url] = new Poller(url, isArray, (delaySeconds * 1000), onSuccess, onError);
-          pollers[url].poll();
-        }
-      },
-
-      stop: function(url) {
-        pollers[url].stop();
-        delete pollers[url];
+    start: function(url, isArray, delaySeconds, onSuccess, onError) {
+      if (!pollers[url]) {
+        pollers[url] = new Poller(url, isArray, (delaySeconds * 1000), onSuccess, onError);
+        pollers[url].poll();
       }
+    },
+
+    stop: function(url) {
+      pollers[url].stop();
+      delete pollers[url];
+    }
 
   };
 
@@ -247,12 +247,12 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
         msg: "Mute input is active"
       },
       psu1: {
-	  msg: "Power Supply Unit #1 default",
-	  field: "psu1"
+        msg: "Power Supply Unit #1 default",
+        field: "psu1"
       },
       psu2: {
-	  msg: "Power Supply Unit #2 default",
-	  field: "psu2"	  
+        msg: "Power Supply Unit #2 default",
+        field: "psu2"
       }
     },
 
@@ -277,7 +277,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
   };
   //showAlarms();
 
-    ws.on('message', function(event) {
+  ws.on('message', function(event) {
     var data = JSON.parse(event.data);
     data.msg = alarms.type[data.name].msg;
     alarms.list.push(new Alarm(data));
@@ -300,17 +300,17 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
   function EdfaInfo() {}
   EdfaInfo.prototype = {
-      alarms: function() {
-        return alarms.forIndex(0);
-      },
-      hasAlarmOn: function(fieldName) {
-        return this.alarms().filter(function(alarm) {
-          return alarm.data.var == fieldName;
-        }).length > 0;
-      },
-      hasAlarms: function() {
-        return this.alarms().length > 0;
-      }
+    alarms: function() {
+      return alarms.forIndex(0);
+    },
+    hasAlarmOn: function(fieldName) {
+      return this.alarms().filter(function(alarm) {
+        return alarm.data.var == fieldName;
+      }).length > 0;
+    },
+    hasAlarms: function() {
+      return this.alarms().length > 0;
+    }
   };
 
   return {
@@ -370,7 +370,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
 }])
 
-    .factory('sys', ['$resource', function($resource) {
+.factory('sys', ['$resource', function($resource) {
 
   return {
 
@@ -384,9 +384,9 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
     firmware: $resource('/api/sys/firmware'),
 
-      targets: $resource('/api/sys/targets'),
+    targets: $resource('/api/sys/targets'),
 
-      usb: $resource('/api/sys/usb')
+    usb: $resource('/api/sys/usb')
   };
 
 }])

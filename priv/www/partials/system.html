@@ -1,12 +1,12 @@
 <h1 class="page-header">System</h1>
 
 <div class="row">
-  
+
   <div class="col-md-6">
-    
+
     <div class="block">
       <h2>Network</h2>
-      
+
       <form role="form" ng-submit="system.networkSave()">
         <div class="form-group">
           <label>Configuration mode</label>
@@ -15,26 +15,26 @@
             <option value="static">Manual configuration</option>
           </select>
         </div>
-	
+
         <div class="form-group" ng-if="system.network.type == 'static'">
           <label>IP Address</label>
           <input type="text" ng-model="system.network.ip" class="form-control" />
         </div>
-	
+
         <div class="form-group" ng-if="system.network.type == 'static'">
           <label>Netmask</label>
           <input type="text" ng-model="system.network.netmask" class="form-control" />
         </div>
-	
+
         <div class="form-group" ng-if="system.network.type == 'static'">
           <label>Gateway</label>
           <input type="text" ng-model="system.network.gateway" class="form-control" />
         </div>
-	
+
         <button type="submit" class="btn btn-primary">Apply</button>
       </form>
     </div>
-    
+
     <div class="block">
       <h2>Upgrade</h2>
 
@@ -42,10 +42,10 @@
       <form role="form" >
         <div class="form-group">
           <label>Web &amp; SNMP Firmware <span class="text-info">(current version: <strong>{{ system.firmware.version }}</strong>)</span></label>
-	  
+
           <input type="file" nv-file-select="" uploader="system.uploader['fw']" class="form-control"
-		 ng-show="!system.uploader['fw'].queue.length"/>
-	  
+                                                                                ng-show="!system.uploader['fw'].queue.length"/>
+
           <div ng-repeat="item in system.uploader['fw'].queue">
             <div >
               <span class="push-left">
@@ -80,10 +80,10 @@
       <form role="form" >
         <div class="form-group">
           <label>Management Module Firmware <span class="text-info">(current version: <strong>{{ global.edfa.info.fwVer }}</strong>)</span></label>
-	  
+
           <input type="file" nv-file-select="" uploader="system.uploader['cpu']" class="form-control"
-		 ng-show="!system.uploader['cpu'].queue.length"/>
-	  
+                                                                                 ng-show="!system.uploader['cpu'].queue.length"/>
+
           <div ng-repeat="item in system.uploader['cpu'].queue">
             <div >
               <span class="push-left">
@@ -119,10 +119,10 @@
       <form role="form" >
         <div class="form-group">
           <label>Units 1 to {{ global.mcu.maxIndex }} Firmware <span class="text-info">(current version: <strong>{{ global.mcu.list[0].fwVer }}</strong>)</span></label>
-	  
+
           <input type="file" nv-file-select="" uploader="system.uploader['amp']" class="form-control"
-		 ng-show="!system.uploader['amp'].queue.length"/>
-	  
+                                                                                 ng-show="!system.uploader['amp'].queue.length"/>
+
           <div ng-repeat="item in system.uploader['amp'].queue">
             <div >
               <span class="push-left">
@@ -154,10 +154,10 @@
       </form>
       <!-- END: Units microcode -->
     </div>
-    
+
     <div class="block">
       <h2>SNMP trap targets</h2>
-      
+
       <form name="targets" role="form" ng-submit="system.targetsSave()">
         <div class="form-group">
           <label>Target 1 (IP address or FQDN)</label>
@@ -171,203 +171,203 @@
           <label>Target 3 (IP address or FQDN)</label>
           <input type="text" ng-model="system.targets.target3" class="form-control" />
         </div>
-	
+
         <button type="submit" class="btn btn-primary">Apply</button>
       </form>
     </div>
-    
+
   </div>
-  
+
   <div class="col-md-6">
 
     <div class="block clearfix">
       <div class="row" >
-	<h2 class="col-sm-8">USB mode</h2>
-	  
-	<form class="col-sm-4" name="usb" role="form" >
-	  <br/>
-	  <div class="pull-right">
-	    <input usb-switch type="checkbox" ng-model="system.usbmode" />
-	  </div>
-	</form>
+        <h2 class="col-sm-8">USB mode</h2>
+
+        <form class="col-sm-4" name="usb" role="form" >
+          <br/>
+          <div class="pull-right">
+            <input usb-switch type="checkbox" ng-model="system.usbmode" />
+          </div>
+        </form>
       </div>
-      
+
       <div class="bs-callout bs-callout-danger">
-	Enabling USB mode will temporary disable SNMP alarms and monitoring.
+        Enabling USB mode will temporary disable SNMP alarms and monitoring.
       </div>
     </div>
-    
+
     <div class="block">
       <h2>Security</h2>
-      
+
       <div class="block" >
-	<h4>HTTP security</h4>
-	
-	<form name="security" role="form" class="form-horizontal" ng-submit="system.securitySave()" >
-	  
+        <h4>HTTP security</h4>
+
+        <form name="security" role="form" class="form-horizontal" ng-submit="system.securitySave()" >
+
           <div class="form-group">
-	    <label class="col-sm-4 control-label" >Login</label>
-	    <div class="col-sm-8">
-	      <input type="text" disabled value="admin" class="form-control"></input>
-	    </div>
-	  </div>
-	  
-	  <div class="form-group">
+            <label class="col-sm-4 control-label" >Login</label>
+            <div class="col-sm-8">
+              <input type="text" disabled value="admin" class="form-control"></input>
+            </div>
+          </div>
+
+          <div class="form-group">
             <label class="col-sm-4 control-label" >Password</label>
-	    <div class="col-sm-8">
+            <div class="col-sm-8">
               <input type="password" ng-model="system.password.password" name="password"
-                     class="form-control" autocomplete="off" />
-	    </div>
+                                                                         class="form-control" autocomplete="off" />
+            </div>
           </div>
           <div class="form-group" ng-class="{'has-error': security.confirm.$error.compareTo}">
             <label class="col-sm-4 control-label">Confirm password</label>
-	    <div class="col-sm-8">
+            <div class="col-sm-8">
               <input type="password" name="confirm" ng-model="system.password.confirm"
-                     class="form-control" compare-to="system.password.password" />	      
+                                                    class="form-control" compare-to="system.password.password" />
               <p>{{ system.password.confirm.$error }}</p>
               <span class="text-danger" ng-show="security.confirm.$error.compareTo">Passwords don't match</span>
-	    </div>
-	  </div>
-	  
-	  <div class="form-group">
-	    <div class="col-sm-offset-9 col-sm-3">
-	      <button type="submit" class="btn btn-primary">Apply</button>
-	    </div>
-	  </div>
-	</form>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="col-sm-offset-9 col-sm-3">
+              <button type="submit" class="btn btn-primary">Apply</button>
+            </div>
+          </div>
+        </form>
       </div>
-      
+
       <div class="block">
-	<form name="protocol" class="form-horizontal" role="form" ng-submit="system.protocolSave()">
-	  <div class="form-group">
-	    <div class="col-sm-12">
+        <form name="protocol" class="form-horizontal" role="form" ng-submit="system.protocolSave()">
+          <div class="form-group">
+            <div class="col-sm-12">
               <label class="checkbox-inline">
-		<input type="checkbox" ng-model="system.protocol['snmpv1']" />SNMP v1
-	      </label>
+                <input type="checkbox" ng-model="system.protocol['snmpv1']" />SNMP v1
+              </label>
               <label class="checkbox-inline">
-		<input type="checkbox" ng-model="system.protocol['snmpv2']" />SNMP v2c
-	      </label>
+                <input type="checkbox" ng-model="system.protocol['snmpv2']" />SNMP v2c
+              </label>
               <label class="checkbox-inline">
-		<input type="checkbox" ng-model="system.protocol['snmpv3']" />SNMP v3
-	      </label>
-	    </div>
-	  </div>
-	  <div class="form-group">
-	    <div class="col-sm-offset-9 col-sm-3">
-	      <button type="submit" class="btn btn-primary">Apply</button>
-	    </div>
-	  </div>
-	</form>
+                <input type="checkbox" ng-model="system.protocol['snmpv3']" />SNMP v3
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-sm-offset-9 col-sm-3">
+              <button type="submit" class="btn btn-primary">Apply</button>
+            </div>
+          </div>
+        </form>
       </div>
-      
+
       <div class="block" ng-if="system.protocol['snmpv1'] || system.protocol['snmpv2']">
-	<h4>SNMP v1/v2c security </h4>
-	
-	<form name="community" role="form" class="form-horizontal" ng-submit="system.communitySave()">
-	  
+        <h4>SNMP v1/v2c security </h4>
+
+        <form name="community" role="form" class="form-horizontal" ng-submit="system.communitySave()">
+
           <div class="form-group">
             <label class="col-sm-4 control-label" >Public community (read-only)</label>
-	    <div class="col-sm-8">
+            <div class="col-sm-8">
               <input class="form-control" type="text" ng-model="system.community.public" />
-	    </div>
+            </div>
           </div>
-	  
+
           <div class="form-group">
             <label class="col-sm-4 control-label">Private community (read-write)</label>
-	    <div class="col-sm-8">
+            <div class="col-sm-8">
               <input class="form-control" type="text" ng-model="system.community.restricted" />
-	    </div>
+            </div>
           </div>
-	  
-	  <div class="form-group">
-	    <div class="col-sm-offset-9 col-sm-3">
-	      <button type="submit" class="btn btn-primary">Apply</button>
-	    </div>
-	  </div>
-	</form>
+
+          <div class="form-group">
+            <div class="col-sm-offset-9 col-sm-3">
+              <button type="submit" class="btn btn-primary">Apply</button>
+            </div>
+          </div>
+        </form>
       </div>
-      
+
       <div class="block" ng-if="system.protocol['snmpv3']">
-	<h4>SNMPv3 Security</h4>
-	
-	<form name="usm" role="form" class="form-horizontal" ng-submit="system.usmSave()">
-	  <div class="form-group">
-	    <label class="col-sm-4 control-label">Security Name</label>
-	    <div class="col-sm-8">
-	      <input class="form-control" type="text" disabled ng-value="system.usm.username"></input>
-	    </div>
-	  </div>
-	  
-	  <div class="form-group">
-	    <label class="col-sm-4 control-label">Security Context</label>
-	    <div class="col-sm-8">
-	      <input class="form-control" type="text" disabled ng-value="system.usm.engine"></input>
-	    </div>
-	  </div>
-	  
-	  <div class="form-group">
-	    <label class="col-sm-4 control-label">Security level</label>
-	    <div class="col-sm-8">
-	      <label class="radio-inline">
-		<input type="radio" ng-model="system.usm.level" value="noauthnopriv"/>NoAuthNoPriv
-	      </label>
-	      <label class="radio-inline">
-		<input type="radio" ng-model="system.usm.level" value="authnopriv" />AuthNoPriv
-	      </label>
-	      <label class="radio-inline">
-		<input type="radio" ng-model="system.usm.level" value="authpriv" />AuthPriv
-	      </label>
-	    </div>
-	  </div>
-	  
-	  <div class="form-group" ng-if="system.usm.level != 'noauthnopriv'">
-	    <label class="col-sm-4 control-label">Authentication Protocol</label>
-	    <div class="col-sm-8">
-	      <label class="radio-inline">
-		<input type="radio" ng-model="system.usm.auth" value="usmHMACMD5AuthProtocol"/>MD5
-	      </label>
-	      <label class="radio-inline">
-		<input type="radio" ng-model="system.usm.auth" value="usmHMACSHAAuthProtocol" />SHA
-	      </label>
-	    </div>
-	  </div>
-	  
-	  <div class="form-group" ng-if="system.usm.level != 'noauthnopriv'">
-	    <label class="col-sm-4 control-label">Authentication Key (passphrase)</label>
-	    <div class="col-sm-8">
-	      <input class="form-control" name="authKey" type="input"
-		     autocomplete="off" ng-model="system.usm.authKey" />
-	    </div>
-	  </div>
-	  
-	  <div class="form-group" ng-if="system.usm.level == 'authpriv'">
-	    <label class="col-sm-4 control-label">Privacy Protocol</label>
-	    <div class="col-sm-8">
-	      <label class="radio-inline">
-		<input type="radio" ng-model="system.usm.priv" value="usmAesCfb128Protocol" />AES
-	      </label>
-	      <label class="radio-inline">
-		<input type="radio" ng-model="system.usm.priv" value="usmDESPrivProtocol" />DES
-	      </label>
-	    </div>
-	  </div>
-	  
-	  <div class="form-group" ng-if="system.usm.level == 'authpriv'">
-	    <label class="col-sm-4 control-label">Private Key (passphrase)</label>
-	    <div class="col-sm-8">
-	      <input class="form-control" type="input" autocomplete="off" ng-model="system.usm.privKey" />
-	    </div>
-	  </div>
-	  
-	  <div class="form-group">
-	    <div class="col-sm-offset-9 col-sm-3">
-	      <button type="submit" class="btn btn-primary">Apply</button>
-	    </div>
-	  </div>
-	</form>
+        <h4>SNMPv3 Security</h4>
+
+        <form name="usm" role="form" class="form-horizontal" ng-submit="system.usmSave()">
+          <div class="form-group">
+            <label class="col-sm-4 control-label">Security Name</label>
+            <div class="col-sm-8">
+              <input class="form-control" type="text" disabled ng-value="system.usm.username"></input>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-sm-4 control-label">Security Context</label>
+            <div class="col-sm-8">
+              <input class="form-control" type="text" disabled ng-value="system.usm.engine"></input>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-sm-4 control-label">Security level</label>
+            <div class="col-sm-8">
+              <label class="radio-inline">
+                <input type="radio" ng-model="system.usm.level" value="noauthnopriv"/>NoAuthNoPriv
+              </label>
+              <label class="radio-inline">
+                <input type="radio" ng-model="system.usm.level" value="authnopriv" />AuthNoPriv
+              </label>
+              <label class="radio-inline">
+                <input type="radio" ng-model="system.usm.level" value="authpriv" />AuthPriv
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group" ng-if="system.usm.level != 'noauthnopriv'">
+            <label class="col-sm-4 control-label">Authentication Protocol</label>
+            <div class="col-sm-8">
+              <label class="radio-inline">
+                <input type="radio" ng-model="system.usm.auth" value="usmHMACMD5AuthProtocol"/>MD5
+              </label>
+              <label class="radio-inline">
+                <input type="radio" ng-model="system.usm.auth" value="usmHMACSHAAuthProtocol" />SHA
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group" ng-if="system.usm.level != 'noauthnopriv'">
+            <label class="col-sm-4 control-label">Authentication Key (passphrase)</label>
+            <div class="col-sm-8">
+              <input class="form-control" name="authKey" type="input"
+                                                         autocomplete="off" ng-model="system.usm.authKey" />
+            </div>
+          </div>
+
+          <div class="form-group" ng-if="system.usm.level == 'authpriv'">
+            <label class="col-sm-4 control-label">Privacy Protocol</label>
+            <div class="col-sm-8">
+              <label class="radio-inline">
+                <input type="radio" ng-model="system.usm.priv" value="usmAesCfb128Protocol" />AES
+              </label>
+              <label class="radio-inline">
+                <input type="radio" ng-model="system.usm.priv" value="usmDESPrivProtocol" />DES
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group" ng-if="system.usm.level == 'authpriv'">
+            <label class="col-sm-4 control-label">Private Key (passphrase)</label>
+            <div class="col-sm-8">
+              <input class="form-control" type="input" autocomplete="off" ng-model="system.usm.privKey" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="col-sm-offset-9 col-sm-3">
+              <button type="submit" class="btn btn-primary">Apply</button>
+            </div>
+          </div>
+        </form>
       </div>
     </div>
-    
+
     <div class="block">
       <div class="row">
         <div class="col-sm-6">
@@ -382,7 +382,7 @@
         </div>
       </div>
     </div>
-    
+
   </div>
-  
+
 </div>
