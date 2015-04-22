@@ -64,27 +64,4 @@ angular.module('bkfwApp.directives', [])
     }]
 
   };
-}])
-
-.directive('usbSwitch', ['dialogs', function(dialogs) {
-  return {
-    priority: -1,
-    restrict: 'A',
-    require: 'ngModel',
-    link: function(scope, element, attrs, ngModelCtrl) {
-      element.bind('click', function(e) {
-        var message = "Are you sure you want to ";
-        if (ngModelCtrl.$modelValue) {
-          message += "enable USB mode ?";
-        } else {
-          message += "disable USB mode ?";
-        }
-        if (message && !confirm(message)) {
-          ngModelCtrl.$setModelValue(!ngModelCtrl.$modelValue);
-          e.stopImmediatePropagation();
-          e.preventDefault();
-        }
-      });
-    }
-  };
 }]);

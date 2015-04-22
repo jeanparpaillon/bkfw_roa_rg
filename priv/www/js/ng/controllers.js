@@ -2,7 +2,7 @@
 
 'use strict';
 
-angular.module('bkfwApp.controllers', [])
+angular.module('bkfwApp.controllers', ['uiSwitch'])
 
 .controller('globalCtrl', ['$scope', '$state', 'AUTH_EVENTS', 'mcu', 'session', 'edfa', function($scope, $state, AUTH_EVENTS, mcu, session, edfa) {
 
@@ -38,29 +38,29 @@ angular.module('bkfwApp.controllers', [])
 
   $scope.$watch(
     function() {
-    return mcu.get($stateParams.mcuIndex);
-  },
-  angular.bind(this, function(newVal) {
-    if (newVal) {
-      this.detail = newVal;
-      // setup initial values
-      if (this.controlMode === null) {
-        this.controlMode = this.detail.operatingMode.toString();
-        console.debug("Current control mode is " + this.controlMode);
-      }
-      if (this.controlValue === null) {
-        this.controlValue = mcu.getControlValue(this.detail, this.controlMode);
-        console.debug("Control value is " + this.controlValue);
-      }
+      return mcu.get($stateParams.mcuIndex);
+    },
+    angular.bind(this, function(newVal) {
+      if (newVal) {
+        this.detail = newVal;
+        // setup initial values
+        if (this.controlMode === null) {
+          this.controlMode = this.detail.operatingMode.toString();
+          console.debug("Current control mode is " + this.controlMode);
+        }
+        if (this.controlValue === null) {
+          this.controlValue = mcu.getControlValue(this.detail, this.controlMode);
+          console.debug("Control value is " + this.controlValue);
+        }
 
-      if (this.inputLossThreshold === null) {
-        this.inputLossThreshold = this.detail.inputLossThreshold;
+        if (this.inputLossThreshold === null) {
+          this.inputLossThreshold = this.detail.inputLossThreshold;
+        }
+        if (this.outputLossThreshold === null) {
+          this.outputLossThreshold = this.detail.outputLossThreshold;
+        }
       }
-      if (this.outputLossThreshold === null) {
-        this.outputLossThreshold = this.detail.outputLossThreshold;
-      }
-    }
-  })
+    })
   );
 
   this.updateControlValue = function() {
@@ -78,7 +78,8 @@ angular.module('bkfwApp.controllers', [])
             dialogs.success("Thresholds set on all amps");
           }));
       }));
-    } else {
+    }
+    else {
       dialogs.confirm("Confirm setting thresholds:")
 
       .then(angular.bind(this, function() {
@@ -109,7 +110,8 @@ angular.module('bkfwApp.controllers', [])
         }));
       }));
 
-    } else {
+    }
+    else {
       dialogs.confirm("Confirm setting operating mode:")
 
       .then(angular.bind(this, function() {
@@ -284,7 +286,43 @@ angular.module('bkfwApp.controllers', [])
 
   };
 
-  this.usbmode = sys.usb.get();
+  this.usbmode = false;
+  this._usbmode = sys.usb.get(null, angular.bind(this, function() {
+    // get actual value
+    this.usbmode = this._usbmode.enable;
+  }));
+
+  $scope.$watch(
+    angular.bind(this, function() {
+      return this.usbmode;
+    }),
+    angular.bind(this, function(newVal, oldVal) {
+      if (newVal == oldVal || newVal == this._usbmode.enable)
+        return;
+
+      var message = "Are you sure you want to ";
+      var body = null;
+      if (newVal) {
+        message += "enable USB mode ?";
+        body = "Enabling USB mode will temporary disable SNMP alarms and monitoring";
+      }
+      else {
+        message += "disable USB mode ?";
+      }
+
+      dialogs.confirm(message, body)
+      .then(
+        angular.bind(this, function() {
+          this._usbmode.enable = newVal;
+          this._usbmode.$save();
+        }),
+        angular.bind(this, function() {
+          this.usbmode = oldVal;
+        })
+      );
+    }),
+    true
+  );
 
 }])
 

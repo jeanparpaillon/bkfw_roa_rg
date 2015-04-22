@@ -139,7 +139,7 @@ div.checkbox label {
 .bs-callout .highlight {
   background-color: #fff;
 }
- 
+
 /* Themes for different contexts */
 .bs-callout-danger {
   background-color: #fcf2f2;
@@ -152,4 +152,30 @@ div.checkbox label {
 .bs-callout-info {
   background-color: #f0f7fd;
   border-color: #d0e3f0;
+}
+
+.switch {
+  width: 65px;
+  border-color: #ccc;
+  border-radius: 3px;
+}
+
+.switch small {
+  border-radius: 3px;
+  box-shadow: none;
+  background: #eee;
+}
+
+.switch .off {
+  color: #444;
+  right: 13%;
+}
+
+.switch .on {
+  left: 13%;
+}
+
+.switch.checked small {
+  left: 35px;
+  background: white;
 }
