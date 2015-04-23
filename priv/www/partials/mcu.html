@@ -121,57 +121,82 @@
         Loading...
         </p>
 
-        <form role="form" class="container-fluid"
+        <form role="form" class="form-horizontal"
           ng-submit="mcu.setOperatingMode()" ng-show="mcu.controlMode"
           usb-disabled>
 
-          <div class="row">
-            <label class="col-md-4" >Operating mode</label>
-            <select ng-model="mcu.controlMode"
-                    ng-change="mcu.updateControlValue()" class="col-md-8"
-                                                         ng-options="id as mode.name for (id, mode) in mcu.modeID">
-            </select>
-          </div>
-
-          <div class="row" ng-if="mcu.controlMode != mcu.mode.OFF">
-            <label class="col-md-4" >Value in {{ mcu.modeID[mcu.controlMode].valueType }}</label>
-            <input type="text" ng-model="mcu.controlValue" class="col-md-8" />
-          </div>
-
-          <div class="row">
-            <div class="col-md-4">
-              <button type="submit" class="btn btn-primary">Set</button>
+          <div class="form-group">
+            <label class="col-md-4 control-label">Operating mode</label>
+            <div class="col-md-8">
+              <select ng-model="mcu.controlMode"
+                      ng-change="mcu.updateControlValue()"
+                      class="form-control"
+                      ng-options="id as mode.name for (id, mode) in
+                      mcu.modeID">
+              </select>
             </div>
-            <div class="col-md-8" >
-              <input id="applyAllControl" type="checkbox" ng-model="mcu.applyAllControl" />
-              <label for="applyAllControl" >Apply to all amps</label>
+          </div>
+
+          <div class="form-group" ng-if="mcu.controlMode != mcu.mode.OFF">
+            <label class="col-md-4 control-label" >Value in {{ mcu.modeID[mcu.controlMode].valueType }}</label>
+            <div class="col-md-8">
+              <input type="text" ng-model="mcu.controlValue"
+                class="form-control" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="col-md-offset-4 col-md-8">
+              <label>
+                <input type="checkbox" ng-model="mcu.applyAllControl" />
+                Apply to all amps
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="col-md-offset-4 col-md-8">
+              <button type="submit" class="btn btn-primary">Set</button>
             </div>
           </div>
         </form>
 
         <h2>Alarm Settings</h2>
 
-        <form role="form" class="container-fluid"
+        <form role="form" class="form-horizontal"
           ng-submit="mcu.setThresholds()" usb-disabled>
-          <div class="row" >
-            <label class="col-md-4" >Loss of input power threshold (dBm)</label>
-            <input type="text" ng-model="mcu.inputLossThreshold" class="col-md-8" />
+
+          <div class="form-group">
+            <label class="col-md-4 control-label">Loss of input power threshold (dBm)</label>
+            <div class="col-md-8">
+              <input type="text" ng-model="mcu.inputLossThreshold"
+              class="form-control" />
+            </div>
           </div>
 
-            <div class="row" >
-              <label class="col-md-4" >Loss of output power threshold (dBm)</label>
-              <input type="text" ng-model="mcu.outputLossThreshold" class="col-md-8" />
+          <div class="form-group">
+            <label class="col-md-4 control-label">Loss of output power threshold (dBm)</label>
+            <div class="col-md-8">
+              <input type="text" ng-model="mcu.outputLossThreshold"
+              class="form-control" />
             </div>
+          </div>
 
-              <div class="row">
-                <div class="col-md-4">
-                  <button type="submit" class="btn btn-primary">Set</button>
-                </div>
-                <div class="col-md-8" >
-                  <input id="applyAllThreshold" type="checkbox" ng-model="mcu.applyAllThreshold" />
-                  <label for="applyAllThreshold" >Apply to all amps</label>
-                </div>
-              </div>
+          <div class="form-group">
+            <div class="col-md-offset-4 col-md-8">
+              <label>
+                <input type="checkbox" ng-model="mcu.applyAllThreshold" />
+                Apply to all amps
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="col-md-offset-4 col-md-8">
+              <button type="submit" class="btn btn-primary">Set</button>
+            </div>
+          </div>
+
         </form>
       </div>
     </div>
