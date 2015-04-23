@@ -391,6 +391,34 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
 
 }])
 
+.factory('usbMode', ['$rootScope', 'sys', function($rootScope, sys) {
+
+  return {
+
+    _usb: sys.usb.get(),
+
+    get state() {
+      return this._usb.enable;
+    },
+
+    enable: function() {
+      this._usb.enable = true;
+      this._usb.$save(function() {
+        $rootScope.$broadcast('usb-mode-enabled');
+      });
+    },
+
+    disable: function() {
+      this._usb.enable = false;
+      this._usb.$save(function() {
+        $rootScope.$broadcast('usb-mode-disabled');
+      });
+    }
+
+  };
+
+}])
+
 .factory('mcu', ['$resource', '$http', '$timeout', 'poll', 'alarms', function($resource, $http, $timeout, poll, alarms) {
 
   return {

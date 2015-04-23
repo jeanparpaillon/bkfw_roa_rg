@@ -64,4 +64,31 @@ angular.module('bkfwApp.directives', [])
     }]
 
   };
+}])
+
+.directive('usbDisabled', ['usbMode', function(usbMode) {
+
+  return {
+
+    restrict: 'A',
+
+    link: function(scope, element, attrs) {
+
+      var toggleElems = function() {
+        var attrVal = "";
+        if (usbMode.state === true) {
+          attrVal = "disabled";
+        }
+        element.find('select').attr('disabled', attrVal);
+        element.find('input').attr('disabled', attrVal);
+        element.find('button').attr('disabled', attrVal);
+      };
+
+      scope.$on('usb-mode-enabled', toggleElems);
+      scope.$on('usb-mode-disabled', toggleElems);
+      toggleElems();
+    }
+
+  };
+
 }]);

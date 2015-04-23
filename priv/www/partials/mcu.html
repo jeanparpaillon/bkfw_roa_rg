@@ -17,94 +17,94 @@
               <tr>
                 <td>{{ mcu.label.operatingMode }}</td>
                 <td>{{ mcu.detail.operatingMode | mcuMode }}</td>
-		<td></td>
+                <td></td>
               </tr>
               <tr>
                 <td>{{ mcu.label.ampConsign }}</td>
                 <td>{{ mcu.detail.ampConsign }}</td>
-		<td>mA</td>
+                <td>mA</td>
               </tr>
               <tr>
                 <td>{{ mcu.label.gainConsign }}</td>
                 <td>{{ mcu.detail.gainConsign }}</td>
-		<td>dB</td>
+                <td>dB</td>
               </tr>
               <tr>
                 <td>{{ mcu.label.outputPowerConsign }}</td>
                 <td>{{ mcu.detail.outputPowerConsign }}</td>
-		<td>dBm</td>
+                <td>dBm</td>
               </tr>
               <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('curLaserTemp')}">
                 <td>{{ mcu.label.curLaserTemp }}</td>
                 <td>
                   <span
-                    ng-show="mcu.detail.hasAlarmOn('curLaserTemp')"
-                    class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
-                    aria-hidden="true">
+                  ng-show="mcu.detail.hasAlarmOn('curLaserTemp')"
+                  class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
+                  aria-hidden="true">
                   </span>
                   {{ mcu.detail.curLaserTemp | numeraljs:'0.00' }}
                 </td>
-		<td>&deg;C</td>
+                <td>&deg;C</td>
               </tr>
               <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('curAmp')}">
                 <td>{{ mcu.label.curAmp }}</td>
                 <td>
                   <span
-                    ng-show="mcu.detail.hasAlarmOn('curAmp')"
-                    class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
-                    aria-hidden="true">
+                  ng-show="mcu.detail.hasAlarmOn('curAmp')"
+                  class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
+                  aria-hidden="true">
                   </span>
                   {{ mcu.detail.curAmp | numeraljs:'0.00' }}
                 </td>
-		<td>mA</td>
+                <td>mA</td>
               </tr>
               <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('curInternalAmp')}">
                 <td>{{ mcu.label.curInternalAmp }}</td>
                 <td>
                   <span
-                    ng-show="mcu.detail.hasAlarmOn('curInternalTemp')"
-                    class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
-                    aria-hidden="true">
+                  ng-show="mcu.detail.hasAlarmOn('curInternalTemp')"
+                  class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
+                  aria-hidden="true">
                   </span>
                   {{ mcu.detail.curInternalAmp | numeraljs:'0.00' }}
                 </td>
-		<td>&deg;C</td>
+                <td>&deg;C</td>
               </tr>
               <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('powerInput')}">
                 <td>{{ mcu.label.powerInput }}</td>
                 <td>
                   <span
-                    ng-show="mcu.detail.hasAlarmOn('powerInput')"
-                    class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
-                    aria-hidden="true">
+                  ng-show="mcu.detail.hasAlarmOn('powerInput')"
+                  class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
+                  aria-hidden="true">
                   </span>
                   {{ mcu.detail.powerInput | numeraljs:'0.00' }}
                 </td>
-		<td>dBm</td>
+                <td>dBm</td>
               </tr>
               <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('powerOutput')}">
                 <td>{{ mcu.label.powerOutput }}</td>
                 <td>
                   <span
-                    ng-show="mcu.detail.hasAlarmOn('powerOutput')"
-                    class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
-                    aria-hidden="true">
+                  ng-show="mcu.detail.hasAlarmOn('powerOutput')"
+                  class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
+                  aria-hidden="true">
                   </span>
                   {{ mcu.detail.powerOutput | numeraljs:'0.00'}}
                 </td>
-		<td>dBm</td>
+                <td>dBm</td>
               </tr>
               <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('powerSupply')}">
                 <td>{{ mcu.label.powerSupply }}</td>
                 <td>
                   <span
-                    ng-show="mcu.detail.hasAlarmOn('powerSupply')"
-                    class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
-                    aria-hidden="true">
+                  ng-show="mcu.detail.hasAlarmOn('powerSupply')"
+                  class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
+                  aria-hidden="true">
                   </span>
                   {{ mcu.detail.powerSupply | numeraljs:'0.00' }}
                 </td>
-		<td>V</td>
+                <td>V</td>
               </tr>
             </tbody>
           </table>
@@ -118,16 +118,18 @@
         <h2>Operating Mode</h2>
 
         <p class="alert alert-info" ng-hide="mcu.controlMode">
-          Loading...
+        Loading...
         </p>
 
-        <form role="form" class="container-fluid" ng-submit="mcu.setOperatingMode()" ng-show="mcu.controlMode">
+        <form role="form" class="container-fluid"
+          ng-submit="mcu.setOperatingMode()" ng-show="mcu.controlMode"
+          usb-disabled>
 
           <div class="row">
             <label class="col-md-4" >Operating mode</label>
             <select ng-model="mcu.controlMode"
                     ng-change="mcu.updateControlValue()" class="col-md-8"
-                    ng-options="id as mode.name for (id, mode) in mcu.modeID">
+                                                         ng-options="id as mode.name for (id, mode) in mcu.modeID">
             </select>
           </div>
 
@@ -136,39 +138,40 @@
             <input type="text" ng-model="mcu.controlValue" class="col-md-8" />
           </div>
 
-	  <div class="row">
-	    <div class="col-md-4">
+          <div class="row">
+            <div class="col-md-4">
               <button type="submit" class="btn btn-primary">Set</button>
-	    </div>
-	    <div class="col-md-8" >
-	      <input id="applyAllControl" type="checkbox" ng-model="mcu.applyAllControl" />
-	      <label for="applyAllControl" >Apply to all amps</label>
-	    </div>
-	  </div>
-	</form>
+            </div>
+            <div class="col-md-8" >
+              <input id="applyAllControl" type="checkbox" ng-model="mcu.applyAllControl" />
+              <label for="applyAllControl" >Apply to all amps</label>
+            </div>
+          </div>
+        </form>
 
-	<h2>Alarm Settings</h2>
-	
-	<form role="form" class="container-fluid" ng-submit="mcu.setThresholds()" >
+        <h2>Alarm Settings</h2>
+
+        <form role="form" class="container-fluid"
+          ng-submit="mcu.setThresholds()" usb-disabled>
           <div class="row" >
             <label class="col-md-4" >Loss of input power threshold (dBm)</label>
             <input type="text" ng-model="mcu.inputLossThreshold" class="col-md-8" />
-          </div>	  
+          </div>
 
-          <div class="row" >
-            <label class="col-md-4" >Loss of output power threshold (dBm)</label>
-            <input type="text" ng-model="mcu.outputLossThreshold" class="col-md-8" />
-          </div>	  
+            <div class="row" >
+              <label class="col-md-4" >Loss of output power threshold (dBm)</label>
+              <input type="text" ng-model="mcu.outputLossThreshold" class="col-md-8" />
+            </div>
 
-	  <div class="row">
-	    <div class="col-md-4">
-              <button type="submit" class="btn btn-primary">Set</button>
-	    </div>
-	    <div class="col-md-8" >
-	      <input id="applyAllThreshold" type="checkbox" ng-model="mcu.applyAllThreshold" />
-	      <label for="applyAllThreshold" >Apply to all amps</label>
-	    </div>
-	  </div>
+              <div class="row">
+                <div class="col-md-4">
+                  <button type="submit" class="btn btn-primary">Set</button>
+                </div>
+                <div class="col-md-8" >
+                  <input id="applyAllThreshold" type="checkbox" ng-model="mcu.applyAllThreshold" />
+                  <label for="applyAllThreshold" >Apply to all amps</label>
+                </div>
+              </div>
         </form>
       </div>
     </div>
@@ -245,4 +248,4 @@
 
     </div> <!-- row -->
 
-</div>
+  </div>

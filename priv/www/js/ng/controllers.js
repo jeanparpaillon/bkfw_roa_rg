@@ -137,7 +137,7 @@ angular.module('bkfwApp.controllers', ['uiSwitch'])
   };
 }])
 
-.controller('systemCtrl', ['$q', '$http', '$timeout', '$state', 'sys', 'auth', 'uploaders', 'dialogs', 'edfa', 'apiErrorsConfig', '$scope', function($q, $http, $timeout, $state, sys, auth, uploaders, dialogs, edfa, apiErrorsConfig, $scope) {
+.controller('systemCtrl', ['$q', '$http', '$timeout', '$state', 'sys', 'usbMode', 'auth', 'uploaders', 'dialogs', 'edfa', 'apiErrorsConfig', '$scope', function($q, $http, $timeout, $state, sys, usbMode, auth, uploaders, dialogs, edfa, apiErrorsConfig, $scope) {
 
   function getError(response) {
   }
@@ -286,18 +286,14 @@ angular.module('bkfwApp.controllers', ['uiSwitch'])
 
   };
 
-  this.usbmode = false;
-  this._usbmode = sys.usb.get(null, angular.bind(this, function() {
-    // get actual value
-    this.usbmode = this._usbmode.enable;
-  }));
+  this.usbmode = usbMode.state;
 
   $scope.$watch(
     angular.bind(this, function() {
       return this.usbmode;
     }),
     angular.bind(this, function(newVal, oldVal) {
-      if (newVal == oldVal || newVal == this._usbmode.enable)
+      if (newVal == oldVal || newVal == usbMode.state)
         return;
 
       var message = "Are you sure you want to ";
@@ -311,11 +307,12 @@ angular.module('bkfwApp.controllers', ['uiSwitch'])
       }
 
       dialogs.confirm(message, body)
-      .then(
-        angular.bind(this, function() {
-          this._usbmode.enable = newVal;
-          this._usbmode.$save();
-        }),
+      .then(function() {
+        if (newVal === true)
+          usbMode.enable();
+        else if (newVal === false)
+          usbMode.disable();
+        },
         angular.bind(this, function() {
           this.usbmode = oldVal;
         })
