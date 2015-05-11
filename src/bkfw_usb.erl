@@ -5,20 +5,20 @@
 
 % API
 -export([start_link/0,
-	 get_status/0,
-	 set_status/1]).
+		 get_status/0,
+		 set_status/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-	terminate/2, code_change/3]).
+		 terminate/2, code_change/3]).
 
 -define(FSM, ?MODULE).
 -define(TIMEOUT, 1000).
 
 -record(state, {
-	  com,
-	  enable = false   :: boolean()
-	 }).
+		  com,
+		  enable = false   :: boolean()
+		 }).
 
 %%%
 %%% API
@@ -44,11 +44,11 @@ set_status(Enable) ->
 init(_) ->
     ?info("Starting USB monitor", []),
     case bkfw_com:start_link(application:get_env(bkfw, usbtty, undefined)) of
-	{ok, Com} ->
-	    {ok, #state{com=Com}};
-	{error, Err} -> 
-	    ?error("Error starting USB-serial port: ~p", [Err]),
-	    {stop, Err}
+		{ok, Com} ->
+			{ok, #state{com=Com}};
+		{error, Err} -> 
+			?error("Error starting USB-serial port: ~p", [Err]),
+			{stop, Err}
     end.
 
 handle_call(get_status, _From, S) ->
