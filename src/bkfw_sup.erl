@@ -82,7 +82,12 @@ start_or_restart(Spec = {Id, _, _, _, _, _}) ->
 		ok ->
 			ok;
 		{error, not_found} -> 
-			supervisor:start_child(?SRV, Spec);
+			case supervisor:start_child(?SRV, Spec) of
+				{ok, _Pid} ->
+					ok;
+				{error, Err2} ->
+					{error, Err2}
+			end;
 		{error, Err} -> 
 			{error, Err}
     end.
