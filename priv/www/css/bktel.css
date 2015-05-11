@@ -52,6 +52,10 @@ h1.page-header {
   margin-bottom: 30px;
 }
 
+.block-disabled {
+  opacity: 0.5;
+}
+
 .block h2 {
   font-size: 20px;
 }

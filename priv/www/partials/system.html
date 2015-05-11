@@ -33,6 +33,8 @@
 
         <button type="submit" class="btn btn-primary">Apply</button>
       </form>
+
+      <usb-alert />
     </div>
 
     <div class="block">
@@ -153,6 +155,7 @@
         </div>
       </form>
       <!-- END: Units microcode -->
+      <usb-alert />
     </div>
 
     <div class="block">
@@ -174,8 +177,8 @@
 
         <button type="submit" class="btn btn-primary">Apply</button>
       </form>
+      <usb-alert />
     </div>
-
   </div>
 
   <div class="col-md-6">
@@ -200,10 +203,10 @@
     <div class="block">
       <h2>Security</h2>
 
-      <div class="block">
+      <div class="block" usb-disabled>
         <h4>HTTP security</h4>
 
-        <form name="security" role="form" class="form-horizontal" ng-submit="system.securitySave()" usb-disabled>
+        <form name="security" role="form" class="form-horizontal" ng-submit="system.securitySave()">
 
           <div class="form-group">
             <label class="col-sm-4 control-label" >Login</label>
@@ -237,9 +240,9 @@
         </form>
       </div>
 
-      <div class="block">
+      <div class="block" usb-disabled>
         <h4>Enabled protocols</h4>
-        <form name="protocol" class="form-horizontal" role="form" ng-submit="system.protocolSave()" usb-disabled>
+        <form name="protocol" class="form-horizontal" role="form" ng-submit="system.protocolSave()">
           <div class="form-group">
             <div class="col-sm-12">
               <label class="checkbox-inline">
@@ -261,10 +264,10 @@
         </form>
       </div>
 
-      <div class="block" ng-if="system.protocol['snmpv1'] || system.protocol['snmpv2']">
+      <div class="block" ng-if="system.protocol['snmpv1'] || system.protocol['snmpv2']" usb-disabled>
         <h4>SNMP v1/v2c security </h4>
 
-        <form name="community" role="form" class="form-horizontal" ng-submit="system.communitySave()" usb-disabled>
+        <form name="community" role="form" class="form-horizontal" ng-submit="system.communitySave()">
 
           <div class="form-group">
             <label class="col-sm-4 control-label" >Public community (read-only)</label>
@@ -288,10 +291,10 @@
         </form>
       </div>
 
-      <div class="block" ng-if="system.protocol['snmpv3']">
+      <div class="block" ng-if="system.protocol['snmpv3']" usb-disabled>
         <h4>SNMPv3 Security</h4>
 
-        <form name="usm" role="form" class="form-horizontal" ng-submit="system.usmSave()" usb-disabled>
+        <form name="usm" role="form" class="form-horizontal" ng-submit="system.usmSave()">
           <div class="form-group">
             <label class="col-sm-4 control-label">Security Name</label>
             <div class="col-sm-8">
@@ -367,23 +370,24 @@
           </div>
         </form>
       </div>
+      <usb-alert />
     </div>
 
-    <div class="block" usb-disabled>
+    <div class="block">
       <div class="row">
         <div class="col-sm-6">
           <br />
-          <button type="button" class="btn btn-warning btn-block" ng-click="system.reset()">Reset to factory defaults</button>
+          <button type="button" class="btn btn-warning btn-block" ng-click="system.reset()" usb-disabled>Reset to factory defaults</button>
           <br />
         </div>
         <div class="col-sm-6">
           <br />
-          <button type="button" class="btn btn-warning btn-block" ng-click="system.reboot()">Reboot</button>
+          <button type="button" class="btn btn-warning btn-block" ng-click="system.reboot()" usb-disabled>Reboot</button>
           <br />
         </div>
       </div>
+      <usb-alert />
     </div>
-
   </div>
 
 </div>

@@ -78,6 +78,10 @@ angular.module('bkfwApp.directives', [])
         var attrVal = "";
         if (usbMode.state === true) {
           attrVal = "disabled";
+          element.addClass('block-disabled');
+        }
+        else {
+          element.removeClass('block-disabled');
         }
         element.find('select').attr('disabled', attrVal);
         element.find('input').attr('disabled', attrVal);
@@ -87,6 +91,31 @@ angular.module('bkfwApp.directives', [])
       scope.$on('usb-mode-enabled', toggleElems);
       scope.$on('usb-mode-disabled', toggleElems);
       toggleElems();
+    }
+
+  };
+
+}])
+
+.directive('usbAlert', ['usbMode', function(usbMode) {
+
+  return {
+
+    restrict: 'E',
+
+    template: '<p ng-show="show" class="bs-callout bs-callout-danger">Not available in USB mode.</p>',
+
+    controller: function($scope) {
+
+      $scope.show = usbMode.state;
+
+      $scope.$on('usb-mode-enabled', function() {
+        $scope.show = true;
+      });
+      $scope.$on('usb-mode-disabled', function() {
+        $scope.show = false;
+      });
+
     }
 
   };
