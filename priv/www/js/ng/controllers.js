@@ -293,6 +293,8 @@ angular.module('bkfwApp.controllers', ['uiSwitch'])
       return this.usbmode;
     }),
     angular.bind(this, function(newVal, oldVal) {
+			//console.log("switch usb mode: newVal=" + newVal + " oldVal=" + oldVal + " usbMode.state=" + usbMode.state);
+			
       if (newVal == oldVal || newVal == usbMode.state)
         return;
 

@@ -53,9 +53,9 @@ init(_) ->
 
 handle_call(get_status, _From, S) ->
     {reply, S#state.enable, S};
-handle_call({set_status, Enable}, _From, S) ->
-    ?debug("Set USB Mode to : ~p", [Enable]),
-    {reply, ok, S#state{enable=Enable}};
+handle_call({set_status, true}, _From, S) ->
+    ?debug("Set USB Mode to : true", []),
+    {reply, ok, S#state{enable=true}};
 handle_call(_Call, _From, S) ->
     {reply, ok, S}.
 

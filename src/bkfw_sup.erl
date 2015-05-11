@@ -6,6 +6,8 @@
 
 %% API
 -export([start_link/0,
+	 get_usbmode/0,
+	 set_usbmode/1,
 	 restart/0]).
 
 %% Supervisor callbacks
@@ -31,6 +33,35 @@ restart() ->
 			  try supervisor:restart_child(Child) catch _:_ -> exit(Child, kill) end
 		  end, supervisor:which_children(?SRV)).
 
+-spec get_usbmode() -> boolean().
+get_usbmode() ->
+    F = fun F0([]) -> false;
+	    F0([{bkfw_usb, undefined, _, _} | _]) -> false;
+	    F0([{bkfw_usb, Pid, _, _ } | _]) when is_pid(Pid) -> true;
+	    F0([_ | Tail]) -> F0(Tail)
+	end,
+    F(supervisor:which_children(?SRV)).
+
+-define(NON_USB_CHILDREN, [bkfw_mutex, bkfw_alarms, bkfw_srv, bkfw_edfa]).
+
+-spec set_usbmode(boolean()) -> ok.
+set_usbmode(false) ->
+    case supervisor:terminate_child(?SRV, bkfw_usb) of
+		ok -> 
+			lists:foreach(fun (Id) -> 
+								  supervisor:restart_child(?SRV, Id)  end, 
+						  ?NON_USB_CHILDREN);
+		{error, not_found} -> ok;
+		{error, Err} -> throw(Err)
+    end;
+
+set_usbmode(true) ->
+    lists:foreach(fun (Id) -> 
+						  spawn(fun () -> supervisor:terminate_child(?SRV, Id) end) 
+				  end,
+				  ?NON_USB_CHILDREN),
+	start_or_restart(?CHILD(bkfw_usb, worker)).
+
 %% ===================================================================
 %% Supervisor callbacks
 %% ===================================================================
@@ -44,9 +75,14 @@ init([]) ->
 		?CHILD(bkfw_edfa, worker),
 		bkfw_http:get_config()
 	       ],
-    C2 = case application:get_env(bkfw, usbtty, undefined) of
-	     undefined -> Children;
-	     [] -> Children;
-	     _ -> [?CHILD(bkfw_usb, worker) | Children]
-	 end,
-    {ok, { {one_for_one, 5, 10}, C2} }.
+    {ok, { {one_for_one, 5, 10}, Children} }.
+
+start_or_restart(Spec = {Id, _, _, _, _, _}) ->
+    case supervisor:restart_child(?SRV, Id) of
+		ok ->
+			ok;
+		{error, not_found} -> 
+			supervisor:start_child(?SRV, Spec);
+		{error, Err} -> 
+			{error, Err}
+    end.

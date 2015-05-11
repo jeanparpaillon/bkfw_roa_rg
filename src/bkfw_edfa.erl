@@ -261,7 +261,11 @@ handle_alarms([Name  | Tail], #state{curInternalTemp=IT, powerSupply=PS}=S) ->
 
 
 get_ets_value(Key, Default) ->
-    gen_server:call(?MODULE, {get_ets_value, Key, Default}).
+    try gen_server:call(?MODULE, {get_ets_value, Key, Default}) of
+		R -> R
+	catch exit:{noproc, _} ->
+			Default
+	end.
 
 loop([]) ->
     case mnesia:transaction(fun () -> mnesia:first(ampTable) end) of
