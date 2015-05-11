@@ -6,21 +6,21 @@
 -include("bkfw.hrl").
 
 -export([start_link/1,
-	 stop/1,
-	 send/3]).
+		 stop/1,
+		 send/3]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-	terminate/2, code_change/3]).
+		 terminate/2, code_change/3]).
 
 -define(TRACE, "/tmp/bkfw").
 -record(state, {owner                 :: pid(),
-		com                   :: term(),
-		port    = undefined   :: port(),
-		data    = <<>>        :: binary(),
-		msg     = undefined   :: msg(),
-		crlf,
-		trace}).
+				com                   :: term(),
+				port    = undefined   :: port(),
+				data    = <<>>        :: binary(),
+				msg     = undefined   :: msg(),
+				crlf,
+				trace}).
 
 %%%
 %%% API
@@ -61,20 +61,20 @@ init([]) ->
 init(Com) when is_list(Com) ->
     ?info("Opening com port: ~p", [Com]),
     Trace = case application:get_env(bkfw, debug, true) of
-		true -> 
-		    Tracepath = get_trace_path(0),
-		    {ok, Dev} = file:open(Tracepath, [append]),
-		    file:write(Dev, ["[COM] Reopening COM port\n"]),
-		    Dev;
-		false -> undefined
-	    end,
+				true -> 
+					Tracepath = get_trace_path(0),
+					{ok, Dev} = file:open(Tracepath, [append]),
+					file:write(Dev, ["[COM] Reopening COM port\n"]),
+					Dev;
+				false -> undefined
+			end,
     case cereal:open_tty(Com) of
-	{ok, Fd} ->
-	    Port = open_port({fd, Fd, Fd}, [binary, stream, {line, 80}]),
-	    {ok, #state{com=Fd, port=Port, trace=Trace, crlf=$\n}};
-	{error, Err} ->
-	    ?error("Error opening com port: ~p", [Err]),
-	    {stop, {error, Err}}
+		{ok, Fd} ->
+			Port = open_port({fd, Fd, Fd}, [binary, stream, {line, 80}]),
+			{ok, #state{com=Fd, port=Port, trace=Trace, crlf=$\n}};
+		{error, Err} ->
+			?error("Error opening com port: ~p", [Err]),
+			{stop, {error, Err}}
     end;
 init(_Args) ->
     ?error("Invalid args: ~p", [_Args]),
@@ -143,18 +143,18 @@ handle_info({Port, {data, {eol, Bin}}}, #state{port=Port, crlf=$\n, trace=Trace}
     {noreply, S#state{data=Bin, crlf=$\r}};
 
 handle_info({Port, {data, {eol, Bin}}}, #state{msg=Msg, owner=Owner, crlf=$\r,
-					       port=Port, data=Data, trace=Trace}=S) ->
+											   port=Port, data=Data, trace=Trace}=S) ->
     debug_com(Trace, ["[RPI <- CPU] ", Bin, "\n"]),
     case bkfw_parser:parse(<< Data/binary, Bin/binary, $\r, $\n >>, Msg) of
-	{ok, Msg2, Rest} ->
-	    debug_com(Trace, io_lib:format("[COM] Answer received: ~p ! ~p\n", [Owner, Msg2])),
-	    Owner ! {msg, Msg2},
-	    {noreply, S#state{owner=undefined, msg=undefined, data=Rest, crlf=$\n}};
-	{more, Msg2, Rest} ->
-	    {noreply, S#state{msg=Msg2, data=Rest, crlf=$\n}};
-	{error, Err, Rest} ->
-	    Owner ! {error, Err},
-	    {noreply, S#state{owner=undefined, msg=undefined, data=Rest, crlf=$\n}}
+		{ok, Msg2, Rest} ->
+			debug_com(Trace, io_lib:format("[COM] Answer received: ~p ! ~p\n", [Owner, Msg2])),
+			Owner ! {msg, Msg2},
+			{noreply, S#state{owner=undefined, msg=undefined, data=Rest, crlf=$\n}};
+		{more, Msg2, Rest} ->
+			{noreply, S#state{msg=Msg2, data=Rest, crlf=$\n}};
+		{error, Err, Rest} ->
+			Owner ! {error, Err},
+			{noreply, S#state{owner=undefined, msg=undefined, data=Rest, crlf=$\n}}
     end;
 
 handle_info(_Info, State) ->
@@ -174,8 +174,8 @@ handle_info(_Info, State) ->
 terminate(_Reason, #state{com=Fd, port=Port}=_S) ->
     Port ! {self(), close},
     receive
-	_ -> 
-	    cereal:close_tty(Fd)
+		_ -> 
+			cereal:close_tty(Fd)
     end.
 
 %%--------------------------------------------------------------------
@@ -202,6 +202,6 @@ debug_com(Dev, Bytes) ->
 get_trace_path(I) ->
     Filename = io_lib:format("~s-~b.trace", [?TRACE, I]),
     case filelib:is_file(Filename) of
-	true -> get_trace_path(I+1);
-	false -> Filename
+		true -> get_trace_path(I+1);
+		false -> Filename
     end.
