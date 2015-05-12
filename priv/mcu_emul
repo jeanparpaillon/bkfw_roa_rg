@@ -15,45 +15,45 @@
 -define(deps, ["getopt", "cereal"]).
 
 -define(argspec, [
-		  {help,    $h,        "help",    undefined,            "Show help"},
-		  {slots,   $s,        "slots",   {string, "00000001"}, "MCU slots (8 chars hex)"},
-		  {pty,     undefined, undefined, string,               "Path to pty"}
-		 ]).
+				  {help,    $h,        "help",    undefined,            "Show help"},
+				  {slots,   $s,        "slots",   {string, "00000001"}, "MCU slots (8 chars hex)"},
+				  {pty,     undefined, undefined, string,               "Path to pty"}
+				 ]).
 
 -define(mcu_alarms, {"PIN", "POUT", "PUMP_TEMP", "PUMP_BIAS", "EDFA_TEMP", "EDFA_PSU", "BREF", "ADI", "MUTE"}).
 -define(edfa_alarms, {"EDFA_TEMP", "EDFA_PSU"}).
 
 -define(WAIT, true).
-%-define(WAIT, timer:sleep(100)).
+												%-define(WAIT, timer:sleep(100)).
 
 -record(mcu, {index              ,
-	      ampConsign         ,
-	      gainConsign        ,
-	      outputPowerConsign ,
-	      operatingMode      ,
-	      curLaserTemp       ,
-	      curAmp             ,
-	      curInternalTemp    ,
-	      powerPd1           ,
-	      powerPd2           ,
-	      powerPd3           ,
-	      powerSupply        ,
-	      inputLossThreshold ,
-	      outputLossThreshold,
-	      vendor             = "BKTel Photonics"        :: string(),
-	      moduleType         = "MCU"                       :: string(),
-	      hwVer              = ""                       :: string(),
-	      hwRev              = ""                       :: string(),
-	      swVer              = ""                       :: string(),
-	      fwVer              = ""                       :: string(),
-	      partNum            = ""                       :: string(),
-	      serialNum          = ""                       :: string(),
-	      productDate        = "20141201"                       :: string()
-	     }).
+			  ampConsign         ,
+			  gainConsign        ,
+			  outputPowerConsign ,
+			  operatingMode      ,
+			  curLaserTemp       ,
+			  curAmp             ,
+			  curInternalTemp    ,
+			  powerPd1           ,
+			  powerPd2           ,
+			  powerPd3           ,
+			  powerSupply        ,
+			  inputLossThreshold ,
+			  outputLossThreshold,
+			  vendor             = "BKTel Photonics"        :: string(),
+			  moduleType         = "MCU"                       :: string(),
+			  hwVer              = ""                       :: string(),
+			  hwRev              = ""                       :: string(),
+			  swVer              = ""                       :: string(),
+			  fwVer              = ""                       :: string(),
+			  partNum            = ""                       :: string(),
+			  serialNum          = ""                       :: string(),
+			  productDate        = "20141201"                       :: string()
+			 }).
 -record(edfa, {
-	  index=0,
-	  internalTemp,
-	  powerSupply,
+		  index=0,
+		  internalTemp,
+		  powerSupply,
 	      vendor             = "BKTel Photonics"        :: string(),
 	      moduleType         = "EDFA"                       :: string(),
 	      hwVer              = "1.1"                       :: string(),
@@ -63,27 +63,27 @@
 	      partNum            = "1234"                       :: string(),
 	      serialNum          = "20141012001"                       :: string(),
 	      productDate        = "20141201"                       :: string()	  
-	 }).
+		 }).
 -record(state, {
-	  port,
-	  slots,
-	  tid
-	 }).
+		  port,
+		  slots,
+		  tid
+		 }).
 
 main(Args) ->
     set_paths(),
     case getopt:parse(?argspec, Args) of
-	{ok, {Opts, []}} ->
-	    case proplists:get_bool(help, Opts) of
-		true ->
-		    getopt:usage(?argspec, atom_to_list(?MODULE)),
-		    halt(0);
-		false ->
-		    start(Opts)
-	    end;
-	_ ->
-	    getopt:usage(?argspec, atom_to_list(?MODULE)),
-	    halt(1)
+		{ok, {Opts, []}} ->
+			case proplists:get_bool(help, Opts) of
+				true ->
+					getopt:usage(?argspec, atom_to_list(?MODULE)),
+					halt(0);
+				false ->
+					start(Opts)
+			end;
+		_ ->
+			getopt:usage(?argspec, atom_to_list(?MODULE)),
+			halt(1)
     end.
 
 %%%
@@ -91,74 +91,74 @@ main(Args) ->
 %%%
 start(Opts) ->
     case proplists:get_value(pty, Opts) of
-	undefined ->
-	    getopt:usage(?argspec, atom_to_list(?MODULE)),
-	    halt(0);
-	Pty ->
-	    ?info("Opening ~p~n", [Pty]),
-	    {ok, Fd} = cereal:open_tty(Pty),
-	    Port = open_port({fd, Fd, Fd}, [binary, stream, {line, 80}]),
-	    Slots = list_to_binary(proplists:get_value(slots, Opts)),
-	    ?info("Slots: ~.2b~n", [binary_to_integer(Slots, 16)]),
-	    Tid = ets:new(emul, [{keypos, 2}]),
-	    loop(#state{port=Port, slots=Slots, tid=Tid}, <<>>)
+		undefined ->
+			getopt:usage(?argspec, atom_to_list(?MODULE)),
+			halt(0);
+		Pty ->
+			?info("Opening ~p~n", [Pty]),
+			{ok, Fd} = cereal:open_tty(Pty),
+			Port = open_port({fd, Fd, Fd}, [binary, stream, {line, 80}]),
+			Slots = list_to_binary(proplists:get_value(slots, Opts)),
+			?info("Slots: ~.2b~n", [binary_to_integer(Slots, 16)]),
+			Tid = ets:new(emul, [{keypos, 2}]),
+			loop(#state{port=Port, slots=Slots, tid=Tid}, <<>>)
     end.
 
 
 loop(#state{port=Port, tid=Tid}=S, Acc) ->
     receive
-	{Port, {data, {noeol, Bin}}} ->
-	    loop(S, << Acc/binary, Bin/binary >>);
-	{Port, {data, {eol, Bin}}} ->
-	    Msg = << Acc/binary, Bin/binary, $\r, $\n >>,
-	    ?debug("received: ~p~n", [Msg]),
-	    case bkfw_parser:parse(Msg) of
-		{error, Err, _} ->
-		    ?error("parse error: ~s~n", [Err]);
-		{eof, _} ->
-		    ok;
-		{ok, {0, Cmd, Args}, _} ->
-		    Obj = case ets:lookup(Tid, 0) of
-			      [] ->
-				  #edfa{internalTemp=random:uniform()*100,
-					powerSupply=24.0};
-			      [Edfa] -> Edfa
-			  end,
-		    ets:insert(Tid, handle_msg(Obj, Cmd, Args, S)),
-		    loop(S, <<>>);
-		{ok, {Idx, Cmd, Args}, _} ->
-		    Obj = case ets:lookup(Tid, Idx) of
-			      [] ->
-				  #mcu{
-				     index=Idx,
-				     ampConsign=random:uniform()*100,
-				     gainConsign=random:uniform()*100,
-				     outputPowerConsign=random:uniform()*100,
-				     operatingMode=element(random:uniform(4), {"PC", "GC", "CC", "OFF"}),
-				     curLaserTemp=random:uniform()*100,
-				     curAmp=random:uniform()*100,
-				     curInternalTemp=random:uniform()*100,
-				     powerPd1=random:uniform()*100 * element(random:uniform(2), {1,-1}),
-				     powerPd2=random:uniform()*100 * element(random:uniform(2), {1,-1}),
-				     powerPd3=random:uniform()*100 * element(random:uniform(2), {1,-1}),
-				     powerSupply=12.0,
-				     inputLossThreshold=random:uniform()*100,
-				     outputLossThreshold=random:uniform()*100,
-				     hwVer=element(random:uniform(3), {"1.1", "1.0", "1.2"}),
-				     swVer=element(random:uniform(3), {"0.1", "0.2", "0.3"}),
-				     fwVer=element(random:uniform(3), {"0.1a", "0.1b", "0.2.0"}),
-				     partNum=element(random:uniform(2), {"123", "456"}),
-				     serialNum=io_lib:format("~b", [random:uniform(1000)])
-				    };
-			      [Edfa] -> Edfa
-			  end,
-		    {S2, Obj2} = handle_msg(Obj, Cmd, Args, S),
-		    ets:insert(Tid, Obj2),
-		    loop(S2, <<>>)
-	    end;
-	_Else ->
-	    ?error("received: ~p~n", [_Else]),
-	    loop(S, Acc)
+		{Port, {data, {noeol, Bin}}} ->
+			loop(S, << Acc/binary, Bin/binary >>);
+		{Port, {data, {eol, Bin}}} ->
+			Msg = << Acc/binary, Bin/binary, $\r, $\n >>,
+			?debug("received: ~p~n", [Msg]),
+			case bkfw_parser:parse(Msg) of
+				{error, Err, _} ->
+					?error("parse error: ~s~n", [Err]);
+				{eof, _} ->
+					ok;
+				{ok, {0, Cmd, Args}, _} ->
+					Obj = case ets:lookup(Tid, 0) of
+							  [] ->
+								  #edfa{internalTemp=random:uniform()*100,
+										powerSupply=24.0};
+							  [Edfa] -> Edfa
+						  end,
+					ets:insert(Tid, handle_msg(Obj, Cmd, Args, S)),
+					loop(S, <<>>);
+				{ok, {Idx, Cmd, Args}, _} ->
+					Obj = case ets:lookup(Tid, Idx) of
+							  [] ->
+								  #mcu{
+									 index=Idx,
+									 ampConsign=random:uniform()*100,
+									 gainConsign=random:uniform()*100,
+									 outputPowerConsign=random:uniform()*100,
+									 operatingMode=element(random:uniform(4), {"PC", "GC", "CC", "OFF"}),
+									 curLaserTemp=random:uniform()*100,
+									 curAmp=random:uniform()*100,
+									 curInternalTemp=random:uniform()*100,
+									 powerPd1=random:uniform()*100 * element(random:uniform(2), {1,-1}),
+									 powerPd2=random:uniform()*100 * element(random:uniform(2), {1,-1}),
+									 powerPd3=random:uniform()*100 * element(random:uniform(2), {1,-1}),
+									 powerSupply=12.0,
+									 inputLossThreshold=random:uniform()*100,
+									 outputLossThreshold=random:uniform()*100,
+									 hwVer=element(random:uniform(3), {"1.1", "1.0", "1.2"}),
+									 swVer=element(random:uniform(3), {"0.1", "0.2", "0.3"}),
+									 fwVer=element(random:uniform(3), {"0.1a", "0.1b", "0.2.0"}),
+									 partNum=element(random:uniform(2), {"123", "456"}),
+									 serialNum=io_lib:format("~b", [random:uniform(1000)])
+									};
+							  [Edfa] -> Edfa
+						  end,
+					{S2, Obj2} = handle_msg(Obj, Cmd, Args, S),
+					ets:insert(Tid, Obj2),
+					loop(S2, <<>>)
+			end;
+		_Else ->
+			?error("received: ~p~n", [_Else]),
+			loop(S, Acc)
     end.
 
 handle_msg(#mcu{index=Addr}=Mcu, rcc, [Pos], S) when is_integer(Pos) ->
@@ -166,12 +166,12 @@ handle_msg(#mcu{index=Addr}=Mcu, rcc, [Pos], S) when is_integer(Pos) ->
     {S, Mcu};
 
 handle_msg(#mcu{index=Addr}=Mcu, scc, [Pos, Cur], S) when is_integer(Pos), 
-							  Cur > 20 ->
+														  Cur > 20 ->
     reply(S, Addr, io_lib:format("SCC ~p OFR", [Pos])),
     {S, Mcu};
 
 handle_msg(#mcu{index=Addr}=Mcu, scc, [Pos, Cur], S) when is_integer(Pos), 
-							  is_float(Cur) ->
+														  is_float(Cur) ->
     reply(S, Addr, io_lib:format("SCC ~p ~.2f", [Pos, Cur])),
     {S, Mcu#mcu{ampConsign=Cur}};
 
@@ -204,30 +204,30 @@ handle_msg(#mcu{index=Addr}=Mcu, rmode, [], S) ->
     {S, Mcu};
 
 handle_msg(#mcu{index=Addr}=Mcu, smode, [Mode], S) when Mode == pc;
-							Mode == gc;
-							Mode == cc;
-							Mode == off ->
+														Mode == gc;
+														Mode == cc;
+														Mode == off ->
     ModeStr = mode_to_list(Mode),
     reply(S, Addr, ["SMODE ", ModeStr]),
     {S, Mcu#mcu{operatingMode=ModeStr}};
 
 handle_msg(#edfa{}=Edfa, ra, [], S) ->
     case random:uniform(4) of
-	1 ->
-	    Alarm = element(random:uniform(size(?edfa_alarms)), ?edfa_alarms),
-	    reply(S, 0, ["ALARMS: ", Alarm]);
-	_ ->
-	    reply(S, 0, "ALARMS:")
+		1 ->
+			Alarm = element(random:uniform(size(?edfa_alarms)), ?edfa_alarms),
+			reply(S, 0, ["ALARMS: ", Alarm]);
+		_ ->
+			reply(S, 0, "ALARMS:")
     end,
     {S, Edfa};
 
 handle_msg(#mcu{index=Addr}=Mcu, ra, [], S) ->
     case random:uniform(4) of
-	1 ->
-	    Alarm = element(random:uniform(size(?mcu_alarms)), ?mcu_alarms),
-	    reply(S, Addr, ["ALARMS: ", Alarm]);
-	_ ->
-	    reply(S, Addr, "ALARMS:")
+		1 ->
+			Alarm = element(random:uniform(size(?mcu_alarms)), ?mcu_alarms),
+			reply(S, Addr, ["ALARMS: ", Alarm]);
+		_ ->
+			reply(S, Addr, "ALARMS:")
     end,
     {S, Mcu};
 
@@ -249,33 +249,33 @@ handle_msg(#mcu{index=Addr, curInternalTemp=IT}=Mcu, rit, [], S) ->
 
 handle_msg(#edfa{}=Edfa, ri, [], S) ->
     reply(S, 0, ["I", $\r, $\n, $\r, $\n, 
-		 "Vendor= ", Edfa#edfa.vendor, $\r, $\n, $\r, $\n, 
-		 "Module= ", Edfa#edfa.moduleType, $\r, $\n, $\r, $\n,
-		 "HW Ver= ", Edfa#edfa.hwVer, $\r, $\n, $\r, $\n,
-		 "HW Rev= ", Edfa#edfa.hwRev, $\r, $\n, $\r, $\n,
-		 "SW Ver= ", Edfa#edfa.swVer, $\r, $\n, $\r, $\n,
-		 "FW Ver= ", Edfa#edfa.fwVer, $\r, $\n, $\r, $\n,
-		 "Part Num= ", Edfa#edfa.partNum, $\r, $\n, $\r, $\n,
-		 "Ser. Num= ", Edfa#edfa.serialNum, $\r, $\n, $\r, $\n,
-		 "Prod. Date= ", Edfa#edfa.productDate, $\r, $\n, $\r, $\n]),
+				 "Vendor= ", Edfa#edfa.vendor, $\r, $\n, $\r, $\n, 
+				 "Module= ", Edfa#edfa.moduleType, $\r, $\n, $\r, $\n,
+				 "HW Ver= ", Edfa#edfa.hwVer, $\r, $\n, $\r, $\n,
+				 "HW Rev= ", Edfa#edfa.hwRev, $\r, $\n, $\r, $\n,
+				 "SW Ver= ", Edfa#edfa.swVer, $\r, $\n, $\r, $\n,
+				 "FW Ver= ", Edfa#edfa.fwVer, $\r, $\n, $\r, $\n,
+				 "Part Num= ", Edfa#edfa.partNum, $\r, $\n, $\r, $\n,
+				 "Ser. Num= ", Edfa#edfa.serialNum, $\r, $\n, $\r, $\n,
+				 "Prod. Date= ", Edfa#edfa.productDate, $\r, $\n, $\r, $\n]),
     {S, Edfa};
 
 handle_msg(#mcu{index=Addr}=Mcu, ri, [], S) ->
     reply(S, Addr, ["I", $\r, $\n, $\r, $\n,
-		    "Vendor= ", Mcu#mcu.vendor, $\r, $\n, $\r, $\n,
-		    "Module= ", Mcu#mcu.moduleType, $\r, $\n, $\r, $\n,
-		    "HW Ver= ", Mcu#mcu.hwVer, $\r, $\n, $\r, $\n,
-		    "HW Rev= ", Mcu#mcu.hwRev, $\r, $\n, $\r, $\n,
-		    "SW Ver= ", Mcu#mcu.swVer, $\r, $\n, $\r, $\n,
-		    "FW Ver= ", Mcu#mcu.fwVer, $\r, $\n, $\r, $\n,
-		    "Part Num= ", Mcu#mcu.partNum, $\r, $\n, $\r, $\n,
-		    "Ser. Num= ", Mcu#mcu.serialNum, $\r, $\n, $\r, $\n,
-		    "Prod. Date= ", Mcu#mcu.productDate, $\r, $\n, $\r, $\n]),
+					"Vendor= ", Mcu#mcu.vendor, $\r, $\n, $\r, $\n,
+					"Module= ", Mcu#mcu.moduleType, $\r, $\n, $\r, $\n,
+					"HW Ver= ", Mcu#mcu.hwVer, $\r, $\n, $\r, $\n,
+					"HW Rev= ", Mcu#mcu.hwRev, $\r, $\n, $\r, $\n,
+					"SW Ver= ", Mcu#mcu.swVer, $\r, $\n, $\r, $\n,
+					"FW Ver= ", Mcu#mcu.fwVer, $\r, $\n, $\r, $\n,
+					"Part Num= ", Mcu#mcu.partNum, $\r, $\n, $\r, $\n,
+					"Ser. Num= ", Mcu#mcu.serialNum, $\r, $\n, $\r, $\n,
+					"Prod. Date= ", Mcu#mcu.productDate, $\r, $\n, $\r, $\n]),
     {S, Mcu};
 
 handle_msg(#mcu{index=Addr, powerPd1=PD1, powerPd2=PD2}=Mcu, rpm, [], S) ->
     reply(S, Addr, [io_lib:format("PD1 ~.2f dBm", [PD1]), $\r, $\n, $\r, $\n,
-		    io_lib:format("PD2 ~.2f dBm", [PD2]), $\r, $\n, $\r, $\n]),
+					io_lib:format("PD2 ~.2f dBm", [PD2]), $\r, $\n, $\r, $\n]),
     {S, Mcu#mcu{powerPd1=ran(PD1), powerPd2=ran(PD2)}};
 
 handle_msg(#edfa{index=Addr, powerSupply=V}=Edfa, rv, [], S) ->
@@ -322,10 +322,10 @@ reply(#state{port=To}, 0, Ans) ->
 reply(#state{port=To, slots=Slots}, Addr, Ans) ->
     Mask = binary_to_integer(Slots, 16),
     case Mask band (1 bsl Addr-1) of
-	0 -> 
-	    ?debug("No answer to ~p\n", [Addr]);
-	_ ->
-	    do_reply(To, Addr, Ans)
+		0 -> 
+			?debug("No answer to ~p\n", [Addr]);
+		_ ->
+			do_reply(To, Addr, Ans)
     end.
 
 do_reply(To, Addr, Ans) ->
@@ -339,8 +339,8 @@ do_reply(To, Addr, Ans) ->
 set_paths() ->
     Root = get_root(),
     Deps = lists:map(fun(D) -> 
-			     Root ++ "/deps/" ++ D ++ "/ebin"
-		     end, ?deps),
+							 Root ++ "/deps/" ++ D ++ "/ebin"
+					 end, ?deps),
     code:add_pathsa([ Root ++ "/ebin" | Deps ]).
 
 get_root() ->
@@ -350,11 +350,11 @@ get_root() ->
 
 get_cwd() ->
     case file:get_cwd() of
-	{ok, Dir} ->
-	    Dir;
-	{error, Reason} ->
-	    ?error("Unable to get cwd: ~p~n", [Reason]),
-	    halt(1)
+		{ok, Dir} ->
+			Dir;
+		{error, Reason} ->
+			?error("Unable to get cwd: ~p~n", [Reason]),
+			halt(1)
     end.
 
 mode_to_list(pc) -> "PC";
