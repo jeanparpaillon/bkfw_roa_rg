@@ -24,7 +24,6 @@
 -define(edfa_alarms, {"EDFA_TEMP", "EDFA_PSU"}).
 
 -define(WAIT, true).
-												%-define(WAIT, timer:sleep(100)).
 
 -record(mcu, {index              ,
 			  ampConsign         ,
@@ -48,7 +47,8 @@
 			  fwVer              = ""                       :: string(),
 			  partNum            = ""                       :: string(),
 			  serialNum          = ""                       :: string(),
-			  productDate        = "20141201"                       :: string()
+			  productDate        = "20141201"                       :: string(),
+			  payload
 			 }).
 -record(edfa, {
 		  index=0,
@@ -62,7 +62,8 @@
 	      fwVer              = "2014.12.11"                       :: string(),
 	      partNum            = "1234"                       :: string(),
 	      serialNum          = "20141012001"                       :: string(),
-	      productDate        = "20141201"                       :: string()	  
+	      productDate        = "20141201"                       :: string(),
+		  payload
 		 }).
 -record(state, {
 		  port,
@@ -306,6 +307,30 @@ handle_msg(#edfa{}=Edfa, rn, [], #state{slots=Slots}=S) ->
     reply(S, 0, ["N 0x", Slots]),
     {S, Edfa};
 
+handle_msg(Obj, select, [], S) ->
+	reply_to(S, Obj, "OK");
+
+handle_msg(Obj, erase, [_Start, _End], S) ->
+	reply_to(S, Obj, "OK");
+
+handle_msg(#edfa{}=E, write, [_Start, _Length, Payload], S) ->
+	reply_to(S, E#edfa{payload=Payload}, "OK");
+
+handle_msg(#mcu{}=M, write, [_Start, _Length, Payload], S) ->
+	reply_to(S, M#mcu{payload=Payload}, "OK");
+
+handle_msg(#edfa{payload=P}=E, read, [_Start, _Length], S) ->
+	reply_to(S, E, P);
+
+handle_msg(#mcu{payload=P}=M, read, [_Start, _Length], S) ->
+	reply_to(S, M, P);
+
+handle_msg(Obj, validate, [], S) ->
+	reply_to(S, Obj, "OK");
+
+handle_msg(Obj, start, [_Start], S) ->
+	reply_to(S, Obj, "OK");
+
 handle_msg(#edfa{}=Edfa, Cmd, Args, S) ->
     ?error("Invalid command: ~p(~p)~n", [Cmd, Args]),
     reply(S, 0, "INVALID CMD"),
@@ -316,6 +341,10 @@ handle_msg(#mcu{index=Addr}=Mcu, Cmd, Args, S) ->
     reply(S, Addr, "INVALID CMD"),
     {S, Mcu}.
 
+reply_to(S, #edfa{}, Ans) ->
+	reply(S, 0, Ans);
+reply_to(S, #mcu{index=Addr}, Ans) ->
+	reply(S, Addr, Ans).
 
 reply(#state{port=To}, 0, Ans) ->
     do_reply(To, 0, Ans);
