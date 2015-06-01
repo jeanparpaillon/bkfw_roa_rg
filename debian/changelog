@@ -1,3 +1,10 @@
+bkfw (1.0rc1) wheezy; urgency=medium
+
+  * Add USB mode
+  * New parameter ttyusb
+
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Mon, 01 Jun 2015 18:35:00 +0200
+
 bkfw (0.6) wheezy; urgency=medium
 
   * Increase max slots to 128
