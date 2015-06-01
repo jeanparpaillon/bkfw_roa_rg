@@ -91,3 +91,10 @@
 # 0.6
 
 * Increase maximum slots allowed: 128
+
+# 1.0rc1
+
+* Add USB mode: when enable, user can communicate with CPU from front
+  USB plug
+* New parameter usbtty: points to the USB-to-serial device (default:
+  "/dev/ttyUSB0")
