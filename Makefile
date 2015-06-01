@@ -36,7 +36,7 @@ $(error "Rebar not available on this system")
 endif
 
 .PHONY: all compile doc clean test dialyzer typer shell distclean pdf \
-  update-deps clean-common-test-data rebuild install dist
+  update-deps clean-common-test-data rebuild install dist docker-release release
 
 all: deps compile test
 
@@ -107,6 +107,11 @@ RELDIR=$(RELNAME)-$(RELVERSION)
 RELBIN=$(RELNAME)_$(RELVERSION).bin
 dist:
 	git archive --prefix=$(RELNAME)-$(RELVERSION)/ HEAD . | gzip -c - > $(RELNAME)-$(RELVERSION).source.tar.gz
+
+IMAGE_ID=bkfw-build
+
+docker-release:
+	docker run -v `pwd`:/mnt $(IMAGE_ID) make -C /mnt release
 
 release:
 	rm -rf $(RELDIR)
