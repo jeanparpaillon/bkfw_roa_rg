@@ -1,3 +1,10 @@
+bkfw (1.0rc2) wheezy; urgency=medium
+
+   * Ignore when USB port is not available
+   * usbtty default to undefined
+
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Wed, 03 Jun 2015 08:03:42 +0200
+
 bkfw (1.0rc1) wheezy; urgency=medium
 
   * Add USB mode

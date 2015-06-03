@@ -98,3 +98,7 @@
   USB plug
 * New parameter usbtty: points to the USB-to-serial device (default:
   "/dev/ttyUSB0")
+
+# 1.0rc2
+
+* Ignore when USB port is not available
