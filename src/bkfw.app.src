@@ -48,6 +48,6 @@
 	 {netif, "eth0"},
 	 {scripts_dir, "/var/lib/bkfw/scripts"},
 	 {debug, false},
-	 {usbtty, "/dev/ttyUSB0"}
+	 {usbtty, undefined}
 	]}
  ]}.

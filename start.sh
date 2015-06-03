@@ -56,7 +56,6 @@ erl -sname agent \
     -pa ${depsdir} \
     -bkfw http "[{port, $port}]" \
     -bkfw com "\"$com\"" \
-    -bkfw usbtty "\"$usbtty\"" \
     -bkfw upload_dir "\"/tmp\"" \
     -bkfw system_cmd "false" \
     -bkfw net "\"${BASEDIR}/priv/interfaces\"" \

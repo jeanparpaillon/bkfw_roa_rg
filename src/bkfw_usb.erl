@@ -32,20 +32,27 @@ start_link() ->
 %%%===================================================================
 init(_) ->
     ?info("Starting USB monitor", []),
-	UsbDev = application:get_env(bkfw, usbtty, undefined),
-	case open_com_port(UsbDev) of
-		{ok, UsbFd, UsbPort} ->
-			ComDev = application:get_env(bkfw, com, undefined),
-			case open_com_port(ComDev) of
-				{ok, ComFd, ComPort} ->
-					{ok, #state{com_fd=ComFd, com=ComPort, usb_fd=UsbFd, usb=UsbPort}};
-				{error, ComErr} ->
-					?error("Error opening port ~p: ~p", [ComDev, ComErr]),
+	case application:get_env(bkfw, usbtty, undefined) of
+		undefined ->
+			{ok, #state{}};
+		UsbDev ->
+			case open_com_port(UsbDev) of
+				{ok, UsbFd, UsbPort} ->
+					ComDev = application:get_env(bkfw, com, undefined),
+					case open_com_port(ComDev) of
+						{ok, ComFd, ComPort} ->
+							{ok, #state{com_fd=ComFd, com=ComPort, usb_fd=UsbFd, usb=UsbPort}};
+						{error, ComErr} ->
+							?error("Error opening port ~p: ~p", [ComDev, ComErr]),
 					{stop, ComErr}
-			end;
-		{error, UsbErr} ->
-			?error("Error opening port ~p: ~p", [UsbDev, UsbErr]),
-			{stop, UsbErr}
+					end;
+				{error, enoent} ->
+					?info("No such USB port, ignoring: ~p", [UsbDev]),
+					{ok, #state{}};
+				{error, UsbErr} ->
+					?error("Error opening port ~p: ~p", [UsbDev, UsbErr]),
+					{stop, UsbErr}
+			end
 	end.
 
 handle_call(_Call, _From, S) ->
@@ -68,10 +75,11 @@ handle_info({From, {data, Bin}}, #state{com=Com, usb=Usb}=S) ->
 	{noreply, S};
 
 handle_info(_Info, S) ->
-	?debug("got ~p", [_Info]),
     {noreply, S}.
 
 
+terminate(_Reason, #state{com=undefined}) ->
+	ok;
 terminate(_Reason, #state{com_fd=ComFd, com=ComPort, usb_fd=UsbFd, usb=UsbPort}) ->
 	ComPort ! {self(), close},
 	receive _ -> cereal:close_tty(ComFd)
