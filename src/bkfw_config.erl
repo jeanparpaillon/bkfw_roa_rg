@@ -83,7 +83,7 @@ upgrade("fw", Filename) ->
 upgrade("cpu", Filename) ->
     bkfw_fw:upgrade_cpu(Filename);
 upgrade("amp", Filename) ->
-    bkfw_fw:upgrade_amp(Filename).
+    bkfw_fw:upgrade_amps(Filename).
 
 -spec encode_password(iolist()) -> string().
 encode_password(Passwd) when is_list(Passwd); is_binary(Passwd) ->

@@ -490,6 +490,7 @@ err_to_string(invalid_login) -> <<"Invalid login and/or password">>;
 err_to_string(missing_mode) -> <<"Missing value: operating mode">>;
 err_to_string(missing_consign) -> <<"Missing value: consign">>;
 err_to_string(missing_net_type) -> <<"Missing value: network type">>;
+err_to_string(invalid_fw) -> <<"Invalid firmware">>;
 err_to_string(invalid_net_config) -> <<"Invalid network configuration">>;
 err_to_string(invalid_net_address) -> <<"Invalid value: network address">>;
 err_to_string(invalid_net_mask) -> <<"Invalid value: network mask">>;

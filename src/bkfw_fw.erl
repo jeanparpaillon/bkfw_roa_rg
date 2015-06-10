@@ -12,7 +12,7 @@
 
 -export([upgrade_fw/1,
 		 upgrade_cpu/1,
-		 upgrade_amp/1]).
+		 upgrade_amps/1]).
 
 upgrade_fw(Filename) ->
     case bkfw_config:script("check_pkg.sh", Filename) of
@@ -25,8 +25,43 @@ upgrade_fw(Filename) ->
 
 upgrade_cpu(Filename) ->
     ?debug("Upgrading CPU firmware from ~s [fake]", [Filename]),
-	ok.
+	case file:read_file(Filename) of
+		{ok, Data} ->
+			upgrade_micro(0, Data);
+		{error, enomem} ->
+			{error, invalid_fw};
+		{error, Err} ->
+			?error("Internal error reading firmware: ~p~n", [Err]),
+			{error, internal}
+	end.
 
-upgrade_amp(Filename) ->
-	?debug("Upgrading AMP firmware from ~s [fake]", [Filename]),
+upgrade_amps(Filename) ->
+	case file:read_file(Filename) of
+		{ok, Data} ->
+			Amps = mnesia:dirty_match_object(#ampTable{_='_'}),
+			upgrade_amp(Amps, Data);
+		{error, enomem} ->
+			{error, invalid_fw};
+		{error, Err} ->
+			?error("Internal error reading firmware: ~p~n", [Err]),
+			{error, internal}
+	end.
+
+%%%
+%%% Priv
+%%%
+upgrade_amp([], _) ->
+	ok;
+upgrade_amp([ #ampTable{index=Idx} | Tail ], Data) when Idx rem 2 == 0 ->
+	upgrade_amp(Tail, Data);
+upgrade_amp([ #ampTable{index=Idx} | Tail ], Data) ->
+	case upgrade_micro(Idx, Data) of
+		ok ->
+			upgrade_amp(Tail, Data);
+		{error, Err} ->
+			{error, Err}
+	end.
+
+upgrade_micro(Idx, _Fw) ->
+	?debug("Upgrading firmware on unit: ~p~n", [Idx]),
 	ok.

@@ -3,11 +3,12 @@
 
 -include("bkfw.hrl").
 
-												% API
+% API
 -export([start_link/0,
+		 wait/0,
 		 command/3]).
 
-												% Internal
+% Internal
 -export([init/0]).
 
 -define(FSM, ?MODULE).
@@ -21,6 +22,19 @@ start_link() ->
     register(?FSM, Pid),
     {ok, Pid}.
 
+-spec wait() -> {ok, {reference(), atom()}} | {error, term()}.
+wait() ->
+    Timeout = application:get_env(bkfw, timeout, ?TIMEOUT),
+    Ref = make_ref(),
+    ?FSM ! {wait, self(), Ref},
+	receive
+		{com, Com} ->
+			{ok, {Ref, Com}}
+	after Timeout ->
+			?FSM ! {signal, Ref},
+			{error, timeout}
+	end.
+
 -spec command(Idx :: integer(), Cmd :: atom(), Args :: list()) -> {ok, term()} | {error, term()}.
 command(Idx, Cmd, Args) when is_integer(Idx), is_atom(Cmd) ->
     CmdName = string:to_upper(atom_to_list(Cmd)),
@@ -29,16 +43,13 @@ command(Idx, Cmd, Args) when is_integer(Idx), is_atom(Cmd) ->
 				  [] -> "";
 				  _ -> [" ", Args]
 			  end,
-    Ref = make_ref(),
-    ?FSM ! {wait, self(), Ref},
-    receive
-		{com, Com} ->
+	case wait() of
+		{ok, {Ref, Com}} ->
 			bkfw_com:send(Com, Idx, [CmdName, ArgsStr]),
-			wait_answer(Idx, cmd_to_ans(Cmd), Ref, Timeout)
-    after Timeout ->
-			?FSM ! {signal, Ref},
-			{error, timeout}
-    end.
+			wait_answer(Idx, cmd_to_ans(Cmd), Ref, Timeout);
+		{error, _}=Err ->
+			Err
+	end.
 
 wait_answer(Idx, '_', Ref, T) ->
     receive
