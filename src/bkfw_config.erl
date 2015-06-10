@@ -14,18 +14,18 @@
 
 %% API
 -export([start_link/0,
-	 encode_password/1,
-	 set_app_conf/4,
-	 get_kv/1,
-	 set_kv/2]).
+		 encode_password/1,
+		 set_app_conf/4,
+		 get_kv/1,
+		 set_kv/2]).
 
 -export([upgrade/2,
-	 cmd/1,
-	 script/2]).
+		 cmd/1,
+		 script/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-	 terminate/2, code_change/3]).
+		 terminate/2, code_change/3]).
 
 -define(USER_CONF, "/var/lib/bkfw/user.config").
 -define(DEFAULT_NETCONF, [{type, static},
@@ -79,19 +79,11 @@ set_kv(Cat, Props) ->
 
 -spec upgrade(string(), string()) -> ok | {error, term()}.
 upgrade("fw", Filename) ->
-    case script("check_pkg.sh", Filename) of
-	ok ->
-	    script("upgrade.sh", Filename),
-	    bkfw_app:reboot(),
-	    ok;
-	{error, Err} -> {error, Err}
-    end;
+	bkfw_fw:upgrade_fw(Filename);
 upgrade("cpu", Filename) ->
-    ?debug("Upgrading CPU firmware from ~s [fake]", [Filename]),
-    ok;
+    bkfw_fw:upgrade_cpu(Filename);
 upgrade("amp", Filename) ->
-    ?debug("Upgrading AMP firmware from ~s [fake]", [Filename]),
-    ok.
+    bkfw_fw:upgrade_amp(Filename).
 
 -spec encode_password(iolist()) -> string().
 encode_password(Passwd) when is_list(Passwd); is_binary(Passwd) ->
