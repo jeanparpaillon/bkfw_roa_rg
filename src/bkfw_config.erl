@@ -86,8 +86,11 @@ upgrade("fw", Filename) ->
 	    ok;
 	{error, Err} -> {error, Err}
     end;
-upgrade(Name, Filename) ->
-    ?debug("Upgrading ~s firmware from ~s [fake]", [Name, Filename]),
+upgrade("cpu", Filename) ->
+    ?debug("Upgrading CPU firmware from ~s [fake]", [Filename]),
+    ok;
+upgrade("amp", Filename) ->
+    ?debug("Upgrading AMP firmware from ~s [fake]", [Filename]),
     ok.
 
 -spec encode_password(iolist()) -> string().
