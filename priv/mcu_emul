@@ -65,10 +65,12 @@
 	      productDate        = "20141201"                       :: string(),
 		  payload
 		 }).
+-record(fw, {idx=0, data}).
 -record(state, {
 		  port,
 		  slots,
-		  tid
+		  tid,
+		  fwtid
 		 }).
 
 main(Args) ->
@@ -102,11 +104,12 @@ start(Opts) ->
 			Slots = list_to_binary(proplists:get_value(slots, Opts)),
 			?info("Slots: ~.2b~n", [binary_to_integer(Slots, 16)]),
 			Tid = ets:new(emul, [{keypos, 2}]),
-			loop(#state{port=Port, slots=Slots, tid=Tid}, <<>>)
+			FwTid = ets:new(fw, [{keypos, 2}]),
+			loop(#state{port=Port, slots=Slots, tid=Tid, fwtid=FwTid}, <<>>)
     end.
 
 
-loop(#state{port=Port, tid=Tid}=S, Acc) ->
+loop(#state{port=Port, tid=Tid, fwtid=FwTid}=S, Acc) ->
     receive
 		{Port, {data, {noeol, Bin}}} ->
 			loop(S, << Acc/binary, Bin/binary >>);
@@ -118,6 +121,15 @@ loop(#state{port=Port, tid=Tid}=S, Acc) ->
 					?error("parse error: ~s~n", [Err]);
 				{eof, _} ->
 					ok;
+				{ok, {Idx, FwCmd, Args}, _} when FwCmd == upg; FwCmd == flash ->
+					Obj = case ets:lookup(FwTid, Idx) of
+							  [] ->
+								  #fw{idx=Idx, data= <<>>};
+							  [Fw] ->
+								  Fw
+						  end,
+					ets:insert(FwTid, handle_fw(Obj, FwCmd, Args, S)),
+					loop(S, <<>>);
 				{ok, {0, Cmd, Args}, _} ->
 					Obj = case ets:lookup(Tid, 0) of
 							  [] ->
@@ -340,6 +352,17 @@ handle_msg(#mcu{index=Addr}=Mcu, Cmd, Args, S) ->
     ?error("Invalid command: ~p(~p)~n", [Cmd, Args]),
     reply(S, Addr, "INVALID CMD"),
     {S, Mcu}.
+
+
+handle_fw(#fw{}=Fw, upg, [], S) ->
+	reply_fw(S, Fw, ["OK"]),
+	{S, Fw}.
+
+
+reply_fw(#state{port=To}, #fw{}, Ans) ->
+    Msg = iolist_to_binary([Ans, $\r, $\n, $\r, $\n]),
+    ?debug("replying: ~p~n", [Msg]),
+    To ! {self(), {command, Msg}}.
 
 reply_to(S, #edfa{}, Ans) ->
 	reply(S, 0, Ans);
