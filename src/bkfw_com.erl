@@ -7,7 +7,10 @@
 
 -export([start_link/1,
 		 stop/1,
-		 send/3]).
+		 send/3,
+		 more/2,
+		 release/1,
+		 raw/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -18,7 +21,6 @@
 				com                   :: term(),
 				port    = undefined   :: port(),
 				data    = <<>>        :: binary(),
-				msg     = undefined   :: msg(),
 				crlf,
 				trace}).
 
@@ -32,9 +34,21 @@ stop(Com) ->
     ?debug("Stopping COM~n", []),
     gen_server:call(Com, stop).
 
--spec send(Com :: pid(), To :: integer(), Msg :: iolist()) -> {ok, Reply :: term()} | {error, Err :: term()}.
+-spec send(Com :: pid(), To :: integer(), Msg :: iolist()) -> ok | {error, Err :: term()}.
 send(Com, To, Msg) when is_integer(To) ->
     gen_server:call(Com, {To, Msg}).
+
+-spec raw(Com :: pid(), Raw :: iolist()) -> ok | {error, Err :: term()}.
+raw(Com, Raw) ->
+	gen_server:call(Com, {raw, Raw}).
+
+-spec more(Com :: pid(), Rest :: term()) -> ok | {error, Err :: term()}.
+more(Com, Rest) ->
+	gen_server:call(Com, {more, Rest}).
+
+-spec release(Com :: pid()) -> ok | {error, Err :: term()}.
+release(Com) ->
+	gen_server:call(Com, release).
 
 %%%
 %%% gen_server callbacks
@@ -94,12 +108,16 @@ init(_Args) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({To, Msg}, {Pid, _Tag}, #state{port=Port, trace=Trace}=S) ->
-    debug_com(Trace, "[COM] Send command\n"),
-    Bin = ["0x", io_lib:format("~2.16.0b", [To]), " ", Msg, $\r, $\n],
-    debug_com(Trace, ["[RPI -> CPU] ", Bin]),
-    Port ! {self(), {command, iolist_to_binary(Bin)}},
+handle_call({raw, Data}, {Pid, _Tag}, #state{port=Port, trace=Trace}=S) ->
+    debug_com(Trace, "[COM] Send raw command\n"),
+    Port ! {self(), {command, iolist_to_binary(Data)}},
     {reply, ok, S#state{owner=Pid}};
+
+handle_call({more, Data}, {Pid, _Tag}, S) ->
+	{reply, ok, S#state{owner=Pid, data=Data}};
+
+handle_call(release, {Pid, _Tag}, #state{owner=Pid}=S) ->
+	{reply, ok, S#state{owner=Pid}};
 
 handle_call(stop, _From, S) ->
     {stop, stop, S};
@@ -133,7 +151,7 @@ handle_cast(_Msg, State) ->
 %%--------------------------------------------------------------------
 handle_info({Port, {data, {_, Bin}}}, #state{port=Port, owner=undefined}=S) ->
     ?debug("Garbage data: ~p~n", [Bin]),
-    {noreply, S#state{data= <<>>, msg=undefined}};
+    {noreply, S#state{data= <<>>}};
 handle_info({Port, {data, {noeol, Bin}}}, #state{port=Port, data=Acc, trace=Trace}=S) ->
     debug_com(Trace, ["[RPI <- CPU] ", Bin]),
     {noreply, S#state{data= << Acc/binary, Bin/binary >>}};
@@ -142,20 +160,11 @@ handle_info({Port, {data, {eol, Bin}}}, #state{port=Port, crlf=$\n, trace=Trace}
     debug_com(Trace, ["[RPI <- CPU] ", Bin, "\r"]),
     {noreply, S#state{data=Bin, crlf=$\r}};
 
-handle_info({Port, {data, {eol, Bin}}}, #state{msg=Msg, owner=Owner, crlf=$\r,
+handle_info({Port, {data, {eol, Bin}}}, #state{owner=Owner, crlf=$\r,
 											   port=Port, data=Data, trace=Trace}=S) ->
     debug_com(Trace, ["[RPI <- CPU] ", Bin, "\n"]),
-    case bkfw_parser:parse(<< Data/binary, Bin/binary, $\r, $\n >>, Msg) of
-		{ok, Msg2, Rest} ->
-			debug_com(Trace, io_lib:format("[COM] Answer received: ~p ! ~p\n", [Owner, Msg2])),
-			Owner ! {msg, Msg2},
-			{noreply, S#state{owner=undefined, msg=undefined, data=Rest, crlf=$\n}};
-		{more, Msg2, Rest} ->
-			{noreply, S#state{msg=Msg2, data=Rest, crlf=$\n}};
-		{error, Err, Rest} ->
-			Owner ! {error, Err},
-			{noreply, S#state{owner=undefined, msg=undefined, data=Rest, crlf=$\n}}
-    end;
+	Owner ! {msg, << Data/binary, Bin/binary, $\r, $\n >>},
+	{noreply, S#state{crlf=$\n}};
 
 handle_info(_Info, State) ->
     {noreply, State}.

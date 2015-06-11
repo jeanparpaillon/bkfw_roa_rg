@@ -5,7 +5,7 @@
 
 % API
 -export([start_link/0,
-		 wait/0,
+		 raw/1,
 		 command/3]).
 
 % Internal
@@ -22,59 +22,87 @@ start_link() ->
     register(?FSM, Pid),
     {ok, Pid}.
 
--spec wait() -> {ok, {reference(), atom()}} | {error, term()}.
-wait() ->
-    Timeout = application:get_env(bkfw, timeout, ?TIMEOUT),
+-spec command(Idx :: integer(), Cmd :: atom(), Args :: list()) -> {ok, term()} | {error, term()}.
+command(Idx, Cmd, Args) when is_integer(Idx), is_atom(Cmd) ->
+    CmdName = string:to_upper(atom_to_list(Cmd)),
+    ArgsStr = case Args of
+				  [] -> "";
+				  _ -> [" ", Args]
+			  end,
+    Bin = ["0x", io_lib:format("~2.16.0b", [Idx]), " ", [CmdName, ArgsStr], $\r, $\n],
+	Timeout = application:get_env(bkfw, timeout, ?TIMEOUT),
+	case wait(Timeout) of
+		{ok, {Ref, Com}} ->
+			bkfw_com:raw(Com, Bin),
+			Ret = wait_answer(Idx, cmd_to_ans(Cmd), Com, Timeout),
+			?FSM ! {signal, Ref},
+			Ret;
+		{error, _} = Err ->
+			Err
+	end.
+
+-spec raw(binary()) -> {ok, term()} | {error, term()}.
+raw(Data) ->
+	Timeout = application:get_env(bkfw, timeout, ?TIMEOUT),	
+	case wait(Timeout) of
+		{ok, {Ref, Com}} ->
+			bkfw_com:raw(Com, Data),
+			Ret = wait_raw(Timeout),
+			?FSM ! {signal, Ref},
+			Ret;
+		{error, _}=Err ->
+			Err
+	end.
+
+%%%
+%%% Priv
+%%%
+-spec wait(Timeout :: integer()) -> {ok, {reference(), atom()}} | {error, term()}.
+wait(Timeout) ->
     Ref = make_ref(),
     ?FSM ! {wait, self(), Ref},
 	receive
-		{com, Com} ->
+		{com, Com} -> 
 			{ok, {Ref, Com}}
 	after Timeout ->
 			?FSM ! {signal, Ref},
 			{error, timeout}
 	end.
 
--spec command(Idx :: integer(), Cmd :: atom(), Args :: list()) -> {ok, term()} | {error, term()}.
-command(Idx, Cmd, Args) when is_integer(Idx), is_atom(Cmd) ->
-    CmdName = string:to_upper(atom_to_list(Cmd)),
-    Timeout = application:get_env(bkfw, timeout, ?TIMEOUT),
-    ArgsStr = case Args of
-				  [] -> "";
-				  _ -> [" ", Args]
-			  end,
-	case wait() of
-		{ok, {Ref, Com}} ->
-			bkfw_com:send(Com, Idx, [CmdName, ArgsStr]),
-			wait_answer(Idx, cmd_to_ans(Cmd), Ref, Timeout);
-		{error, _}=Err ->
-			Err
+wait_raw(T) ->
+	receive
+		{error, _} = Err -> Err;
+		{msg, Msg} -> {ok, Msg}
+	after T ->
+			{error, timeout}
 	end.
 
-wait_answer(Idx, '_', Ref, T) ->
-    receive
-		{error, Err} ->
-			?FSM ! {signal, Ref},
-			{error, Err};
-		{msg, {Idx, _, _}=Msg} -> 
-			?FSM ! {signal, Ref},
-			{ok, Msg}
-    after T -> 
-			?FSM ! {signal, Ref},
+wait_answer(Idx, Expect, Com, T) ->
+	wait_answer(Idx, Expect, Com, T, undefined).
+
+
+wait_answer(Idx, Expect, Com, T, SoFar) ->
+	receive
+		{error, _} = Err ->
+			Err;
+		{msg, Data} ->
+			case bkfw_parser:parse(Data, SoFar) of
+				{ok, Msg, _} ->
+					bkfw_com:release(Com),
+					match_ans(Expect, Msg);
+				{more, Msg, Rest} ->
+					bkfw_com:more(Com, Rest),
+					wait_answer(Idx, Expect, Com, T, Msg);
+				{error, _} = Err ->
+					Err
+			end
+	after T ->
 			{error, timeout}
-    end;    
-wait_answer(Idx, Ans, Ref, T) ->
-    receive
-		{error, Err} ->
-			?FSM ! {signal, Ref},
-			{error, Err};
-		{msg, {Idx, Ans, _}=Msg} -> 
-			?FSM ! {signal, Ref},
-			{ok, Msg}
-    after T -> 
-			?FSM ! {signal, Ref},
-			{error, timeout}
-    end.
+	end.
+
+match_ans('_', {_, _, _}=Msg) -> {ok, Msg};
+match_ans(Ans, {_, Ans, _}=Msg) -> {ok, Msg};
+match_ans(_, _) -> {error, {unexpected, answer}}.
 
 init() ->
     ?info("Starting command server", []),

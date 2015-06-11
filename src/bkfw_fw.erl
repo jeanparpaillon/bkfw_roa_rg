@@ -64,4 +64,9 @@ upgrade_amp([ #ampTable{index=Idx} | Tail ], Data) ->
 
 upgrade_micro(Idx, _Fw) ->
 	?debug("Upgrading firmware on unit: ~p~n", [Idx]),
-	ok.
+	case bkfw_srv:raw("0000") of
+		{ok, Data} ->
+			ok;
+		{error, _} = Err ->
+			Err
+	end.
