@@ -500,6 +500,7 @@ err_to_string(invalid_target) -> <<"Invalid value: target address">>;
 err_to_string(invalid_thresholds) -> <<"Invalid value: thresholds">>;
 err_to_string(invalid_snmp_authkey) -> <<"Authentication key must be at least 8-chars long">>;
 err_to_string(invalid_snmp_privkey) -> <<"Privacy key must be at least 8-chars long">>;
+err_to_string(invalid_payload) -> <<"Error writing firmware">>;
 err_to_string(ofr) -> <<"Consign out of range, check your manual">>;
 err_to_string(empty_password) -> <<"Invalid value: empty password">>;
 err_to_string({unexpected, _}) -> <<"Internal error in backend">>;

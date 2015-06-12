@@ -22,6 +22,8 @@ parse_msg({eof, Rest}, {A, i, Lines}) ->
     {ok, {A, i, lists:reverse(Lines)}, Rest};
 parse_msg({eof, Rest}, {_, pd, _}=Msg) ->
     {ok, Msg, Rest};
+parse_msg({eof, Rest}, Msg) when is_list(Msg) ->
+	{ok, lists:reverse(Msg), Rest};
 parse_msg({ok, _, _}=Tok, {_, i, _}=Msg) ->
     parse_kv(Tok, Msg);
 parse_msg({ok, _, _}=Tok, {_, pd, _}=Msg) ->
@@ -30,6 +32,10 @@ parse_msg({ok, N, Rest}, undefined) when is_integer(N) ->
     parse_cmd(bkfw_scanner:token(Rest), {N, undefined, []});
 parse_msg({ok, _, _}=Tok, {_, undefined, _}=Msg) ->
     parse_cmd(Tok, Msg);
+parse_msg({ok, V, Rest}, undefined) ->
+	parse_msg(bkfw_scanner:token(Rest), [V]);
+parse_msg({ok, V, Rest}, Msg) when is_list(Msg) ->
+	parse_msg(bkfw_scanner:token(Rest), [V | Msg ]);
 parse_msg({more, Rest}, Msg) ->
     {more, Msg, Rest};
 parse_msg({error, Err, Bin}, _) ->

@@ -21,6 +21,7 @@ token(<< $\r, $\n, R/bits>>, _) -> {eof, R};
 token(<< $\s, R/bits >>, SoFar) -> token(R, << SoFar/bits, $\s >>);
 token(<< $\t, R/bits >>, SoFar) -> token(R, << SoFar/bits, $\t >>);
 token(<< $=, R/bits >>, SoFar) -> s_value(R, <<>>, << SoFar/bits, $= >>);
+token(<< $[, R/bits >>, SoFar) -> bin_value(R, <<>>, << SoFar/bits, $[ >>);
 token(<< "0x", R/bits >>, SoFar)                    -> s_hex_i(R, << SoFar/bits, "0x" >>);
 token(<< Alpha, R/bits >>, SoFar) when Alpha >= 65, Alpha =< 90 -> 
     s_string(R, << Alpha >>, << SoFar/bits, Alpha >>);   % Upper-case alpha
@@ -44,6 +45,10 @@ token(<< C, R/bits >>, _) -> {error, io_lib:format("Invalid char: ~p", [C]), R}.
 %%%
 %%% priv
 %%%
+bin_value(<<>>, _, SoFar)               -> {more, SoFar};
+bin_value(<< $], R/bits >>, Acc, _)     -> {ok, Acc, R};
+bin_value(<< C, R/bits >>, Acc, SoFar)  -> bin_value(R, << Acc/binary, C >>, << SoFar/bits, C >>).
+
 s_hex_i(<<>>, SoFar) -> {more, SoFar};
 s_hex_i(<< $\r, $\n>>, _) -> {error, eof, <<>>};
 s_hex_i(<< $\r, $\n, R/bits>>, _) -> {error, eof, <<$\r, $\n, R/bits>>};
@@ -221,6 +226,8 @@ kw_to_atom(<<"CLOSE">>)     -> close;
 kw_to_atom(<<"EDFA_TEMP">>) -> edfa_temp;
 kw_to_atom(<<"EDFA_PSU">>)  -> edfa_psu;
 kw_to_atom(<<"ERASE">>)     -> erase;
+kw_to_atom(<<"ERROR">>)     -> error;
+kw_to_atom(<<"ERROR:">>)    -> error;
 kw_to_atom(<<"GC">>)        -> gc;
 kw_to_atom(<<"IT">>)        -> it;
 kw_to_atom(<<"I">>)         -> i;
@@ -232,10 +239,12 @@ kw_to_atom(<<"MODE">>)      -> mode;
 kw_to_atom(<<"MODULE=">>)   -> module;
 kw_to_atom(<<"MUTE">>)      -> mute;
 kw_to_atom(<<"NOK">>)       -> nok;
+kw_to_atom(<<"NOK:">>)      -> nok;
 kw_to_atom(<<"N">>)         -> n;
 kw_to_atom(<<"OFF">>)       -> off;
 kw_to_atom(<<"OFR">>)       -> ofr;
 kw_to_atom(<<"OK">>)        -> ok;
+kw_to_atom(<<"OK:">>)       -> ok;
 kw_to_atom(<<"OPEN">>)      -> open;
 kw_to_atom(<<"PC">>)        -> pc;
 kw_to_atom(<<"PIN">>)       -> pin;

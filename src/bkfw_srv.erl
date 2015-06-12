@@ -5,14 +5,19 @@
 
 % API
 -export([start_link/0,
-		 raw/1,
-		 command/3]).
+		 wait/0,
+		 release/1,
+		 raw/3,
+		 command/3,
+		 command/5]).
 
 % Internal
 -export([init/0]).
 
 -define(FSM, ?MODULE).
 -define(TIMEOUT, 1000).
+
+-type comref() :: {reference(), atom()}.
 
 %%%
 %%% API
@@ -22,53 +27,59 @@ start_link() ->
     register(?FSM, Pid),
     {ok, Pid}.
 
--spec command(Idx :: integer(), Cmd :: atom(), Args :: list()) -> {ok, term()} | {error, term()}.
-command(Idx, Cmd, Args) when is_integer(Idx), is_atom(Cmd) ->
+-spec command(ComRef :: comref(), 
+			  Idx :: iolist(), 
+			  Cmd :: atom(), Args :: list(), 
+			  Timeout :: integer()) -> {ok, term()} | {error, term()}.
+command({_, Com}, Idx, Cmd, Args, Timeout) ->
     CmdName = string:to_upper(atom_to_list(Cmd)),
     ArgsStr = case Args of
 				  [] -> "";
 				  _ -> [" ", Args]
 			  end,
-    Bin = ["0x", io_lib:format("~2.16.0b", [Idx]), " ", [CmdName, ArgsStr], $\r, $\n],
-	Timeout = application:get_env(bkfw, timeout, ?TIMEOUT),
-	case wait(Timeout) of
-		{ok, {Ref, Com}} ->
-			bkfw_com:raw(Com, Bin),
-			Ret = wait_answer(Idx, cmd_to_ans(Cmd), Com, Timeout),
-			?FSM ! {signal, Ref},
+    Bin = [Idx, " ", [CmdName, ArgsStr], $\r, $\n],
+	bkfw_com:raw(Com, Bin),
+	wait_answer(Idx, cmd_to_ans(Cmd), Com, Timeout).
+
+
+-spec command(Idx :: integer() | iolist(), Cmd :: atom(), Args :: list()) -> {ok, term()} | {error, term()}.
+command(Idx, Cmd, Args) when is_integer(Idx), is_atom(Cmd) ->
+	command(["0x", io_lib:format("~2.16.0b", [Idx])], Cmd, Args);
+command(Idx, Cmd, Args) ->
+	case wait() of
+		{ok, ComRef} ->
+			Timeout = application:get_env(bkfw, timeout, ?TIMEOUT),
+			Ret = command(ComRef, Idx, Cmd, Args, Timeout),
+			release(ComRef),
 			Ret;
 		{error, _} = Err ->
 			Err
 	end.
 
--spec raw(binary()) -> {ok, term()} | {error, term()}.
-raw(Data) ->
-	Timeout = application:get_env(bkfw, timeout, ?TIMEOUT),	
-	case wait(Timeout) of
-		{ok, {Ref, Com}} ->
-			bkfw_com:raw(Com, Data),
-			Ret = wait_raw(Timeout),
-			?FSM ! {signal, Ref},
-			Ret;
-		{error, _}=Err ->
-			Err
-	end.
+-spec raw(comref(), binary(), integer()) -> {ok, term()} | {error, term()}.
+raw({_, Com}, Data, Timeout) ->
+	bkfw_com:raw(Com, Data),
+	wait_raw(Timeout).
 
-%%%
-%%% Priv
-%%%
--spec wait(Timeout :: integer()) -> {ok, {reference(), atom()}} | {error, term()}.
-wait(Timeout) ->
+-spec wait() -> {ok, comref()} | {error, term()}.
+wait() ->
     Ref = make_ref(),
     ?FSM ! {wait, self(), Ref},
 	receive
-		{com, Com} -> 
-			{ok, {Ref, Com}}
-	after Timeout ->
+		{com, Com} -> {ok, {Ref, Com}}
+	after 1000*300 ->
 			?FSM ! {signal, Ref},
 			{error, timeout}
 	end.
 
+-spec release(term()) -> ok.
+release({Ref, _}) ->
+	?FSM ! {signal, Ref},
+	ok.
+
+%%%
+%%% Priv
+%%%
 wait_raw(T) ->
 	receive
 		{error, _} = Err -> Err;
