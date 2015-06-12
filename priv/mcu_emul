@@ -368,7 +368,7 @@ handle_fw(#fw{}=Fw, flash, [clear], S) ->
 	reply_fw(S, Fw, ["OK"]),
 	{S, Fw};
 handle_fw(#fw{data=Data}=Fw, flash, [read, _Adr, _Length], S) ->
-	reply_fw(S, Fw, ["OK: [", binary_to_list(Data), "]"]),
+	reply_fw(S, Fw, ["OK: [", Data, "]"]),
 	{S, Fw};
 handle_fw(Fw, flash, [write, _Adr, _Length, Payload], S) ->
 	reply_fw(S, Fw, ["OK"]),

@@ -131,6 +131,7 @@ s_string(<< C, R/bits >>, Acc, SoFar) when C >= 48, C =< 57 ->        % digit
 s_string(<< $., R/bits >>, Acc, SoFar) -> s_string(R, << Acc/binary, $. >>, << SoFar/bits, $. >>);
 s_string(<< $_, R/bits >>, Acc, SoFar) -> s_string(R, << Acc/binary, $_ >>, << SoFar/bits, $_ >>);
 s_string(<< $:, R/bits >>, Acc, SoFar) -> s_string(R, << Acc/binary, $: >>, << SoFar/bits, $: >>);
+s_string(<< $=, R/bits >>, Acc, SoFar) -> s_string(R, << Acc/binary, $= >>, << SoFar/bits, $= >>);
 s_string(<< C, R/bits >>, _Acc, _) -> 
     {error, io_lib:format("Invalid char in string: ~p", [C]), R}.
 

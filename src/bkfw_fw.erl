@@ -15,7 +15,7 @@
 		 upgrade_amps/1]).
 
 -define(TIMEOUT, 5000).
--define(FW_START, 16#08004000).
+-define(FW_START, 16#8004000).
 -define(FW_LENGTH, 64).
 
 upgrade_fw(Filename) ->
@@ -79,19 +79,14 @@ upgrade_micro(Idx, Fw) ->
 	end.
 
 upgrade_micro(ComRef, Idx, Fw) ->
-	?debug("<0>upg", []),
 	case bkfw_srv:command(ComRef, Idx, upg, [], ?TIMEOUT) of
 		{ok, [ok]} ->
-			?debug("<1>upg", []),
 			upg_flash_open(ComRef, Idx, Fw);
 		{ok, [nok, error, Code]} ->
-			?debug("<2>upg", []),
 			{error, code_to_err(Code)};
 		{ok, _Else} ->
-			?debug("<3>upg -> ~p", [_Else]),
 			{error, unexpected};
 		{error, _} = Err ->
-			?debug("<4>upg -> ~p", [Err]),
 			Err
 	end.
 
@@ -120,62 +115,46 @@ upg_flash_clear(ComRef, Idx, Fw) ->
 	end.
 
 
-% Firmware written
 upg_flash_write(ComRef, Idx, <<>>, _) ->
-	case bkfw_src:command(ComRef, Idx, flash, ["START ", ?FW_START]) of
+	?debug("firmware written, starting", []),
+	case bkfw_src:command(ComRef, Idx, flash, ["START ", ?FW_START], ?TIMEOUT) of
 		{ok, [ok]} -> ok;
 		{ok, _} -> {error, unexpected};
 		{error, _} = Err -> Err
 	end;
 
-% Last chunk, in case it is smaller than ?FW_LENGTH
-upg_flash_write(ComRef, Idx, Fw, Adr) when byte_size(Fw) < ?FW_LENGTH ->
-	Length = byte_size(Fw),
-	EncPayload = encode(Fw),
-	case bkfw_srv:command(ComRef, Idx, flash, ["WRITE ", Adr, Length, EncPayload], ?TIMEOUT) of
-		{ok, [ok]} ->
-			case bkfw_srv:command(ComRef, Idx, flash, ["READ", Adr, Length]) of
-				{ok, [ok, EncPayload]} ->
-					upg_flash_write(ComRef, Idx, <<>>, Adr + Length);
-				{ok, [ok, _]} -> {error, invalid_payload};
-				{ok, _} -> {error, unexpected};
-				{error, _} = Err ->	Err
-			end;
-		{ok, [nok, error, Code]} -> {error, code_to_err(Code)};
-		{ok, _} ->{error, unexpected};
-		{error, _} = Err ->	Err
-	end;
-
-% Regular chunk
 upg_flash_write(ComRef, Idx, Fw, Adr) ->
-	<< Payload:?FW_LENGTH/bytes, Rest/binary >> = Fw,
+	{Payload, Rest, Length} = if 
+								  byte_size(Fw) < ?FW_LENGTH -> 
+									  {Fw, <<>>, byte_size(Fw)};
+								  true ->
+									  << P:?FW_LENGTH/bytes, R/binary >> = Fw,
+									  {P, R, ?FW_LENGTH}
+							  end,
+	EncAdr = io_lib:format("~8.16.0b", [Adr]),
+	EncLength = io_lib:format("~b", [Length]),
 	EncPayload = encode(Payload),
 	?debug("write: ~p", [EncPayload]),
-	case bkfw_srv:command(ComRef, Idx, flash, ["WRITE ", Adr, ?FW_LENGTH, EncPayload], ?TIMEOUT) of
+	case bkfw_srv:command(ComRef, Idx, flash, ["WRITE ", EncAdr, " ", EncLength, " ", EncPayload], ?TIMEOUT) of
 		{ok, [ok]} ->
-			case bkfw_srv:command(ComRef, Idx, flash, ["READ", Adr, ?FW_LENGTH]) of
+			case bkfw_srv:command(ComRef, Idx, flash, ["READ ", EncAdr, " ", EncLength], ?TIMEOUT) of
 				{ok, [ok, EncPayload]} ->
-					?debug("read: ~p", [EncPayload]),
-					upg_flash_write(ComRef, Idx, Rest, Adr + ?FW_LENGTH);
-				{ok, [ok, _]} -> {error, invalid_payload};
-				{ok, _} -> {error, unexpected};
-				{error, _} = Err ->	Err
+					?debug("<1>read: ~p", [EncPayload]),
+					upg_flash_write(ComRef, Idx, Rest, Adr + Length);
+				{ok, [ok, _Else]} -> 
+					?debug("<2>read: ~p", [_Else]),
+					{error, invalid_payload};
+				{ok, _} -> 
+					{error, unexpected};
+				{error, _} = Err ->	
+					Err
 			end;
 		{ok, [nok, error, Code]} -> {error, code_to_err(Code)};
 		{ok, _} ->{error, unexpected};
 		{error, _} = Err ->	Err
 	end.
 
-encode(Bin) -> binary_to_list(Bin).
-
-%% encode(Bin) when is_binary(Bin) ->
-%% 	encode(Bin, []).
-
-%% encode(<<>>, Acc) -> 
-%% 	lists:reverse(Acc);
-%% encode(<< B:8, R/bits >>, Acc) ->
-%% 	encode(R, [ B | Acc ]).
-
+encode(Bin) -> base64:encode_to_string(Bin).
 
 code_to_err(1) -> not_ready;
 code_to_err(2) -> not_opened;
