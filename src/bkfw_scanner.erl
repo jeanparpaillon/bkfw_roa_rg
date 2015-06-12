@@ -228,6 +228,7 @@ kw_to_atom(<<"EDFA_PSU">>)  -> edfa_psu;
 kw_to_atom(<<"ERASE">>)     -> erase;
 kw_to_atom(<<"ERROR">>)     -> error;
 kw_to_atom(<<"ERROR:">>)    -> error;
+kw_to_atom(<<"FLASH">>)     -> flash;
 kw_to_atom(<<"GC">>)        -> gc;
 kw_to_atom(<<"IT">>)        -> it;
 kw_to_atom(<<"I">>)         -> i;

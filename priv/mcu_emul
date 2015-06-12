@@ -354,7 +354,26 @@ handle_msg(#mcu{index=Addr}=Mcu, Cmd, Args, S) ->
     {S, Mcu}.
 
 
+-define(FW_START, 16#08004000).
 handle_fw(#fw{}=Fw, upg, [], S) ->
+	reply_fw(S, Fw, ["OK"]),
+	{S, Fw};
+handle_fw(#fw{}=Fw, flash, [open], S) ->
+	reply_fw(S, Fw, ["OK: v10"]),
+	{S, Fw};
+handle_fw(#fw{}=Fw, flash, [close], S) ->
+	reply_fw(S, Fw, ["OK"]),
+	{S, Fw};
+handle_fw(#fw{}=Fw, flash, [clear], S) ->
+	reply_fw(S, Fw, ["OK"]),
+	{S, Fw};
+handle_fw(#fw{data=Data}=Fw, flash, [read, _Adr, _Length], S) ->
+	reply_fw(S, Fw, ["OK: [", binary_to_list(Data), "]"]),
+	{S, Fw};
+handle_fw(Fw, flash, [write, _Adr, _Length, Payload], S) ->
+	reply_fw(S, Fw, ["OK"]),
+	{S, Fw#fw{data=Payload}};
+handle_fw(#fw{}=Fw, flash, [start, _Adr], S) ->
 	reply_fw(S, Fw, ["OK"]),
 	{S, Fw}.
 

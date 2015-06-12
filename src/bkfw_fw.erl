@@ -79,14 +79,19 @@ upgrade_micro(Idx, Fw) ->
 	end.
 
 upgrade_micro(ComRef, Idx, Fw) ->
+	?debug("<0>upg", []),
 	case bkfw_srv:command(ComRef, Idx, upg, [], ?TIMEOUT) of
 		{ok, [ok]} ->
+			?debug("<1>upg", []),
 			upg_flash_open(ComRef, Idx, Fw);
 		{ok, [nok, error, Code]} ->
+			?debug("<2>upg", []),
 			{error, code_to_err(Code)};
-		{ok, _} ->
+		{ok, _Else} ->
+			?debug("<3>upg -> ~p", [_Else]),
 			{error, unexpected};
 		{error, _} = Err ->
+			?debug("<4>upg -> ~p", [Err]),
 			Err
 	end.
 
@@ -126,10 +131,11 @@ upg_flash_write(ComRef, Idx, <<>>, _) ->
 % Last chunk, in case it is smaller than ?FW_LENGTH
 upg_flash_write(ComRef, Idx, Fw, Adr) when byte_size(Fw) < ?FW_LENGTH ->
 	Length = byte_size(Fw),
-	case bkfw_srv:command(ComRef, Idx, flash, ["WRITE ", Adr, Length, Fw], ?TIMEOUT) of
+	EncPayload = encode(Fw),
+	case bkfw_srv:command(ComRef, Idx, flash, ["WRITE ", Adr, Length, EncPayload], ?TIMEOUT) of
 		{ok, [ok]} ->
 			case bkfw_srv:command(ComRef, Idx, flash, ["READ", Adr, Length]) of
-				{ok, [ok, Fw]} ->
+				{ok, [ok, EncPayload]} ->
 					upg_flash_write(ComRef, Idx, <<>>, Adr + Length);
 				{ok, [ok, _]} -> {error, invalid_payload};
 				{ok, _} -> {error, unexpected};
@@ -142,11 +148,14 @@ upg_flash_write(ComRef, Idx, Fw, Adr) when byte_size(Fw) < ?FW_LENGTH ->
 
 % Regular chunk
 upg_flash_write(ComRef, Idx, Fw, Adr) ->
-	<< Payload:(?FW_LENGTH*8), Rest/binary >> = Fw,
-	case bkfw_srv:command(ComRef, Idx, flash, ["WRITE ", Adr, ?FW_LENGTH, Payload], ?TIMEOUT) of
+	<< Payload:?FW_LENGTH/bytes, Rest/binary >> = Fw,
+	EncPayload = encode(Payload),
+	?debug("write: ~p", [EncPayload]),
+	case bkfw_srv:command(ComRef, Idx, flash, ["WRITE ", Adr, ?FW_LENGTH, EncPayload], ?TIMEOUT) of
 		{ok, [ok]} ->
 			case bkfw_srv:command(ComRef, Idx, flash, ["READ", Adr, ?FW_LENGTH]) of
-				{ok, [ok, Payload]} ->
+				{ok, [ok, EncPayload]} ->
+					?debug("read: ~p", [EncPayload]),
 					upg_flash_write(ComRef, Idx, Rest, Adr + ?FW_LENGTH);
 				{ok, [ok, _]} -> {error, invalid_payload};
 				{ok, _} -> {error, unexpected};
@@ -156,6 +165,16 @@ upg_flash_write(ComRef, Idx, Fw, Adr) ->
 		{ok, _} ->{error, unexpected};
 		{error, _} = Err ->	Err
 	end.
+
+encode(Bin) -> binary_to_list(Bin).
+
+%% encode(Bin) when is_binary(Bin) ->
+%% 	encode(Bin, []).
+
+%% encode(<<>>, Acc) -> 
+%% 	lists:reverse(Acc);
+%% encode(<< B:8, R/bits >>, Acc) ->
+%% 	encode(R, [ B | Acc ]).
 
 
 code_to_err(1) -> not_ready;

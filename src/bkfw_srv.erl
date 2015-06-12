@@ -111,7 +111,7 @@ wait_answer(Idx, Expect, Com, T, SoFar) ->
 			{error, timeout}
 	end.
 
-match_ans('_', {_, _, _}=Msg) -> {ok, Msg};
+match_ans('_', Msg) -> {ok, Msg};
 match_ans(Ans, {_, Ans, _}=Msg) -> {ok, Msg};
 match_ans(_, _) -> {error, {unexpected, answer}}.
 
