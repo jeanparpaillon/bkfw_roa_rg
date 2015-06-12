@@ -102,3 +102,8 @@
 # 1.0rc2
 
 * Ignore when USB port is not available
+
+# 1.1rc1
+
+* USB mode ok
+* Firmware upload quite ok: binary encoding yet to decide

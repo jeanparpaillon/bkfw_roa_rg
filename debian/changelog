@@ -1,3 +1,10 @@
+bkfw (1.1rc1) wheezy; urgency=medium
+
+   * USB mode ok
+   * Firmware upload quite ok: binary encoding yet to define
+
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Sat, 13 Jun 2015 00:57:42 +0200
+
 bkfw (1.0rc2) wheezy; urgency=medium
 
    * Ignore when USB port is not available
