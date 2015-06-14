@@ -278,7 +278,7 @@ loop([]) ->
     end;
 loop([Fun | Tail]) ->
     timer:sleep(application:get_env(bkfw, cmd_period, ?PERIOD)),
-    case gen_server:call(?MODULE, {call, Fun}) of
+    case gen_server:call(?MODULE, {call, Fun}, infinity) of
 		ok ->
 			loop(Tail);
 		{error, timeout} ->

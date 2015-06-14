@@ -68,11 +68,13 @@ upgrade_amp([ #ampTable{index=Idx} | Tail ], Data) ->
 
 upgrade_micro(Idx, Fw) ->
 	?debug("Upgrading firmware on unit: ~p~n", [Idx]),
+	ok = bkfw_sup:set_upgrade(true),
 	case bkfw_srv:wait() of
 		{ok, ComRef} ->
 			IdxStr = ["0x", io_lib:format("~4.16.0b", [Idx])],
 			Ret = upgrade_micro(ComRef, IdxStr, Fw),
 			bkfw_srv:release(ComRef),
+			ok = bkfw_sup:set_upgrade(false),
 			Ret;
 		{error, _} = Err ->
 			Err

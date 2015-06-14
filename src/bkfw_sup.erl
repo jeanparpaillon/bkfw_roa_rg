@@ -6,6 +6,7 @@
 
 %% API
 -export([start_link/0,
+		 set_upgrade/1,
 		 get_usbmode/0,
 		 set_usbmode/1,
 		 restart/0]).
@@ -33,6 +34,17 @@ restart() ->
 						  try supervisor:restart_child(Child) catch _:_ -> exit(Child, kill) end
 				  end, supervisor:which_children(?SRV)).
 
+-spec set_upgrade(boolean()) -> ok | {error, term()}.
+set_upgrade(false) ->
+	?info("(re)starting monitoring loop", []),
+	case supervisor:restart_child(?SRV, bkfw_edfa) of
+		{ok, _} -> ok;
+		{ok, _, _} -> ok;
+		{error, _} = Err -> Err
+	end;
+set_upgrade(true) ->
+	?info("Stopping monitoring loop", []),
+	supervisor:terminate_child(?SRV, bkfw_edfa).		
 
 
 -spec get_usbmode() -> boolean().
