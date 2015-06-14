@@ -6,9 +6,9 @@
 
 %% API
 -export([start_link/0,
-	 get_usbmode/0,
-	 set_usbmode/1,
-	 restart/0]).
+		 get_usbmode/0,
+		 set_usbmode/1,
+		 restart/0]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -26,20 +26,22 @@ start_link() ->
 
 restart() ->
     lists:foreach(fun ({_Id, restarting, _, _}) ->
-			  true;
-		      ({_Id, undefined, _, _}) ->
-			  true;
-		      ({_Id, Child, _, _}) ->
-			  try supervisor:restart_child(Child) catch _:_ -> exit(Child, kill) end
-		  end, supervisor:which_children(?SRV)).
+						  true;
+					  ({_Id, undefined, _, _}) ->
+						  true;
+					  ({_Id, Child, _, _}) ->
+						  try supervisor:restart_child(Child) catch _:_ -> exit(Child, kill) end
+				  end, supervisor:which_children(?SRV)).
+
+
 
 -spec get_usbmode() -> boolean().
 get_usbmode() ->
     F = fun F0([]) -> false;
-	    F0([{bkfw_usb, undefined, _, _} | _]) -> false;
-	    F0([{bkfw_usb, Pid, _, _ } | _]) when is_pid(Pid) -> true;
-	    F0([_ | Tail]) -> F0(Tail)
-	end,
+			F0([{bkfw_usb, undefined, _, _} | _]) -> false;
+			F0([{bkfw_usb, Pid, _, _ } | _]) when is_pid(Pid) -> true;
+			F0([_ | Tail]) -> F0(Tail)
+		end,
     F(supervisor:which_children(?SRV)).
 
 -define(NON_USB_CHILDREN, [bkfw_mutex, bkfw_alarms, bkfw_srv, bkfw_edfa]).
@@ -68,13 +70,13 @@ set_usbmode(true) ->
 
 init([]) ->
     Children = [
-		?CHILD(bkfw_config, worker),
-		?CHILD(bkfw_mutex, worker),
-		{bkfw_alarms, {gen_event, start_link, [{local, bkfw_alarms}]}, permanent, 5000, worker, [gen_event]},
-		?CHILD(bkfw_srv, worker),
-		?CHILD(bkfw_edfa, worker),
-		bkfw_http:get_config()
-	       ],
+				?CHILD(bkfw_config, worker),
+				?CHILD(bkfw_mutex, worker),
+				{bkfw_alarms, {gen_event, start_link, [{local, bkfw_alarms}]}, permanent, 5000, worker, [gen_event]},
+				?CHILD(bkfw_srv, worker),
+				?CHILD(bkfw_edfa, worker),
+				bkfw_http:get_config()
+			   ],
     {ok, { {one_for_one, 5, 10}, Children} }.
 
 start_or_restart(Spec = {Id, _, _, _, _, _}) ->
