@@ -1,3 +1,9 @@
+bkfw (1.1) wheezy; urgency=medium
+
+  * Use base64 encoding for firmware upgrade
+
+ -- Jean Parpaillon <jean.parpaillon@free.fr>  Sun, 14 Jun 2015 23:08:28 +0200
+
 bkfw (1.1rc1) wheezy; urgency=medium
 
    * USB mode ok

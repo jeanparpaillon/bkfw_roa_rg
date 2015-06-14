@@ -107,3 +107,7 @@
 
 * USB mode ok
 * Firmware upload quite ok: binary encoding yet to decide
+
+# 1.1
+
+* Use base64 encoding for firmware transfer
