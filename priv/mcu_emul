@@ -128,8 +128,9 @@ loop(#state{port=Port, tid=Tid, fwtid=FwTid}=S, Acc) ->
 							  [Fw] ->
 								  Fw
 						  end,
-					ets:insert(FwTid, handle_fw(Obj, FwCmd, Args, S)),
-					loop(S, <<>>);
+					{S2, Obj2} = handle_fw(Obj, FwCmd, Args, S),
+					ets:insert(FwTid, Obj2),
+					loop(S2, <<>>);
 				{ok, {0, Cmd, Args}, _} ->
 					Obj = case ets:lookup(Tid, 0) of
 							  [] ->
@@ -368,7 +369,7 @@ handle_fw(#fw{}=Fw, flash, [clear], S) ->
 	reply_fw(S, Fw, ["OK"]),
 	{S, Fw};
 handle_fw(#fw{data=Data}=Fw, flash, [read, _Adr, _Length], S) ->
-	reply_fw(S, Fw, ["OK: [", Data, "]"]),
+	reply_fw(S, Fw, ["OK: ", Data]),
 	{S, Fw};
 handle_fw(Fw, flash, [write, _Adr, _Length, Payload], S) ->
 	reply_fw(S, Fw, ["OK"]),

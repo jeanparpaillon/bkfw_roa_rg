@@ -16,7 +16,7 @@
 
 -define(TIMEOUT, 5000).
 -define(FW_START, 16#8004000).
--define(FW_LENGTH, 64).
+-define(FW_LENGTH, 48).
 
 upgrade_fw(Filename) ->
     case bkfw_config:script("check_pkg.sh", Filename) of
@@ -117,7 +117,8 @@ upg_flash_clear(ComRef, Idx, Fw) ->
 
 upg_flash_write(ComRef, Idx, <<>>, _) ->
 	?debug("firmware written, starting", []),
-	case bkfw_src:command(ComRef, Idx, flash, ["START ", ?FW_START], ?TIMEOUT) of
+	EncAdr = io_lib:format("0x~8.16.0b", [?FW_START]),
+	case bkfw_srv:command(ComRef, Idx, flash, ["START ", EncAdr], ?TIMEOUT) of
 		{ok, [ok]} -> ok;
 		{ok, _} -> {error, unexpected};
 		{error, _} = Err -> Err
@@ -131,30 +132,33 @@ upg_flash_write(ComRef, Idx, Fw, Adr) ->
 									  << P:?FW_LENGTH/bytes, R/binary >> = Fw,
 									  {P, R, ?FW_LENGTH}
 							  end,
-	EncAdr = io_lib:format("~8.16.0b", [Adr]),
+	EncAdr = io_lib:format("0x~8.16.0b", [Adr]),
 	EncLength = io_lib:format("~b", [Length]),
 	EncPayload = encode(Payload),
-	?debug("write: ~p", [EncPayload]),
+	%?debug("write: ~p", [EncPayload]),
 	case bkfw_srv:command(ComRef, Idx, flash, ["WRITE ", EncAdr, " ", EncLength, " ", EncPayload], ?TIMEOUT) of
 		{ok, [ok]} ->
 			case bkfw_srv:command(ComRef, Idx, flash, ["READ ", EncAdr, " ", EncLength], ?TIMEOUT) of
 				{ok, [ok, EncPayload]} ->
-					?debug("<1>read: ~p", [EncPayload]),
 					upg_flash_write(ComRef, Idx, Rest, Adr + Length);
 				{ok, [ok, _Else]} -> 
-					?debug("<2>read: ~p", [_Else]),
 					{error, invalid_payload};
-				{ok, _} -> 
+				{ok, _Else} -> 
 					{error, unexpected};
-				{error, _} = Err ->	
-					Err
+				{error, Err} ->	
+					?error("Error checking firmware: ~s", [Err]),
+					{error, Err}
 			end;
-		{ok, [nok, error, Code]} -> {error, code_to_err(Code)};
-		{ok, _} ->{error, unexpected};
-		{error, _} = Err ->	Err
+		{ok, [nok, error, Code]} -> 
+			{error, code_to_err(Code)};
+		{ok, _} ->
+			{error, unexpected};
+		{error, Err}  ->
+			?error("Error writing firmware: ~p", [Err]),
+			{error, Err}
 	end.
 
-encode(Bin) -> base64:encode_to_string(Bin).
+encode(Bin) -> base64:encode(Bin).
 
 code_to_err(1) -> not_ready;
 code_to_err(2) -> not_opened;

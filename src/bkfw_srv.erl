@@ -7,9 +7,9 @@
 -export([start_link/0,
 		 wait/0,
 		 release/1,
-		 raw/3,
 		 command/3,
-		 command/5]).
+		 command/5,
+		 command/6]).
 
 % Internal
 -export([init/0]).
@@ -27,11 +27,22 @@ start_link() ->
     register(?FSM, Pid),
     {ok, Pid}.
 
+
 -spec command(ComRef :: comref(), 
 			  Idx :: iolist(), 
 			  Cmd :: atom(), Args :: list(), 
 			  Timeout :: integer()) -> {ok, term()} | {error, term()}.
-command({_, Com}, Idx, Cmd, Args, Timeout) ->
+command(ComRef, Idx, Cmd, Args, Timeout) ->
+	Parser = parse_cmd_ans(Cmd),
+	command(ComRef, Idx, Cmd, Args, Timeout, Parser).
+
+
+-spec command(ComRef :: comref(), 
+			  Idx :: iolist(), 
+			  Cmd :: atom(), Args :: list(), 
+			  Timeout :: integer(),
+			  Parser :: fun()) -> {ok, term()} | {error, term()}.
+command({_, Com}, Idx, Cmd, Args, Timeout, Parser) ->
     CmdName = string:to_upper(atom_to_list(Cmd)),
     ArgsStr = case Args of
 				  [] -> "";
@@ -39,7 +50,7 @@ command({_, Com}, Idx, Cmd, Args, Timeout) ->
 			  end,
     Bin = [Idx, " ", [CmdName, ArgsStr], $\r, $\n],
 	bkfw_com:raw(Com, Bin),
-	wait_answer(Idx, cmd_to_ans(Cmd), Com, Timeout).
+	wait_answer(Idx, Parser, Com, Timeout).
 
 
 -spec command(Idx :: integer() | iolist(), Cmd :: atom(), Args :: list()) -> {ok, term()} | {error, term()}.
@@ -55,11 +66,6 @@ command(Idx, Cmd, Args) ->
 		{error, _} = Err ->
 			Err
 	end.
-
--spec raw(comref(), binary(), integer()) -> {ok, term()} | {error, term()}.
-raw({_, Com}, Data, Timeout) ->
-	bkfw_com:raw(Com, Data),
-	wait_raw(Timeout).
 
 -spec wait() -> {ok, comref()} | {error, term()}.
 wait() ->
@@ -80,35 +86,36 @@ release({Ref, _}) ->
 %%%
 %%% Priv
 %%%
-wait_raw(T) ->
-	receive
-		{error, _} = Err -> Err;
-		{msg, Msg} -> {ok, Msg}
-	after T ->
-			{error, timeout}
-	end.
-
-wait_answer(Idx, Expect, Com, T) ->
-	wait_answer(Idx, Expect, Com, T, undefined).
+wait_answer(Idx, Parser, Com, T) ->
+	wait_answer(Idx, Parser, Com, T, undefined).
 
 
-wait_answer(Idx, Expect, Com, T, SoFar) ->
+wait_answer(Idx, Parser, Com, T, SoFar) ->
 	receive
 		{error, _} = Err ->
 			Err;
 		{msg, Data} ->
-			case bkfw_parser:parse(Data, SoFar) of
-				{ok, Msg, _} ->
+			case Parser(Data, SoFar) of
+				{ok, _} = Ret  ->
 					bkfw_com:release(Com),
-					match_ans(Expect, Msg);
+					Ret;
 				{more, Msg, Rest} ->
 					bkfw_com:more(Com, Rest),
-					wait_answer(Idx, Expect, Com, T, Msg);
+					wait_answer(Idx, Parser, Com, T, Msg);
 				{error, _} = Err ->
 					Err
 			end
 	after T ->
 			{error, timeout}
+	end.
+
+parse_cmd_ans(Cmd) ->
+	fun(Data, SoFar) ->
+			case bkfw_parser:parse(Data, SoFar) of
+				{ok, Msg, _} -> match_ans(cmd_to_ans(Cmd), Msg);
+				{more, Msg, Rest} -> {more, Msg, Rest};
+				{error, Err, _} -> {error, Err}
+			end
 	end.
 
 match_ans('_', Msg) -> {ok, Msg};

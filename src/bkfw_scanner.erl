@@ -7,7 +7,8 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--export([token/1]).
+-export([token/1,
+		 buf/2]).
 
 -type token_ret() :: {ok, token(), binary()} | {eof, binary()} | {more, binary()} | {error, term(), binary()}.
 
@@ -21,7 +22,6 @@ token(<< $\r, $\n, R/bits>>, _) -> {eof, R};
 token(<< $\s, R/bits >>, SoFar) -> token(R, << SoFar/bits, $\s >>);
 token(<< $\t, R/bits >>, SoFar) -> token(R, << SoFar/bits, $\t >>);
 token(<< $=, R/bits >>, SoFar) -> s_value(R, <<>>, << SoFar/bits, $= >>);
-token(<< $[, R/bits >>, SoFar) -> bin_value(R, <<>>, << SoFar/bits, $[ >>);
 token(<< "0x", R/bits >>, SoFar)                    -> s_hex_i(R, << SoFar/bits, "0x" >>);
 token(<< Alpha, R/bits >>, SoFar) when Alpha >= 65, Alpha =< 90 -> 
     s_string(R, << Alpha >>, << SoFar/bits, Alpha >>);   % Upper-case alpha
@@ -42,12 +42,16 @@ token(<< $8, R/bits >>, SoFar) -> s_num(R, 1, 8, << SoFar/bits, $8 >>);
 token(<< $9, R/bits >>, SoFar) -> s_num(R, 1, 9, << SoFar/bits, $9 >>);
 token(<< C, R/bits >>, _) -> {error, io_lib:format("Invalid char: ~p", [C]), R}.
 
+-spec buf(Length :: integer(), Data :: binary()) -> token_ret().
+buf(Length, Data) -> buf(Length, Data, <<>>).
+
 %%%
 %%% priv
 %%%
-bin_value(<<>>, _, SoFar)               -> {more, SoFar};
-bin_value(<< $], R/bits >>, Acc, _)     -> {ok, Acc, R};
-bin_value(<< C, R/bits >>, Acc, SoFar)  -> bin_value(R, << Acc/binary, C >>, << SoFar/bits, C >>).
+buf(0, Rest, Buf) -> {ok, Buf, Rest};
+buf(_, <<>>, Buf) -> {more, Buf};
+buf(L, << C, R/bits >>, Buf) -> buf(L-1, R, << Buf/bits, C >>).
+
 
 s_hex_i(<<>>, SoFar) -> {more, SoFar};
 s_hex_i(<< $\r, $\n>>, _) -> {error, eof, <<>>};
@@ -132,6 +136,8 @@ s_string(<< $., R/bits >>, Acc, SoFar) -> s_string(R, << Acc/binary, $. >>, << S
 s_string(<< $_, R/bits >>, Acc, SoFar) -> s_string(R, << Acc/binary, $_ >>, << SoFar/bits, $_ >>);
 s_string(<< $:, R/bits >>, Acc, SoFar) -> s_string(R, << Acc/binary, $: >>, << SoFar/bits, $: >>);
 s_string(<< $=, R/bits >>, Acc, SoFar) -> s_string(R, << Acc/binary, $= >>, << SoFar/bits, $= >>);
+s_string(<< $+, R/bits >>, Acc, SoFar) -> s_string(R, << Acc/binary, $+ >>, << SoFar/bits, $+ >>);
+s_string(<< $/, R/bits >>, Acc, SoFar) -> s_string(R, << Acc/binary, $/ >>, << SoFar/bits, $/ >>);
 s_string(<< C, R/bits >>, _Acc, _) -> 
     {error, io_lib:format("Invalid char in string: ~p", [C]), R}.
 

@@ -4,7 +4,7 @@
 -include("bkfw.hrl").
 
 -export([parse/1,
-	 parse/2]).
+		 parse/2]).
 
 parse(Bin) ->
     parse(Bin, undefined).
@@ -34,6 +34,8 @@ parse_msg({ok, _, _}=Tok, {_, undefined, _}=Msg) ->
     parse_cmd(Tok, Msg);
 parse_msg({ok, V, Rest}, undefined) ->
 	parse_msg(bkfw_scanner:token(Rest), [V]);
+parse_msg({ok, L, Rest}, [_Adr, write, flash]=Msg) when is_integer(L) ->
+	parse_msg(bkfw_scanner:buf(L, Rest), [ L | Msg]);
 parse_msg({ok, V, Rest}, Msg) when is_list(Msg) ->
 	parse_msg(bkfw_scanner:token(Rest), [V | Msg ]);
 parse_msg({more, Rest}, Msg) ->
