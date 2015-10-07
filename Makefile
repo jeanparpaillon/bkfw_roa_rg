@@ -36,7 +36,8 @@ $(error "Rebar not available on this system")
 endif
 
 .PHONY: all compile doc clean test dialyzer typer shell distclean pdf \
-  update-deps clean-common-test-data rebuild install dist docker-release release
+  update-deps clean-common-test-data rebuild install dist docker-release \
+  docker-image release
 
 all: deps compile test
 
@@ -110,8 +111,16 @@ dist:
 
 IMAGE_ID=bkfw-build
 
-docker-release:
-	docker run -v `pwd`:/mnt $(IMAGE_ID) make -C /mnt release
+docker-release: docker-image
+	docker run -v `pwd`:/mnt $(IMAGE_ID) make -C /mnt release ORIG_UID=`id -u` ORIG_GRP=`id -g`
+
+docker-image:
+	@if ! $$(docker images | grep -q ^$(IMAGE_ID)); then \
+	  echo "Building $(IMAGE_ID) docker image"; \
+	  docker build --tag=$(IMAGE_ID) docker; \
+	else \
+	  echo "$(IMAGE_ID) docker image up-to-date"; \
+	fi
 
 release:
 	rm -rf $(RELDIR)
@@ -125,3 +134,4 @@ release:
 	cp mibs/*.mib $(RELDIR)/mibs
 	cp /usr/share/mibs/ietf/SNMPv2-MIB $(RELDIR)/mibs
 	zip -r $(RELDIR).zip $(RELDIR)
+	-test -n "$(ORIG_UID)" && chown -R $(ORIG_UID).$(ORIG_GRP) .
