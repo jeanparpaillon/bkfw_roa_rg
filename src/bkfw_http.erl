@@ -313,7 +313,8 @@ from_multipart(Req, #state{section={firmware, Fw}, firmware=Path}=S) ->
 	    case bkfw_config:upgrade(Fw, Path) of
 	    	ok ->
 	    	    {true, Req2, S};
-	    	{error, _Err} ->
+	    	{error, _} = Err ->
+				?error("Error upgrading firmware: ~p", [Err]),
 	    	    {false, Req2, S}
 	    end
     end.
