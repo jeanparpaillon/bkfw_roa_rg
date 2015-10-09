@@ -12,6 +12,7 @@
 %%% API
 %%%
 -export([start_link/0,
+		 stop/0,
 		 get_kv/0,
 		 loop/1]).
 
@@ -50,6 +51,9 @@ start_link() ->
 		{error, Err} -> {error, Err}
     end.
 
+stop() ->
+	gen_server:stop(?MODULE, shutdown, 5000).
+
 init_loop() ->
     loop([ read_infos | ?FUNS ]).
 
@@ -83,6 +87,7 @@ variable_func(get, Key) ->
 %%%
 init([]) ->
     ?info("Starting SMM monitoring", []),
+	process_flag(trap_exit, true),
     gen_event:add_handler(bkfw_alarms, bkfw_alarms_snmp, []),
     Tid = ets:new(?MODULE, []),
     ets:insert(Tid, {smmNumber, 0}),
@@ -213,8 +218,13 @@ handle_info(_Info, State) ->
 %% @spec terminate(Reason, State) -> void()
 %% @end
 %%--------------------------------------------------------------------
+terminate(shutdown, _State) ->
+	?info("Terminate EDFA monitoring", []),
+	bkfw_srv:flush(),
+    ok;
 terminate(_Reason, _State) ->
-    ok.
+	ok.
+
 
 %%--------------------------------------------------------------------
 %% @private

@@ -5,6 +5,7 @@
 
 % API
 -export([start_link/0,
+		 flush/0,
 		 wait/0,
 		 release/1,
 		 command/3,
@@ -26,6 +27,16 @@ start_link() ->
     Pid = spawn_link(?MODULE, init, []),
     register(?FSM, Pid),
     {ok, Pid}.
+
+
+flush() ->
+	?info("Flushing command server", []),
+	case wait() of
+		{ok, {_, Com}} ->
+			bkfw_com:stop(Com);
+		{error, _} ->
+			ignore
+	end.
 
 
 -spec command(ComRef :: comref(), 
@@ -93,6 +104,7 @@ wait_answer(Idx, Parser, Com, T) ->
 wait_answer(Idx, Parser, Com, T, SoFar) ->
 	receive
 		{error, _} = Err ->
+			?info("Error waiting answer<1>: ~p", [Err]),
 			Err;
 		{msg, Data} ->
 			case Parser(Data, SoFar) of
@@ -103,9 +115,11 @@ wait_answer(Idx, Parser, Com, T, SoFar) ->
 					bkfw_com:more(Com, Rest),
 					wait_answer(Idx, Parser, Com, T, Msg);
 				{error, _} = Err ->
+					?info("Error waiting answer<2>: ~p", [Err]),
 					Err
 			end
 	after T ->
+			?info("Timeout waiting answer", []),
 			{error, timeout}
 	end.
 
@@ -120,7 +134,9 @@ parse_cmd_ans(Cmd) ->
 
 match_ans('_', Msg) -> {ok, Msg};
 match_ans(Ans, {_, Ans, _}=Msg) -> {ok, Msg};
-match_ans(_, _) -> {error, {unexpected, answer}}.
+match_ans(E, R) -> 
+	?error("<Parse error> expected: ~p received ~p", [E, R]),
+	{error, {unexpected, answer}}.
 
 init() ->
     ?info("Starting command server", []),
