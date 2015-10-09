@@ -111,3 +111,7 @@
 # 1.1
 
 * Use base64 encoding for firmware transfer
+
+# 1.2
+
+* Include amps fiwnware upgrade
