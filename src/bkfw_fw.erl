@@ -43,6 +43,7 @@ upgrade_amps(Filename) ->
 	case file:read_file(Filename) of
 		{ok, Data} ->
 			Amps = mnesia:dirty_match_object(#ampTable{_='_'}),
+			%Amps = [ #ampTable{index=71}, #ampTable{index=72} ],
 			upgrade_amp(Amps, Data);
 		{error, enomem} ->
 			{error, invalid_fw};
@@ -105,7 +106,7 @@ upg_flash_open(ComRef, Idx, Fw) ->
 	end.
 
 upg_flash_clear(ComRef, Idx, Fw) ->
-	case bkfw_srv:command(ComRef, Idx, flash, ["CLEAR"], ?TIMEOUT) of
+	case bkfw_srv:command(ComRef, Idx, flash, ["CLEAR"], ?TIMEOUT * 4) of
 		{ok, [ok | _]} ->
 			upg_flash_write(ComRef, Idx, Fw, ?FW_START);
 		{ok, [nok, error, Code]} ->
@@ -165,4 +166,4 @@ encode(Bin) -> base64:encode(Bin).
 code_to_err(1) -> not_ready;
 code_to_err(2) -> not_opened;
 code_to_err(3) -> unexpected;
-code_to_err(4) -> timeout.
+code_to_err(4) -> timeout_can_bus.
