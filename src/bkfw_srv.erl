@@ -114,9 +114,12 @@ wait_answer(Idx, Parser, Com, T, SoFar) ->
 				{more, Msg, Rest} ->
 					bkfw_com:more(Com, Rest),
 					wait_answer(Idx, Parser, Com, T, Msg);
-				{error, _} = Err ->
-					?info("Error waiting answer<2>: ~p", [Err]),
-					Err
+				{error, Err} when is_list(Err) ->
+					?info("Error waiting answer<2>: ~s", [Err]),
+					{error, Err};
+				{error, Err} ->
+					?info("Error waiting answer<3>: ~p", [Err]),
+					{error, Err}
 			end
 	after T ->
 			?info("Timeout waiting answer", []),
