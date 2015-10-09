@@ -29,6 +29,8 @@ token(<< Alpha, R/bits >>, SoFar) when Alpha >= 97, Alpha =< 122 ->
     s_string(R, << Alpha >>, << SoFar/bits, Alpha >>);  % Lower-case alpha
 token(<< $_, R/bits >>, SoFar) -> 
     s_string(R, << $_ >>, << SoFar/bits, $_ >>);
+token(<< $%, R/bits >>, SoFar) -> 
+    s_string(R, <<>>, << SoFar/bits, $% >>);
 token(<< $-, R/bits >>, SoFar) -> s_num_i(R, -1, << SoFar/bits, $- >>);
 token(<< $0, R/bits >>, SoFar) -> s_num_i(R, 1, << SoFar/bits, $0 >>);
 token(<< $1, R/bits >>, SoFar) -> s_num(R, 1, 1, << SoFar/bits, $1 >>);
