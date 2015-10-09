@@ -121,7 +121,7 @@ loop(#state{port=Port, tid=Tid, fwtid=FwTid}=S, Acc) ->
 					?error("parse error: ~s~n", [Err]);
 				{eof, _} ->
 					ok;
-				{ok, {Idx, FwCmd, Args}, _} when FwCmd == upg; FwCmd == flash ->
+				{ok, {Idx, FwCmd, Args}, _} when FwCmd == ucan; FwCmd == flash ->
 					Obj = case ets:lookup(FwTid, Idx) of
 							  [] ->
 								  #fw{idx=Idx, data= <<>>};
@@ -356,7 +356,7 @@ handle_msg(#mcu{index=Addr}=Mcu, Cmd, Args, S) ->
 
 
 -define(FW_START, 16#08004000).
-handle_fw(#fw{}=Fw, upg, [], S) ->
+handle_fw(#fw{}=Fw, ucan, [], S) ->
 	reply_fw(S, Fw, ["OK"]),
 	{S, Fw};
 handle_fw(#fw{}=Fw, flash, [open], S) ->

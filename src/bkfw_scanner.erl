@@ -284,7 +284,7 @@ kw_to_atom(<<"SLO">>)       -> slo;
 kw_to_atom(<<"SMODE">>)     -> smode;
 kw_to_atom(<<"SPC">>)       -> spc;
 kw_to_atom(<<"START">>)     -> start;
-kw_to_atom(<<"UPG">>)       -> upg;
+kw_to_atom(<<"UCAN">>)      -> ucan;
 kw_to_atom(<<"VALIDATE">>)  -> validate;
 kw_to_atom(<<"VENDOR=">>)   -> vendor;
 kw_to_atom(<<"V">>)         -> v;

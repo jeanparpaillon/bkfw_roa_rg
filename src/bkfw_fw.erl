@@ -81,7 +81,7 @@ upgrade_micro(Idx, Fw) ->
 	end.
 
 upgrade_micro(ComRef, Idx, Fw) ->
-	case bkfw_srv:command(ComRef, Idx, upg, [], ?TIMEOUT) of
+	case bkfw_srv:command(ComRef, Idx, ucan, [], ?TIMEOUT) of
 		{ok, [ok]} ->
 			upg_flash_open(ComRef, Idx, Fw);
 		{ok, [nok, error, Code]} ->
