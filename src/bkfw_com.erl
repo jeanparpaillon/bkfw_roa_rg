@@ -109,7 +109,7 @@ init(_Args) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call({raw, Data}, {Pid, _Tag}, #state{port=Port, trace=Trace}=S) ->
-    debug_com(Trace, "[COM] Send raw command\n"),
+    debug_com(Trace, ["[COM] Send raw command: ", Data, "\n"]),
     Port ! {self(), {command, iolist_to_binary(Data)}},
     {reply, ok, S#state{owner=Pid}};
 
