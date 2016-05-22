@@ -20,6 +20,10 @@ ERLFLAGS= -pa $(CURDIR)/.eunit -pa $(CURDIR)/ebin -pa $(CURDIR)/deps/*/ebin
 DEPS_PLT=$(CURDIR)/.deps_plt
 DEPS=erts kernel stdlib
 
+OTP_SRC=esl-erlang_17.1-2~debian~wheezy_amd64.deb
+OTP_BASE_URL=https://packages.erlang-solutions.com/debian/pool
+OTP_ARCHIVE=docker/$(OTP_SRC)
+
 # =============================================================================
 # Verify that the programs we need to run are installed on this system
 # =============================================================================
@@ -114,13 +118,17 @@ IMAGE_ID=bkfw-build
 docker-release: docker-image
 	docker run -v `pwd`:/mnt $(IMAGE_ID) make -C /mnt release ORIG_UID=`id -u` ORIG_GRP=`id -g`
 
-docker-image:
+docker-image: $(OTP_ARCHIVE)
 	@if ! $$(docker images | grep -q ^$(IMAGE_ID)); then \
 	  echo "Building $(IMAGE_ID) docker image"; \
 	  docker build --tag=$(IMAGE_ID) docker; \
 	else \
 	  echo "$(IMAGE_ID) docker image up-to-date"; \
 	fi
+
+$(OTP_ARCHIVE):
+	curl --progress-bar  $(OTP_BASE_URL)/$(OTP_SRC) > $@
+
 
 release:
 	rm -rf $(RELDIR)
