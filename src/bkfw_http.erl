@@ -7,18 +7,18 @@
 
 %%% Cowboy REST callbacks
 -export([
-	 init/3,
-	 rest_init/2,
-	 allowed_methods/2,
-	 content_types_accepted/2,
-	 content_types_provided/2,
-	 resource_exists/2,
-	 allow_missing_post/2,
-	 to_json/2,
-	 from_json/2,
-	 from_multipart/2,
-	 is_authorized/2
-	]).
+		 init/3,
+		 rest_init/2,
+		 allowed_methods/2,
+		 content_types_accepted/2,
+		 content_types_provided/2,
+		 resource_exists/2,
+		 allow_missing_post/2,
+		 to_json/2,
+		 from_json/2,
+		 from_multipart/2,
+		 is_authorized/2
+		]).
 
 -define(PORT, 8080).
 -define(JSX_OPTS, [{space, 1}, {indent, 2}]).
@@ -29,13 +29,13 @@
 -define(set_errors(E, Req), set_errors(E, Req)).
 
 -record(state, {
-	  section   = undefined :: mcu | edfa | sys | {firmware, string()},
-	  index     = undefined :: integer() | undefined | badarg,
-	  mcu       = undefined,
-	  sys       = undefined :: login | net | password | community | usm | protocol | 
-				   reset | reboot | targets | usb,
-	  firmware  = undefined :: undefined | string()
-	 }).
+		  section   = undefined :: mcu | edfa | sys | {firmware, string()},
+		  index     = undefined :: integer() | undefined | badarg,
+		  mcu       = undefined,
+		  sys       = undefined :: login | net | password | community | usm | protocol | 
+								   reset | reboot | targets | usb,
+		  firmware  = undefined :: undefined | string()
+		 }).
 
 %%%
 %%% API
@@ -46,19 +46,19 @@ get_config() ->
     DftLogo = filename:join(code:priv_dir(bkfw), "logo.png"),
     Logo = application:get_env(bkfw, logo, DftLogo),
     Handlers = [
-		{"/api/mcu/[:index]",       bkfw_http, mcu},
-		{"/api/edfa",               bkfw_http, edfa},
-		{"/api/alarms",             bkfw_http_ws, []},
-		{"/api/sys/firmware/[:fw]", bkfw_http, firmware},
-		{"/api/sys/:name",          bkfw_http, sys},
-		{"/logo",                   cowboy_static, {file, Logo, [{mimetypes, cow_mimetypes, all}]}},
-		{"/[...]",                  cowboy_static, {dir, Dir, [{mimetypes, cow_mimetypes, all}]}}
-	       ],
+				{"/api/mcu/[:index]",       bkfw_http, mcu},
+				{"/api/edfa",               bkfw_http, edfa},
+				{"/api/alarms",             bkfw_http_ws, []},
+				{"/api/sys/firmware/[:fw]", bkfw_http, firmware},
+				{"/api/sys/:name",          bkfw_http, sys},
+				{"/logo",                   cowboy_static, {file, Logo, [{mimetypes, cow_mimetypes, all}]}},
+				{"/[...]",                  cowboy_static, {dir, Dir, [{mimetypes, cow_mimetypes, all}]}}
+			   ],
     Args = [http, 1,
-	    [{port, proplists:get_value(port, Opts, ?PORT)}],
-	    [{env, [{dispatch, cowboy_router:compile([{'_', Handlers}])}]},
-	     {middlewares, [bkfw_index, cowboy_router, cowboy_handler]}]
-	   ],
+			[{port, proplists:get_value(port, Opts, ?PORT)}],
+			[{env, [{dispatch, cowboy_router:compile([{'_', Handlers}])}]},
+			 {middlewares, [bkfw_index, cowboy_router, cowboy_handler]}]
+		   ],
     {bkfw_http, {cowboy, start_http, Args}, permanent, 5000, worker, [cowboy]}.
 
 %%%
@@ -69,40 +69,40 @@ init(_, _, _) ->
 
 rest_init(Req, mcu) ->
     case cowboy_req:binding(index, Req) of
-	{undefined, Req2} ->
-	    {ok, Req2, #state{section=mcu, index=undefined}};
-	{BinI, Req2} ->
-	    try binary_to_integer(BinI) of
-		I ->
-		    {ok, Req2, #state{section=mcu, index=I}}
-	    catch error:badarg ->
-		    {ok, Req2, #state{section=mcu, index=badarg}}
-	    end
+		{undefined, Req2} ->
+			{ok, Req2, #state{section=mcu, index=undefined}};
+		{BinI, Req2} ->
+			try binary_to_integer(BinI) of
+				I ->
+					{ok, Req2, #state{section=mcu, index=I}}
+			catch error:badarg ->
+					{ok, Req2, #state{section=mcu, index=badarg}}
+			end
     end;
 rest_init(Req, edfa) ->
     {ok, Req, #state{section=edfa}};
 rest_init(Req, sys) ->
     case cowboy_req:binding(name, Req) of
-	{<<"login">>, Req2} -> {ok, Req2, #state{section=sys, sys=login}};
-	{<<"reset">>, Req2} -> {ok, Req2, #state{section=sys, sys=reset}};
-	{<<"reboot">>, Req2} -> {ok, Req2, #state{section=sys, sys=reboot}};
-	{<<"net">>, Req2} -> {ok, Req2, #state{section=sys, sys=net}};
-	{<<"network">>, Req2} -> {ok, Req2, #state{section=sys, sys=net}};
-	{<<"password">>, Req2} -> {ok, Req2, #state{section=sys, sys=password}};
-	{<<"community">>, Req2} -> {ok, Req2, #state{section=sys, sys=community}};
-	{<<"usm">>, Req2} -> {ok, Req2, #state{section=sys, sys=usm}};
-	{<<"targets">>, Req2} -> {ok, Req2, #state{section=sys, sys=targets}};
-	{<<"protocol">>, Req2} -> {ok, Req2, #state{section=sys, sys=protocol}};
-	{<<"usb">>, Req2} -> {ok, Req2, #state{section=sys, sys=usb}};
-	{_, Req2} -> {ok, Req2, #state{section=sys, sys=undefined}}
+		{<<"login">>, Req2} -> {ok, Req2, #state{section=sys, sys=login}};
+		{<<"reset">>, Req2} -> {ok, Req2, #state{section=sys, sys=reset}};
+		{<<"reboot">>, Req2} -> {ok, Req2, #state{section=sys, sys=reboot}};
+		{<<"net">>, Req2} -> {ok, Req2, #state{section=sys, sys=net}};
+		{<<"network">>, Req2} -> {ok, Req2, #state{section=sys, sys=net}};
+		{<<"password">>, Req2} -> {ok, Req2, #state{section=sys, sys=password}};
+		{<<"community">>, Req2} -> {ok, Req2, #state{section=sys, sys=community}};
+		{<<"usm">>, Req2} -> {ok, Req2, #state{section=sys, sys=usm}};
+		{<<"targets">>, Req2} -> {ok, Req2, #state{section=sys, sys=targets}};
+		{<<"protocol">>, Req2} -> {ok, Req2, #state{section=sys, sys=protocol}};
+		{<<"usb">>, Req2} -> {ok, Req2, #state{section=sys, sys=usb}};
+		{_, Req2} -> {ok, Req2, #state{section=sys, sys=undefined}}
     end;
 rest_init(Req, firmware) ->
-    % /api/sys/firmware/[fw|cpu|amp]
+	%% /api/sys/firmware/[fw|cpu|amp]
     case cowboy_req:binding(fw, Req) of
-	{<<"fw">>, Req2} -> {ok, Req2, #state{section={firmware, "fw"}}};
-	{<<"cpu">>, Req2} -> {ok, Req2, #state{section={firmware, "cpu"}}};
-	{<<"amp">>, Req2} -> {ok, Req2, #state{section={firmware, "amp"}}};
-	{_, Req2} -> {ok, Req2, #state{section=firmware}}
+		{<<"fw">>, Req2} -> {ok, Req2, #state{section={firmware, "fw"}}};
+		{<<"cpu">>, Req2} -> {ok, Req2, #state{section={firmware, "cpu"}}};
+		{<<"amp">>, Req2} -> {ok, Req2, #state{section={firmware, "amp"}}};
+		{_, Req2} -> {ok, Req2, #state{section=firmware}}
     end;	
 rest_init(Req, _Sec) ->
     {ok, Req, #state{section=undefined}}.
@@ -122,12 +122,12 @@ content_types_accepted(Req, #state{section={firmware, _}}=State) ->
      ], Req, State};
 content_types_accepted(Req, State) ->
     case cowboy_req:has_body(Req) of
-	true ->
-	    {[
-	      {{<<"application">>, <<"json">>, '*'}, from_json}
-	     ], Req, State};
-	false ->
-	    {[], Req, State}
+		true ->
+			{[
+			  {{<<"application">>, <<"json">>, '*'}, from_json}
+			 ], Req, State};
+		false ->
+			{[], Req, State}
     end.
 
 
@@ -145,10 +145,10 @@ is_authorized(Req, #state{section={firmware, _}}=State) ->
     require_auth(Req, State);
 is_authorized(Req, State) ->
     case cowboy_req:method(Req) of
-	{<<"POST">>, Req2} ->
-	    require_auth(Req2, State);
-	{_, Req2} ->
-	    {true, Req2, State}
+		{<<"POST">>, Req2} ->
+			require_auth(Req2, State);
+		{_, Req2} ->
+			{true, Req2, State}
     end.
 
 
@@ -158,21 +158,21 @@ resource_exists(Req, #state{section=mcu, index=undefined}=S) ->
     {true, Req, S};
 resource_exists(Req, #state{section=mcu, index=I}=S) ->
     case mnesia:dirty_match_object(#ampTable{index=I, _='_'}) of
-	[] ->
-	    {false, Req, S};
-	[Mcu] ->
-	    {true, Req, S#state{mcu=Mcu}}
+		[] ->
+			{false, Req, S};
+		[Mcu] ->
+			{true, Req, S#state{mcu=Mcu}}
     end;
 resource_exists(Req, #state{section=sys, sys=Sys}=S) when Sys =:= login;
-							  Sys =:= net;
-							  Sys =:= reset;
-							  Sys =:= reboot;
-							  Sys =:= password;
-							  Sys =:= community;
-							  Sys =:= usm;
-							  Sys =:= protocol;
-							  Sys =:= targets;
-							  Sys =:= usb ->
+														  Sys =:= net;
+														  Sys =:= reset;
+														  Sys =:= reboot;
+														  Sys =:= password;
+														  Sys =:= community;
+														  Sys =:= usm;
+														  Sys =:= protocol;
+														  Sys =:= targets;
+														  Sys =:= usb ->
     {true, Req, S};
 resource_exists(Req, #state{section=sys}=S) ->
     {false, Req, S};
@@ -202,12 +202,12 @@ to_json(Req, #state{section=edfa}=S) ->
     {jsx:encode(bkfw_edfa:get_kv(), ?JSX_OPTS), Req, S};
 
 to_json(Req, #state{section=sys, sys=Cat}=S) when Cat =:= login;
-						  Cat =:= net;
-						  Cat =:= community;
-						  Cat =:= usm;
-						  Cat =:= protocol;
-						  Cat =:= targets;
-						  Cat =:= usb->
+												  Cat =:= net;
+												  Cat =:= community;
+												  Cat =:= usm;
+												  Cat =:= protocol;
+												  Cat =:= targets;
+												  Cat =:= usb->
     {jsx:encode(bkfw_config:get_kv(Cat)), Req, S};
 
 to_json(Req, #state{section=firmware}=S) ->
@@ -219,127 +219,127 @@ to_json(Req, #state{section=sys, sys=_}=S) ->
 
 from_json(Req, #state{section=mcu, index=undefined}=S) ->
     case parse_body(Req) of
-	{error, invalid_body, Req2} ->
-	    {false, ?set_error(invalid_body, Req2), S};
-	{error, Err, Req2} ->
-	    ?error("Internal error: ~p~n", [Err]),
-	    {halt, ?set_error(internal, Req2), S};
-	{ok, Json, Req2} ->
-	    ?debug("POST /api/mcu/\n"
-		   "       ~p\n", [Json]),
-	    Indices = mnesia:dirty_all_keys(ampTable),
-	    Err = lists:foldl(fun (I, Acc) ->
-				      case bkfw_mcu:set_kv(I, Json) of
-					  ok -> Acc;
-					  {error, Err} ->
-					      ?error("Request error: ~p~n", [Err]),
-					      [ [io_lib:format("amp #~p: ", [I]), err_to_string(Err)] | Acc ]
-				      end
-			      end, [], Indices),
-	    case Err of
-		[] -> {true, Req2, S};
-		Errors -> {false, ?set_errors(Errors, Req2), S}
-	    end		
+		{error, invalid_body, Req2} ->
+			{false, ?set_error(invalid_body, Req2), S};
+		{error, Err, Req2} ->
+			?error("Internal error: ~p~n", [Err]),
+			{halt, ?set_error(internal, Req2), S};
+		{ok, Json, Req2} ->
+			?debug("POST /api/mcu/\n"
+				   "       ~p\n", [Json]),
+			Indices = mnesia:dirty_all_keys(ampTable),
+			Err = lists:foldl(fun (I, Acc) ->
+									  case bkfw_mcu:set_kv(I, Json) of
+										  ok -> Acc;
+										  {error, Err} ->
+											  ?error("Request error: ~p~n", [Err]),
+											  [ [io_lib:format("amp #~p: ", [I]), err_to_string(Err)] | Acc ]
+									  end
+							  end, [], Indices),
+			case Err of
+				[] -> {true, Req2, S};
+				Errors -> {false, ?set_errors(Errors, Req2), S}
+			end		
     end;
 from_json(Req, #state{section=mcu, index=I}=S) ->
     case parse_body(Req) of
-	{error, invalid_body, Req2} ->
-	    {false, ?set_error(invalid_body, Req2), S};
-	{error, Err, Req2} ->
-	    ?error("Internal error: ~p~n", [Err]),
-	    {halt, ?set_error(internal, Req2), S};
-	{ok, Json, Req2} ->
-	    ?debug("POST /api/mcu/~p\n"
-		   "       ~p\n", [I, Json]),
-	    case bkfw_mcu:set_kv(I, Json) of
-		ok ->
-		    ?debug("Set MCU kv=ok\n"),
-		    {true, Req2, S};
-		{error, Err} ->
-		    ?error("Request error: ~p~n", [Err]),
-		    {false, ?set_error(Err, Req2), S}
-	    end
+		{error, invalid_body, Req2} ->
+			{false, ?set_error(invalid_body, Req2), S};
+		{error, Err, Req2} ->
+			?error("Internal error: ~p~n", [Err]),
+			{halt, ?set_error(internal, Req2), S};
+		{ok, Json, Req2} ->
+			?debug("POST /api/mcu/~p\n"
+				   "       ~p\n", [I, Json]),
+			case bkfw_mcu:set_kv(I, Json) of
+				ok ->
+					?debug("Set MCU kv=ok\n"),
+					{true, Req2, S};
+				{error, Err} ->
+					?error("Request error: ~p~n", [Err]),
+					{false, ?set_error(Err, Req2), S}
+			end
     end;
 from_json(Req, #state{section=sys, sys=login}=S) ->
     case parse_body(Req) of
-	{error, invalid_body, Req2} ->
-	    {false, ?set_error(invalid_body, Req2), S};
-	{error, Err, Req2} ->
-	    {false, ?set_error(Err, Req2), S};
-	{ok, Json, Req2} ->
-	    case auth_user(proplists:get_value(login, Json),
-			   proplists:get_value(password, Json)) of
-		true ->
-		    {true, Req2, S};
-		false ->
-		    {false, ?set_error(invalid_login, Req2), S}
-	    end
+		{error, invalid_body, Req2} ->
+			{false, ?set_error(invalid_body, Req2), S};
+		{error, Err, Req2} ->
+			{false, ?set_error(Err, Req2), S};
+		{ok, Json, Req2} ->
+			case auth_user(proplists:get_value(login, Json),
+						   proplists:get_value(password, Json)) of
+				true ->
+					{true, Req2, S};
+				false ->
+					{false, ?set_error(invalid_login, Req2), S}
+			end
     end;
 from_json(Req, #state{section=sys, sys=Cat}=S) ->
     case parse_body(Req) of
-	{error, invalid_body, Req2} ->
-	    {false, ?set_error(invalid_body, Req2), S};
-	{error, Err, Req2} ->
-	    ?error("Internal error: ~p~n", [Err]),
-	    {halt, ?set_error(internal, Req2), S};
-	{ok, Json, Req2} ->
-	    case bkfw_config:set_kv(Cat, Json) of
-		ok ->
-		    {true, Req2, S};
-		{error, Err} ->
-		    ?error("Request error: ~p~n", [Err]),
-		    {false, ?set_error(Err, Req2), S}
-	    end
+		{error, invalid_body, Req2} ->
+			{false, ?set_error(invalid_body, Req2), S};
+		{error, Err, Req2} ->
+			?error("Internal error: ~p~n", [Err]),
+			{halt, ?set_error(internal, Req2), S};
+		{ok, Json, Req2} ->
+			case bkfw_config:set_kv(Cat, Json) of
+				ok ->
+					{true, Req2, S};
+				{error, Err} ->
+					?error("Request error: ~p~n", [Err]),
+					{false, ?set_error(Err, Req2), S}
+			end
     end.
 
 from_multipart(Req, #state{section={firmware, Fw}, firmware=Path}=S) ->
     case cowboy_req:part(Req) of
-	{ok, Hdr, Req2} ->
-	    case cow_multipart:form_data(Hdr) of
-		{data, _Name} ->
-		    {ok, _Body, Req3} = cowboy_req:part_body(Req2),
-		    from_multipart(Req3, S);
-		{file, _Field, _Filename, _ContentType, _Enc} ->
-		    Fullpath = filename:join(application:get_env(bkfw, upload_dir, ""), Fw ++ ".bin"),
-		    case stream_file(Fullpath, Req2) of
-			{ok, Req3} ->
-			    from_multipart(Req3, S#state{firmware=Fullpath});
-			{error, Err} ->
-			    ?error("Error streaming file: ~p~n", [Err]),
-			    {halt, Req2, S}
-		    end
-	    end;
-	{done, Req2} ->
-	    case bkfw_config:upgrade(Fw, Path) of
-	    	ok ->
-	    	    {true, Req2, S};
-	    	{error, _} = Err ->
-				?error("Error upgrading firmware: ~p", [Err]),
-	    	    {false, Req2, S}
-	    end
+		{ok, Hdr, Req2} ->
+			case cow_multipart:form_data(Hdr) of
+				{data, _Name} ->
+					{ok, _Body, Req3} = cowboy_req:part_body(Req2),
+					from_multipart(Req3, S);
+				{file, _Field, _Filename, _ContentType, _Enc} ->
+					Fullpath = filename:join(application:get_env(bkfw, upload_dir, ""), Fw ++ ".bin"),
+					case stream_file(Fullpath, Req2) of
+						{ok, Req3} ->
+							from_multipart(Req3, S#state{firmware=Fullpath});
+						{error, Err} ->
+							?error("Error streaming file: ~p~n", [Err]),
+							{halt, Req2, S}
+					end
+			end;
+		{done, Req2} ->
+			case bkfw_config:upgrade(Fw, Path) of
+				ok ->
+					{true, Req2, S};
+				{error, _} = Err ->
+					?error("Error upgrading firmware: ~p", [Err]),
+					{false, Req2, S}
+			end
     end.
 
 parse_body(Req) ->
     case cowboy_req:body(Req) of
-	{ok, <<>>, Req2} ->
-	    {error, invalid_body, Req2};
-	{ok, Body, Req2} ->
-	    try jsx:decode(Body, [{labels, attempt_atom}]) of
-		Props when is_list(Props) ->
-		    {ok, Props, Req2}
-	    catch error:badarg ->
-		    {error, invalid_body, Req2}
-	    end;
-	{error, Err} ->
-	    {error, Err}
+		{ok, <<>>, Req2} ->
+			{error, invalid_body, Req2};
+		{ok, Body, Req2} ->
+			try jsx:decode(Body, [{labels, attempt_atom}]) of
+				Props when is_list(Props) ->
+					{ok, Props, Req2}
+			catch error:badarg ->
+					{error, invalid_body, Req2}
+			end;
+		{error, Err} ->
+			{error, Err}
     end.
 
 stream_file(Filename, Req) ->
     case file:open(Filename, [write]) of
-	{ok, File} ->
-	    stream_file(File, Req, 0);
-	{error, Err} ->
-	    {error, Err}
+		{ok, File} ->
+			stream_file(File, Req, 0);
+		{error, Err} ->
+			{error, Err}
     end.
 
 stream_file(File, _Req, Size) when Size > ?MAX_SIZE ->
@@ -348,54 +348,54 @@ stream_file(File, _Req, Size) when Size > ?MAX_SIZE ->
 
 stream_file(File, Req, Size) ->
     case cowboy_req:part_body(Req) of
-	{ok, Data, Req2} ->
-	    case file:write(File, Data) of
-		ok ->
-		    file:close(File),
-		    {ok, Req2};
-		{error, Err} ->
-		    ?error("Error writing file: ~p~n", [Err]),
-		    {error, Err}
-	    end;
-	{more, Data, Req2} ->
-	    case file:write(File, Data) of
-		ok ->
-		    stream_file(File, Req2, Size + byte_size(Data));
-		{error, Err} ->
-		    {error, Err}
-	    end
+		{ok, Data, Req2} ->
+			case file:write(File, Data) of
+				ok ->
+					file:close(File),
+					{ok, Req2};
+				{error, Err} ->
+					?error("Error writing file: ~p~n", [Err]),
+					{error, Err}
+			end;
+		{more, Data, Req2} ->
+			case file:write(File, Data) of
+				ok ->
+					stream_file(File, Req2, Size + byte_size(Data));
+				{error, Err} ->
+					{error, Err}
+			end
     end.
 
 require_auth(Req, State) ->
     case cowboy_req:header(<<"authorization">>, Req) of
-	{undefined, Req2} ->
-	    {{false, auth_header(Req, State)}, Req2, State};
-	{Value, Req2} ->
-	    case parse_auth(Value) of
-		{basic, Auth} ->
-		    auth_basic_user(Auth, Req, State);
-		{digest, _Auth} ->
-		    % Unsupported
-		    {{false, auth_header(Req, State)}, Req2, State};
-		{error, Err} ->
-		    ?error("Error authenticating: ~p~n", [Err]),
-		    {halt, Req2, State}
-	    end
+		{undefined, Req2} ->
+			{{false, auth_header(Req, State)}, Req2, State};
+		{Value, Req2} ->
+			case parse_auth(Value) of
+				{basic, Auth} ->
+					auth_basic_user(Auth, Req, State);
+				{digest, _Auth} ->
+												% Unsupported
+					{{false, auth_header(Req, State)}, Req2, State};
+				{error, Err} ->
+					?error("Error authenticating: ~p~n", [Err]),
+					{halt, Req2, State}
+			end
     end.
 
 auth_basic_user(Auth, Req, State) ->
     try binary:split(base64:decode(Auth), [<<":">>]) of
-	[User, Password] ->
-	    case auth_user(User, Password) of
-		true ->
-		    {true, Req, State};
-		false ->
-		    {{false, auth_header(Req, State)}, Req, State}
-	    end;
-	_ ->
-	    {{false, auth_header(Req, State)}, Req, State}
+		[User, Password] ->
+			case auth_user(User, Password) of
+				true ->
+					{true, Req, State};
+				false ->
+					{{false, auth_header(Req, State)}, Req, State}
+			end;
+		_ ->
+			{{false, auth_header(Req, State)}, Req, State}
     catch error:_Err ->
-	    {{false, auth_header(Req, State)}, Req, State}
+			{{false, auth_header(Req, State)}, Req, State}
     end.
 
 auth_header(_, _) ->
@@ -403,23 +403,23 @@ auth_header(_, _) ->
 
 auth_user(<<"admin">>, Password) ->
     case get_password() of
-	undefined -> false;
-	{md5, Hash} ->
-	    case base64:encode(Password) of
-		Hash -> true;
-		_ -> false
-	    end
+		undefined -> false;
+		{md5, Hash} ->
+			case base64:encode(Password) of
+				Hash -> true;
+				_ -> false
+			end
     end;
 auth_user(_, _) ->
     false.
 
 get_password() ->
     case application:get_env(bkfw, password, undefined) of
-	undefined -> undefined;
-	{Method, Hash} when Method =:= md5;
-			    Method =:= sha ->
-	    {Method, list_to_binary(Hash)};
-	_ -> undefined
+		undefined -> undefined;
+		{Method, Hash} when Method =:= md5;
+							Method =:= sha ->
+			{Method, list_to_binary(Hash)};
+		_ -> undefined
     end.
 
 -spec parse_auth(binary()) -> {basic | digest | error, term()}.
@@ -428,9 +428,9 @@ parse_auth(Bin) ->
 
 parse_method({Method, Rest}) ->
     case to_lower(Method) of
-	<<"x-basic">> -> parse_basic_hash(Rest);
-	<<"x-digest">> -> parse_digest(Rest);
-	M -> {error, {invalid_method, M}}
+		<<"x-basic">> -> parse_basic_hash(Rest);
+		<<"x-digest">> -> parse_digest(Rest);
+		M -> {error, {invalid_method, M}}
     end.
 
 parse_basic_hash(Bin) ->
@@ -441,9 +441,9 @@ parse_digest(Bin) ->
 
 parse_next(Bin) ->
     case binary:split(Bin, <<" ">>, [trim]) of
-	[<<>>, Rest] -> parse_next(Rest);
-	[Next, Rest] -> {Next, Rest};
-	[Next] -> {Next, <<>>}
+		[<<>>, Rest] -> parse_next(Rest);
+		[Next, Rest] -> {Next, Rest};
+		[Next] -> {Next, <<>>}
     end.
 
 to_lower(Bin) ->
@@ -453,33 +453,33 @@ to_lower(<<>>, Acc) ->
     Acc;
 to_lower(<< C, Rest/bits >>, Acc) ->
     case C of
-	$A -> to_lower(Rest, << Acc/binary, $a >>);
-	$B -> to_lower(Rest, << Acc/binary, $b >>);
-	$C -> to_lower(Rest, << Acc/binary, $c >>);
-	$D -> to_lower(Rest, << Acc/binary, $d >>);
-	$E -> to_lower(Rest, << Acc/binary, $e >>);
-	$F -> to_lower(Rest, << Acc/binary, $f >>);
-	$G -> to_lower(Rest, << Acc/binary, $g >>);
-	$H -> to_lower(Rest, << Acc/binary, $h >>);
-	$I -> to_lower(Rest, << Acc/binary, $i >>);
-	$J -> to_lower(Rest, << Acc/binary, $j >>);
-	$K -> to_lower(Rest, << Acc/binary, $k >>);
-	$L -> to_lower(Rest, << Acc/binary, $l >>);
-	$M -> to_lower(Rest, << Acc/binary, $m >>);
-	$N -> to_lower(Rest, << Acc/binary, $n >>);
-	$O -> to_lower(Rest, << Acc/binary, $o >>);
-	$P -> to_lower(Rest, << Acc/binary, $p >>);
-	$Q -> to_lower(Rest, << Acc/binary, $q >>);
-	$R -> to_lower(Rest, << Acc/binary, $r >>);
-	$S -> to_lower(Rest, << Acc/binary, $s >>);
-	$T -> to_lower(Rest, << Acc/binary, $t >>);
-	$U -> to_lower(Rest, << Acc/binary, $u >>);
-	$V -> to_lower(Rest, << Acc/binary, $v >>);
-	$W -> to_lower(Rest, << Acc/binary, $w >>);
-	$X -> to_lower(Rest, << Acc/binary, $x >>);
-	$Y -> to_lower(Rest, << Acc/binary, $y >>);
-	$Z -> to_lower(Rest, << Acc/binary, $z >>);
-	_ -> to_lower(Rest, << Acc/binary, C >>)
+		$A -> to_lower(Rest, << Acc/binary, $a >>);
+		$B -> to_lower(Rest, << Acc/binary, $b >>);
+		$C -> to_lower(Rest, << Acc/binary, $c >>);
+		$D -> to_lower(Rest, << Acc/binary, $d >>);
+		$E -> to_lower(Rest, << Acc/binary, $e >>);
+		$F -> to_lower(Rest, << Acc/binary, $f >>);
+		$G -> to_lower(Rest, << Acc/binary, $g >>);
+		$H -> to_lower(Rest, << Acc/binary, $h >>);
+		$I -> to_lower(Rest, << Acc/binary, $i >>);
+		$J -> to_lower(Rest, << Acc/binary, $j >>);
+		$K -> to_lower(Rest, << Acc/binary, $k >>);
+		$L -> to_lower(Rest, << Acc/binary, $l >>);
+		$M -> to_lower(Rest, << Acc/binary, $m >>);
+		$N -> to_lower(Rest, << Acc/binary, $n >>);
+		$O -> to_lower(Rest, << Acc/binary, $o >>);
+		$P -> to_lower(Rest, << Acc/binary, $p >>);
+		$Q -> to_lower(Rest, << Acc/binary, $q >>);
+		$R -> to_lower(Rest, << Acc/binary, $r >>);
+		$S -> to_lower(Rest, << Acc/binary, $s >>);
+		$T -> to_lower(Rest, << Acc/binary, $t >>);
+		$U -> to_lower(Rest, << Acc/binary, $u >>);
+		$V -> to_lower(Rest, << Acc/binary, $v >>);
+		$W -> to_lower(Rest, << Acc/binary, $w >>);
+		$X -> to_lower(Rest, << Acc/binary, $x >>);
+		$Y -> to_lower(Rest, << Acc/binary, $y >>);
+		$Z -> to_lower(Rest, << Acc/binary, $z >>);
+		_ -> to_lower(Rest, << Acc/binary, C >>)
     end.
 
 json_error(Errors) ->
