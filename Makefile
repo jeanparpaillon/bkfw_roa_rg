@@ -14,104 +14,38 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+PROJECT = bkfw
+PROJECT_VERSION = 1.3.0
 
-ERLFLAGS= -pa $(CURDIR)/.eunit -pa $(CURDIR)/ebin -pa $(CURDIR)/deps/*/ebin
+DEPS = \
+	getopt \
+	cereal \
+	cowboy \
+	jsx
 
-DEPS_PLT=$(CURDIR)/.deps_plt
-DEPS=erts kernel stdlib
+dep_cereal = git https://github.com/joewilliams/cereal.git 5933f1c
+dep_jsx_commit = v2.8.0
+
+include erlang.mk
 
 OTP_SRC=esl-erlang_17.1-2~debian~wheezy_amd64.deb
 OTP_BASE_URL=https://packages.erlang-solutions.com/debian/pool
 OTP_ARCHIVE=docker/$(OTP_SRC)
 
-# =============================================================================
-# Verify that the programs we need to run are installed on this system
-# =============================================================================
-ERL = $(shell which erl)
+ERLC_MIB_OPTS = +'{group_check, false}' +no_defs
 
-ifeq ($(ERL),)
-$(error "Erlang not available on this system")
-endif
+clean:: clean-release
 
-REBAR=$(shell which rebar || echo ./rebar)
-
-ifeq ($(REBAR),)
-$(error "Rebar not available on this system")
-endif
-
-.PHONY: all compile doc clean test dialyzer typer shell distclean pdf \
-  update-deps clean-common-test-data rebuild install dist docker-release \
-  docker-image release
-
-all: deps compile test
-
-# =============================================================================
-# Rules to build the system
-# =============================================================================
-
-deps:
-	$(REBAR) get-deps
-	$(REBAR) compile
-
-update-deps:
-	$(REBAR) update-deps
-	$(REBAR) compile
-
-compile:
-	$(REBAR) skip_deps=true compile
-
-install:
-	$(REBAR) generate
-doc:
-	$(REBAR) skip_deps=true doc
-
-eunit: compile clean-common-test-data
-	$(REBAR) skip_deps=true eunit
-
-test: compile eunit
-
-$(DEPS_PLT):
-	@echo Building local plt at $(DEPS_PLT)
-	@echo
-	dialyzer --output_plt $(DEPS_PLT) --build_plt \
-	   --apps $(DEPS) -r deps
-
-dialyzer: $(DEPS_PLT)
-	dialyzer --fullpath --plt $(DEPS_PLT) -Wrace_conditions -r ./ebin
-
-typer:
-	typer --plt $(DEPS_PLT) -r ./src
-
-shell: deps compile
-# You often want *rebuilt* rebar tests to be available to the
-# shell you have to call eunit (to get the tests
-# rebuilt). However, eunit runs the tests, which probably
-# fails (thats probably why You want them in the shell). This
-# runs eunit but tells make to ignore the result.
-	- @$(REBAR) skip_deps=true eunit
-	@$(ERL) $(ERLFLAGS)
+clean-release:
+	-rm -rf $(PROJECT)-*
 
 pdf:
 	pandoc README.md -o README.pdf
 
-clean:
-	- rm -rf $(CURDIR)/test/*.beam
-	- rm -rf $(CURDIR)/logs
-	- rm -rf $(CURDIR)/ebin
-	$(REBAR) skip_deps=true clean
-
-distclean: clean
-	- rm -rf $(DEPS_PLT)
-	#- rm -rvf $(CURDIR)/deps
-
-rebuild: distclean deps compile escript dialyzer test
-
-RELNAME=bkfw
-RELVERSION=$(shell ./version.sh)
-RELDIR=$(RELNAME)-$(RELVERSION)
-RELBIN=$(RELNAME)_$(RELVERSION).bin
+RELDIR=$(PROJECT)-$(PROJECT_VERSION)
+RELBIN=$(PROJECT)_$(PROJECT_VERSION).bin
 dist:
-	git archive --prefix=$(RELNAME)-$(RELVERSION)/ HEAD . | gzip -c - > $(RELNAME)-$(RELVERSION).source.tar.gz
+	git archive --prefix=$(RELDIR)/ HEAD . | gzip -c - > $(RELDIR).source.tar.gz
 
 IMAGE_ID=bkfw-build
 
@@ -129,13 +63,12 @@ docker-image: $(OTP_ARCHIVE)
 $(OTP_ARCHIVE):
 	curl --progress-bar  $(OTP_BASE_URL)/$(OTP_SRC) > $@
 
-
 release:
 	rm -rf $(RELDIR)
 	rm -f $(RELDIR).zip
 	mkdir -p $(RELDIR)
 	dpkg-buildpackage -b
-	cp ../bkfw_$(RELVERSION)_all.deb $(RELDIR)/$(RELBIN)
+	cp ../bkfw_$(PROJECT_VERSION)_all.deb $(RELDIR)/$(RELBIN)
 	cp README.md $(RELDIR)/README.md
 	cp CHANGES.md $(RELDIR)/CHANGES.md
 	mkdir -p $(RELDIR)/mibs
@@ -143,3 +76,5 @@ release:
 	cp /usr/share/mibs/ietf/SNMPv2-MIB $(RELDIR)/mibs
 	zip -r $(RELDIR).zip $(RELDIR)
 	-test -n "$(ORIG_UID)" && chown -R $(ORIG_UID).$(ORIG_GRP) .
+
+.PHONY: pdf dist docker-release docker-image release clean-release

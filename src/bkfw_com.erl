@@ -203,7 +203,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%%
 debug_com(undefined, _) -> ok;
 debug_com(Dev, Bytes) -> 
-    Now = erlang:now(),
+    Now = erlang:timestamp(),
     {{_Y,_M,_D},{H,M,S}} = calendar:now_to_universal_time(Now),
     {_,_,MS} = Now,
     file:write(Dev, [io_lib:format("[~p:~p:~p.~p]", [H,M,S,MS]), Bytes]).
