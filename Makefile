@@ -34,6 +34,11 @@ OTP_ARCHIVE=docker/$(OTP_SRC)
 
 ERLC_MIB_OPTS = +'{group_check, false}' +no_defs
 
+$(PROJECT).d:: build-www
+
+build-www:
+	cd priv/www && bower update
+
 clean:: clean-release
 
 clean-release:
@@ -77,4 +82,4 @@ release:
 	zip -r $(RELDIR).zip $(RELDIR)
 	-test -n "$(ORIG_UID)" && chown -R $(ORIG_UID).$(ORIG_GRP) .
 
-.PHONY: pdf dist docker-release docker-image release clean-release
+.PHONY: pdf dist docker-release docker-image release clean-release build-www
