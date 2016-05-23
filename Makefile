@@ -32,7 +32,12 @@ OTP_SRC=esl-erlang_17.1-2~debian~wheezy_amd64.deb
 OTP_BASE_URL=https://packages.erlang-solutions.com/debian/pool
 OTP_ARCHIVE=docker/$(OTP_SRC)
 
+RELX_CONFIG = $(CURDIR)/rel/prod/relx.config
+
 ERLC_MIB_OPTS = +'{group_check, false}' +no_defs
+
+rel-dev:
+	$(MAKE) RELX_CONFIG=$(CURDIR)/rel/dev/relx.config
 
 $(PROJECT).d:: build-www
 
@@ -82,4 +87,4 @@ release:
 	zip -r $(RELDIR).zip $(RELDIR)
 	-test -n "$(ORIG_UID)" && chown -R $(ORIG_UID).$(ORIG_GRP) .
 
-.PHONY: pdf dist docker-release docker-image release clean-release build-www
+.PHONY: pdf dist docker-release docker-image release clean-release build-www rel-dev

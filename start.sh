@@ -61,7 +61,7 @@ erl -sname agent \
     -bkfw net "\"${BASEDIR}/priv/interfaces\"" \
     -bkfw scripts_dir "\"${BASEDIR}/priv/scripts\"" \
     -bkfw debug "true" \
-    -config ${reldir}/files/sys \
+    -config ${reldir}/sys \
     -s bkfw
 
 exit 0
