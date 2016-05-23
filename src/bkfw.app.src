@@ -19,7 +19,9 @@
 				  getopt,
 				  cereal,
 				  cowboy,
-				  jsx
+				  jsx,
+				  snmp,
+				  mnesia
                  ]},
   {mod, { bkfw_app, []}},
   {env, [

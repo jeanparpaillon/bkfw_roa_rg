@@ -3,14 +3,12 @@
 -behaviour(application).
 
 -include("bkfw.hrl").
--include("EDFA-MIB.hrl").
-%-include_lib("snmp/include/snmp_types.hrl").
 
 %% Application callbacks
 -export([start/2, 
-	 stop/1,
-	 restart/0,
-	 reboot/0]).
+		 stop/1,
+		 restart/0,
+		 reboot/0]).
 
 %% ===================================================================
 %% Application callbacks
@@ -18,11 +16,6 @@
 
 start(_StartType, _StartArgs) ->
     init_db(),
-    application:start(ranch),
-    application:start(crypto),
-    application:start(cowlib),
-    application:start(cowboy),
-    application:start(snmp),
     load_mibs(snmp, ["SNMP-NOTIFICATION-MIB", "SNMP-TARGET-MIB"]),
     load_mibs(bkfw, ["BKTEL-PHOTONICS-SMI", "SMM-MIB"]),
     bkfw_sup:start_link().
@@ -35,7 +28,6 @@ stop(_State) ->
 %%% Priv
 %%%
 init_db() ->
-     application:start(mnesia),
      {atomic, ok} = mnesia:create_table(ampTable, 
 					[{snmp, [{key, integer}]},
 					 {attributes, record_info(fields, ampTable)}]).
