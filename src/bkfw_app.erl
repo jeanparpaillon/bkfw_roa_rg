@@ -15,6 +15,7 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
+	application:load(bkfw),
     init_db(),
     load_mibs(snmp, ["SNMP-NOTIFICATION-MIB", "SNMP-TARGET-MIB"]),
     load_mibs(bkfw, ["BKTEL-PHOTONICS-SMI", "SMM-MIB"]),

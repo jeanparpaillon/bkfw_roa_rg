@@ -137,7 +137,7 @@ handle_call({get_kv, net}, _From, #state{net=Net}=State) ->
     Props = case proplists:get_value(type, Net) of
 				static -> Net;
 				dhcp ->
-					[ {type, dhcp} | get_if_infos(application:get_env(bkfw, net, "")) ]
+					[ {type, dhcp} | get_if_infos(get_iface_file()) ]
 			end,
     {reply, Props, State};
 
@@ -349,7 +349,12 @@ load_resources() ->
     end.
 
 get_script(Name) ->
-    filename:join([application:get_env(bkfw, scripts_dir, "priv/scripts"), Name]).
+	case application:get_env(bkfw, scripts_dir, {priv_dir, "scripts"}) of
+		{priv_dir, Path} ->
+			filename:join([code:priv_dir(bkfw), Path, Name]);
+		Path when is_list(Path) ->
+			filename:join([Path, Name])
+	end.
 
 script(Cmd, Args) ->
     cmd(get_script(Cmd) ++ " " ++ Args).
@@ -400,7 +405,7 @@ get_if_infos(NetIf) ->
 -spec get_network_config(string()) -> {ok, [net_opt()]} | {error, term()}.
 get_network_config(Iface) when is_list(Iface) ->
     Cmd = get_script("readInterfaces.awk ") 
-		++ application:get_env(bkfw, net, "")
+		++ get_iface_file()
 		++ " device=" ++ Iface,
     case os:cmd(Cmd) of
 		"dhcp\n" -> {ok, [{type, dhcp}]};
@@ -454,14 +459,13 @@ valid_ip(Addr, Mask, Gw) ->
 
 
 set_network_dhcp(Iface)  when is_list(Iface) ->
-    File = application:get_env(bkfw, net, ""),
     NewConfig = io_lib:format("auto lo~n"
 							  ++ "iface lo inet loopback~n"
 							  ++ "~n"
 							  ++ "auto ~s~n"
 							  ++ "iface ~s inet dhcp~n", 
 							  [Iface, Iface]),
-    case file:write_file(File, NewConfig) of
+    case file:write_file(get_iface_file(), NewConfig) of
 		ok ->
 			case apply_network(Iface) of
 				ok ->
@@ -478,7 +482,6 @@ set_network_static(Iface, Props) when is_list(Iface), is_list(Props) ->
 				  proplists:get_value(netmask, Props, ""),
 				  proplists:get_value(gateway, Props, "")) of
 		{ok, Ip, Mask, Gw} ->
-			File = application:get_env(bkfw, net, ""),
 			NewConfig = io_lib:format("auto lo~n"
 									  ++ "iface lo inet loopback~n"
 									  ++ "~n"
@@ -488,7 +491,7 @@ set_network_static(Iface, Props) when is_list(Iface), is_list(Props) ->
 									  ++ "\tnetmask ~s~n"
 									  ++ "\tgateway ~s~n",
 									  [Iface, Iface, inet:ntoa(Ip), inet:ntoa(Mask), inet:ntoa(Gw)]),
-			case file:write_file(File, NewConfig) of
+			case file:write_file(get_iface_file(), NewConfig) of
 				ok ->
 					case apply_network(Iface) of
 						ok ->
@@ -716,3 +719,12 @@ get_snmp_engine_id(Dir) ->
 		{ok, Conf} -> list_to_binary(proplists:get_value(snmpEngineID, Conf, "agent"));
 		{error, _} -> <<"agent">>
     end.
+
+
+get_iface_file() ->
+	case application:get_env(bkfw, net, {priv_dir, "interfaces"}) of
+		{priv_dir, Path} ->
+			filename:join([code:priv_dir(bkfw), Path]);
+		Path when is_list(Path) ->
+			Path
+	end.
