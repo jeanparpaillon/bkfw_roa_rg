@@ -246,25 +246,8 @@ read_it(#ampTable{index=Idx}=E) ->
 			{error, Err}
     end.
 
-read_i(#ampTable{index=Idx}=E) ->
-    case bkfw_srv:command(Idx, ri, []) of
-		{ok, {Idx, i, Infos}} ->
-			{ok, E#ampTable{
-				   vendor=get_info(vendor, Infos, E#ampTable.vendor),
-				   moduleType=get_info(moduleType, Infos, E#ampTable.moduleType),
-				   hwVer=get_info(hwVer, Infos, E#ampTable.hwVer),
-				   hwRev=get_info(hwRev, Infos, E#ampTable.hwRev),
-				   swVer=get_info(swVer, Infos, E#ampTable.swVer),
-				   fwVer=get_info(fwVer, Infos, E#ampTable.fwVer),
-				   partNum=get_info(partNum, Infos, E#ampTable.partNum),
-				   serialNum=get_info(serialNum, Infos, E#ampTable.serialNum),
-				   productDate=get_info(productDate, Infos, E#ampTable.productDate)
-				  }};
-		{ok, _Ret} ->
-			{error, {string, io_lib:format("RI invalid answer: ~p~n", [_Ret])}};
-		{error, Err} ->
-			{error, Err}
-    end.
+read_i(#ampTable{}=E) ->
+	{ok, E}.
 
 read_pm(#ampTable{index=Idx}=E) ->
     case bkfw_srv:command(Idx, rpm, []) of
