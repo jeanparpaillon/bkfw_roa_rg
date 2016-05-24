@@ -129,27 +129,21 @@ handle_call({get_snmp, Key}, _From, #state{tid=Tid}=S) ->
     {reply, Ret, S};
 
 handle_call({call, read_infos}, _From, #state{tid=Tid}=S) ->
-    case bkfw_srv:command(0, ri, []) of
-		{ok, {0, i, Infos}} ->
-			ets:insert(Tid,
-					   [
-						{smmVendor, get_info(vendor, Infos)},
-						{smmModuleType, get_info(moduleType, Infos)},
-						{smmHWVer, get_info(hwVer, Infos)},
-						{smmHWRev, get_info(hwRev, Infos)},
-						{smmSWVer, get_info(swVer, Infos)},
-						{smmFWVer, get_info(fwVer, Infos)},
-						{smmPartNum, get_info(partNum, Infos)},
-						{smmSerialNum, get_info(serialNum, Infos)},
-						{smmProductDate, get_info(productDate, Infos)}
-					   ]
-					  ),
-			{reply, ok, S};
-		{ok, Ret} ->
-			{reply, {error, {string, io_lib:format("RI invalid answer: ~p~n", [Ret])}}, S};
-		{error, Err} ->
-			{reply, {error, Err}, S}
-    end;
+	Infos = application:get_env(bkfw, i, []),
+	ets:insert(Tid,
+			   [
+				{smmVendor, get_info(vendor, Infos)},
+				{smmModuleType, get_info(moduleType, Infos)},
+				{smmHWVer, get_info(hwVer, Infos)},
+				{smmHWRev, get_info(hwRev, Infos)},
+				{smmSWVer, get_info(swVer, Infos)},
+				{smmFWVer, get_info(fwVer, Infos)},
+				{smmPartNum, get_info(partNum, Infos)},
+				{smmSerialNum, get_info(serialNum, Infos)},
+				{smmProductDate, get_info(productDate, Infos)}
+			   ]
+			  ),
+	{reply, ok, S};
 
 handle_call({call, read_v}, _From, #state{tid=Tid}=S) ->
     case bkfw_srv:command(0, rv, []) of
@@ -255,10 +249,15 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 get_info(Key, Infos) ->
-    proplists:get_value(Key, Infos, <<>>).
+    case proplists:get_value(Key, Infos, <<>>) of
+		<<>> ->
+			<<>>;
+		S when is_list(S) ->
+			list_to_binary(S)
+	end.
 
-												% loop over all bits of mask and compare with old slots,
-												% start or kill bkfw_mon if necessary
+%% loop over all bits of mask and compare with old slots,
+%% start or kill bkfw_mon if necessary
 handle_slots(_Mask, ?SLOTS, S) ->
     {reply, ok, S};
 

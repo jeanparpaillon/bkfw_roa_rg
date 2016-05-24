@@ -43,6 +43,16 @@
 		 {netif, "eth0"},
 		 {scripts_dir, "/var/lib/bkfw/scripts"},
 		 {debug, false},
-		 {usbtty, undefined}
+		 {usbtty, undefined},
+		 {i, [{vendor, "BKTel Photonics"},
+			  {moduleType, ""},
+			  {hwVer, ""},
+			  {hwRev, ""},
+			  {swVer, ""},
+			  {fwVer, ""},
+			  {partNum, "409152"},
+			  {serialNum, "P1549GB03250"},
+			  {productDate, "04/05/2016"}
+			 ]}
 		]}
  ]}.
