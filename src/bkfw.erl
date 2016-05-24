@@ -14,7 +14,7 @@
 		 reboot/0]).
 
 start() ->
-	_ = application:ensure_all_started().
+	_ = application:ensure_all_started(bkfw).
 
 %% ===================================================================
 %% Application callbacks
@@ -34,7 +34,8 @@ stop(_State) ->
 start_phase(http, normal, _Args) ->
 	%% Wait for HTTP API to be ready
 	timer:sleep(1000),
-	bkfw_sup:post_http();
+	%%bkfw_sup:post_http();
+	ok;
 
 start_phase(_, _, _) ->
 	{error, bas_phase}.

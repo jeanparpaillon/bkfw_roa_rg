@@ -307,12 +307,12 @@ parse_pd([ [2, P, <<"dBm">>] | Tail], {Pd1, _, Pd3}) -> parse_pd(Tail, {Pd1, P, 
 parse_pd([ [3, P, <<"dBm">>] | Tail], {Pd1, Pd2, _}) -> parse_pd(Tail, {Pd1, Pd2, P});
 parse_pd([ _ | Tail], Acc) -> parse_pd(Tail, Acc).
 
-get_info(Key, Infos, Default) ->
-    try proplists:get_value(Key, Infos, Default) of
-		Str -> Str
-    catch error:badarg ->
-			Default
-    end.
+%% get_info(Key, Infos, Default) ->
+%%     try proplists:get_value(Key, Infos, Default) of
+%% 		Str -> Str
+%%     catch error:badarg ->
+%% 			Default
+%%     end.
 
 
 handle_alarms([], E) -> {ok, E};

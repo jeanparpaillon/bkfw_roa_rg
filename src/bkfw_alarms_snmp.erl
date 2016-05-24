@@ -56,6 +56,11 @@ alarm_to_trap(edfa_temp, #ampTable{}) -> ampInternalTempTrap;
 alarm_to_trap(edfa_temp, {_,_}) -> smmInternalTempTrap;
 alarm_to_trap(edfa_psu, #ampTable{}) -> ampPowerSupplyTrap;
 alarm_to_trap(edfa_psu, {_,_}) -> smmPowerSupplyTrap;
+alarm_to_trap(fan1,  {_,_}) -> smmFan1Trap;
+alarm_to_trap(fan2,  {_,_}) -> smmFan2Trap;
+alarm_to_trap(fan3,  {_,_}) -> smmFan3Trap;
+alarm_to_trap(fan4,  {_,_}) -> smmFan4Trap;
+alarm_to_trap(psu,  {_,_}) -> smmPsuTrap;
 alarm_to_trap(psu1, {_,_}) -> smmPsu1Trap;
 alarm_to_trap(psu2, {_,_}) -> smmPsu2Trap;
 alarm_to_trap(bref, _) -> ampBrefTrap;
@@ -93,21 +98,31 @@ alarm_to_vars(edfa_psu, #ampTable{index=Idx, powerSupply=P}) ->
      {ampIndex, [Idx], Idx},
      {ampPowerSupply, [Idx], round(P)}
     ];
-alarm_to_vars(psu1, {_, _}) ->                                       
+alarm_to_vars(psu, {_, _}) ->                                       
     [];
-alarm_to_vars(psu2, {_, _}) ->                                       
+alarm_to_vars(psu1, {_, _}) ->
     [];
-alarm_to_vars(edfa_temp, {IT, _}) ->                                 
+alarm_to_vars(psu2, {_, _}) ->
+    [];
+alarm_to_vars(fan1, {_, _}) ->
+    [];
+alarm_to_vars(fan2, {_, _}) ->
+    [];
+alarm_to_vars(fan3, {_, _}) ->
+    [];
+alarm_to_vars(fan4, {_, _}) ->
+    [];
+alarm_to_vars(edfa_temp, {IT, _}) ->
     [{smmCurInternalTemp, round(IT)}];
-alarm_to_vars(edfa_psu, {_, PS}) ->                                  
+alarm_to_vars(edfa_psu, {_, PS}) ->                               
     [{smmPowerSupply, round(PS)}];
-alarm_to_vars(bref, #ampTable{index=Idx}=E) ->                       
+alarm_to_vars(bref, #ampTable{index=Idx}=E) ->
     [
      {ampIndex, [Idx], Idx},
      {ampPowerPd2, [Idx], round(E#ampTable.powerPd2)},
      {ampPowerPd3, [Idx], round(E#ampTable.powerPd3)}
     ];
-alarm_to_vars(adi, #ampTable{index=Idx}) ->                          
+alarm_to_vars(adi, #ampTable{index=Idx}) ->
     [{ampIndex, [Idx], Idx}];
-alarm_to_vars(mute, #ampTable{index=Idx}) ->                         
+alarm_to_vars(mute, #ampTable{index=Idx}) ->
     [{ampIndex, [Idx], Idx}].

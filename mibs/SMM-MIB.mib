@@ -14,7 +14,7 @@ IMPORTS
 	FROM BKTEL-PHOTONICS-SMI;
 
 smmModule MODULE-IDENTITY
-    LAST-UPDATED "201501120000Z"
+    LAST-UPDATED "201605240000Z"
     ORGANIZATION "BKtel Photonics"
     CONTACT-INFO
             "   BKtel Photonics
@@ -41,6 +41,9 @@ smmModule MODULE-IDENTITY
     REVISION	"201502300000Z"
     DESCRIPTION
 	"Fix typo in smmPsu2Trap description."
+    REVISION	"201605240000Z"
+    DESCRIPTION
+	"Add PSU, FAN{1,2,3,4} traps."
     ::= { bktelPhotonics 1 }
 
 smmMIB	OBJECT IDENTIFIER ::= { smmModule 1 }
@@ -511,24 +514,59 @@ smmPsu2Trap NOTIFICATION-TYPE
 	"Default detected on PSU nr. 2"
     ::= { smmMIBTraps 14 }
 
+smmPsuTrap NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+	"Default detected on PSU"
+    ::= { smmMIBTraps 15 }
+
+smmFan1Trap NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+	"Default detected on FAN #1"
+    ::= { smmMIBTraps 16 }
+
+smmFan2Trap NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+	"Default detected on FAN #2"
+    ::= { smmMIBTraps 17 }
+
+smmFan3Trap NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+	"Default detected on FAN #3"
+    ::= { smmMIBTraps 18 }
+
+smmFan4Trap NOTIFICATION-TYPE
+    STATUS current
+    DESCRIPTION
+	"Default detected on FAN #4"
+    ::= { smmMIBTraps 19 }
+
 smmMIBTrapGroups OBJECT IDENTIFIER ::= { smmMIBConformance 1 }
 
 smmMIBTrapGroup NOTIFICATION-GROUP
     NOTIFICATIONS {
         ampInputPowerTrap,
-	ampOutputPowerTrap,
-	ampPumpTempTrap,
-	ampPumpBiasTrap,
-	ampInternalTempTrap,
-	ampPowerSupplyTrap,
-	smmInternalTempTrap,
-	smmPowerSupplyTrap,
-	ampBrefTrap,
-	ampAdiTrap,
-	ampMuteTrap,
-	smmGenericTrap,
-	smmPsu1Trap,
-	smmPsu2Trap
+		ampOutputPowerTrap,
+		ampPumpTempTrap,
+		ampPumpBiasTrap,
+		ampInternalTempTrap,
+		ampPowerSupplyTrap,
+		smmInternalTempTrap,
+		smmPowerSupplyTrap,
+		ampBrefTrap,
+		ampAdiTrap,
+		ampMuteTrap,
+		smmGenericTrap,
+		smmPsu1Trap,
+		smmPsu2Trap,
+		smmPsuTrap,
+		smmFan1Trap,
+		smmFan2Trap,
+		smmFan3Trap,
+		smmFan4Trap
     }
     STATUS current
     DESCRIPTION
