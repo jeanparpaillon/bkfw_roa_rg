@@ -17,6 +17,12 @@ try:
   import RPi.GPIO as GPIO
   imports['GPIO'] = True
 except:
+  class FakeGPIO(object):
+    def event_detected(self, evt):
+      return False
+
+  GPIO = FakeGPIO()
+    
   print "WARN: GPIO disabled"
   imports['GPIO'] = False
 
