@@ -32,7 +32,7 @@ stop(_State) ->
 
 
 start_phase(http, normal, _Args) ->
-	%%% Wait for HTTP API to be ready
+	%% Wait for HTTP API to be ready
 	timer:sleep(1000),
 	bkfw_sup:post_http();
 
