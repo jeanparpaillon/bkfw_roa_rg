@@ -28,7 +28,7 @@
 
 -define(PERIOD, 100).
 -define(SLOTS, 128).
-%-define(TID, ?MODULE).
+%%-define(TID, ?MODULE).
 
 -define(FUNS, [read_n, read_it, read_v, read_a]).
 
