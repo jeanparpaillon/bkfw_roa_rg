@@ -816,17 +816,11 @@ while True:
   if Param.screen_update == True:
 	draw_screen(tab[Param.current_screen])
 
-  if (time.time() - Param.time_stamp) > 1:
-    if Set.flag == False:
-      for k in edfas:
-        edfas[k].load()
-      screen_update()
-      #print "current screen: %d" %Param.current_screen
-      #print "current page: %d" %tab[Param.current_screen].page_position
-      #print "--------------------------"
-    Param.time_stamp = time.time()
+  if Set.flag == False:
+    for k in edfas:
+      edfas[k].load()
+    screen_update()
 
-#lcd.clear()
-#lcd.set_cursor(2,0)
-#lcd.show_cursor(True)
-#lcd.blink(True)
+  time.sleep(1)
+
+exit(0)
