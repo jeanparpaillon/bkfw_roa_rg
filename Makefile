@@ -25,6 +25,8 @@ DEPS = \
 
 dep_cereal = git https://github.com/joewilliams/cereal.git 5933f1c
 dep_jsx_commit = v2.8.0
+dep_erlang_ale = git https://github.com/esl/erlang_ale.git v0.1.0
+dep_lcd_app = git https://github.com/jeanparpaillon/erlang_pi_lcd.git next
 
 include erlang.mk
 
@@ -39,10 +41,11 @@ ERLC_MIB_OPTS = +'{group_check, false}' +no_defs
 rel-dev:
 	$(MAKE) RELX_CONFIG=$(CURDIR)/rel/dev/relx.config
 
-$(PROJECT).d:: build-www
+$(PROJECT).d:: priv/.stamp-www
 
-build-www:
+priv/.stamp-www: priv/www/bower.json
 	cd priv/www && bower update
+	touch $@
 
 clean:: clean-release
 
