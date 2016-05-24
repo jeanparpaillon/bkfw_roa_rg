@@ -29,26 +29,26 @@ stop(_State) ->
 %%% Priv
 %%%
 init_db() ->
-     {atomic, ok} = mnesia:create_table(ampTable, 
-					[{snmp, [{key, integer}]},
-					 {attributes, record_info(fields, ampTable)}]).
+	{atomic, ok} = mnesia:create_table(ampTable, 
+									   [{snmp, [{key, integer}]},
+										{attributes, record_info(fields, ampTable)}]).
 
 load_mibs(App, Mibs) ->
     Paths = lists:map(fun (Path) ->
-			      ?info("Loading MIB: ~p", [Path]),
-			      Dir = code:priv_dir(App) ++ "/mibs/",
-			      Dir ++ Path
-		      end, Mibs),
+							  ?info("Loading MIB: ~p", [Path]),
+							  Dir = code:priv_dir(App) ++ "/mibs/",
+							  Dir ++ Path
+					  end, Mibs),
     ok = snmpa:load_mibs(snmp_master_agent, Paths).
 
 restart() ->
     spawn(fun() ->
-		  timer:sleep(1000),
-		  init:restart()
-	  end).
+				  timer:sleep(1000),
+				  init:restart()
+		  end).
 
 reboot() ->
     spawn(fun() ->
-		  timer:sleep(1000),
-		  bkfw_config:script("restart.sh", [])
-	  end).
+				  timer:sleep(1000),
+				  bkfw_config:script("restart.sh", [])
+		  end).

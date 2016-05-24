@@ -87,6 +87,7 @@ init([]) ->
 				{bkfw_alarms, {gen_event, start_link, [{local, bkfw_alarms}]}, permanent, 5000, worker, [gen_event]},
 				?CHILD(bkfw_srv, worker),
 				?CHILD(bkfw_edfa, worker),
+				?CHILD(bkfw_lcd, worker),
 				bkfw_http:get_config()
 			   ],
     {ok, { {one_for_one, 5, 10}, Children} }.

@@ -13,7 +13,7 @@
 %%%
 -export([start_link/0,
 		 stop/0,
-		 get_kv/0,
+		 get_kv/1,
 		 loop/1]).
 
 %% SNMP instrumentation
@@ -57,7 +57,7 @@ stop() ->
 init_loop() ->
     loop([ read_infos | ?FUNS ]).
 
-get_kv() ->
+get_kv(1) ->
     [
      {curInternalTemp, get_ets_value(smmCurInternalTemp, 0.0)},
      {powerSupply,     get_ets_value(smmPowerSupply, 0.0)},
@@ -70,7 +70,24 @@ get_kv() ->
      {partNum,         get_ets_value(smmPartNum, <<>>)},
      {serialNum,       get_ets_value(smmSerialNum, <<>>)},
      {productDate,     get_ets_value(smmProductDate, <<>>)}
-    ].
+    ];
+
+get_kv(2) ->
+	[
+	 {serialnum,       get_ets_value(smmSerialNum, <<>>)},
+	 {partnum,         get_ets_value(smmPartNum, <<>>)},
+	 {date,            get_ets_value(smmProductDate, <<>>)},
+	 {vendor,          case get_ets_value(smmVendor, <<>>) of
+						   <<"BKTel Photonics">> -> <<" Bktel\n      Photonics ">>;
+						   <<"Laser 2000">> -> <<"   Laser 2000   ">>;
+						   <<"Alnair">> -> <<"     Alnair     ">>;
+						   <<"Infractive">> -> <<"   Infractive   ">>;
+						   _ -> <<"vendor not\nconfigured">>
+					   end},
+	 {hard,            get_ets_value(smmHWVer, <<>>)},
+	 {soft,            get_ets_value(smmSWVer, <<>>)}
+	].
+
 
 %%% SNMP functions
 variable_func(new, _) ->

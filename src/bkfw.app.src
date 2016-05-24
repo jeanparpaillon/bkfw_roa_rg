@@ -11,7 +11,8 @@
 				bkfw_sup,
 				bkfw_alarms,
 				bkfw_http,
-				bkfw_mutex
+				bkfw_mutex,
+				bkfw_lcd
 			   ]},
   {applications, [
                   kernel,

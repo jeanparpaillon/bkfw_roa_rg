@@ -4,7 +4,7 @@
 -include("bkfw.hrl").
 
 -export([loop/1,
-		 get_kv/1,
+		 get_kv/2,
 		 set_kv/2]).
 
 %%% SNMP functions
@@ -44,7 +44,7 @@ loop(Amp, [ Fun | Tail ]) ->
 		{error, Err} -> {error, Err, Amp}
     end.
 
-get_kv(#ampTable{}=T) ->
+get_kv(#ampTable{}=T, 1) ->
     [
      {index,               T#ampTable.index},
      {ampConsign,          T#ampTable.ampConsign},
@@ -68,7 +68,32 @@ get_kv(#ampTable{}=T) ->
      {partNum,             T#ampTable.partNum},
      {serialNum,           T#ampTable.serialNum},
      {productDate,         T#ampTable.productDate}
+    ];
+
+get_kv(#ampTable{}=T, 2) ->
+    [
+     {index,               T#ampTable.index},
+	 {mode,                T#ampTable.operatingMode},
+	 {max_current_LD1,     0.0},
+	 {max_current_LD2,     5000.0},
+	 {min_pc,              0.0},
+	 {max_pc,              23.0},
+	 {min_gc,              0.0},
+	 {max_gc,              33.0},
+	 {number_of_laser,     2},
+	 {has_settable_LD1,    true},
+	 {alarms,              []},
+	 {'LD1_current',       0.0},
+	 {'LD2_current',       0.0},
+	 {input_power,         0.0},
+	 {output_power,        21.0},
+	 {internal_temp,       25.0},
+	 {'CC1_setpoint',      150},
+	 {'CC2_setpoint',      5000},
+	 {'PC_setpoint',       25.5},
+	 {'GC_setpoint',       20.5}
     ].
+
 
 set_kv(Idx, Kv) ->
     case get_kv_integer(operatingMode, Kv) of

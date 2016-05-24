@@ -34,7 +34,8 @@
 		  mcu       = undefined,
 		  sys       = undefined :: login | net | password | community | usm | protocol | 
 								   reset | reboot | targets | usb,
-		  firmware  = undefined :: undefined | string()
+		  firmware  = undefined :: undefined | string(),
+		  version   = 1         :: integer()
 		 }).
 
 %%%
@@ -46,11 +47,14 @@ get_config() ->
     DftLogo = filename:join(code:priv_dir(bkfw), "logo.png"),
     Logo = application:get_env(bkfw, logo, DftLogo),
     Handlers = [
-				{"/api/mcu/[:index]",       bkfw_http, mcu},
-				{"/api/edfa",               bkfw_http, edfa},
+				{"/api/mcu/[:index]",       bkfw_http, {1, mcu}},
+				{"/api2/mcu/[:index]",      bkfw_http, {2, mcu}},
+				{"/api/edfa",               bkfw_http, {1, edfa}},
+				{"/api2/edfa",              bkfw_http, {2, edfa}},
 				{"/api/alarms",             bkfw_http_ws, []},
 				{"/api/sys/firmware/[:fw]", bkfw_http, firmware},
 				{"/api/sys/:name",          bkfw_http, sys},
+				{"/api2/params",            bkfw_http, params},
 				{"/logo",                   cowboy_static, {file, Logo, [{mimetypes, cow_mimetypes, all}]}},
 				{"/[...]",                  cowboy_static, {dir, Dir, [{mimetypes, cow_mimetypes, all}]}}
 			   ],
@@ -67,20 +71,22 @@ get_config() ->
 init(_, _, _) ->
     {upgrade, protocol, cowboy_rest}.
 
-rest_init(Req, mcu) ->
+rest_init(Req, {Version, mcu}) ->
     case cowboy_req:binding(index, Req) of
 		{undefined, Req2} ->
-			{ok, Req2, #state{section=mcu, index=undefined}};
+			{ok, Req2, #state{section=mcu, index=undefined, version=Version}};
 		{BinI, Req2} ->
 			try binary_to_integer(BinI) of
 				I ->
-					{ok, Req2, #state{section=mcu, index=I}}
+					{ok, Req2, #state{section=mcu, index=I, version=Version}}
 			catch error:badarg ->
-					{ok, Req2, #state{section=mcu, index=badarg}}
+					{ok, Req2, #state{section=mcu, index=badarg, version=Version}}
 			end
     end;
-rest_init(Req, edfa) ->
-    {ok, Req, #state{section=edfa}};
+rest_init(Req, {Version, edfa}) ->
+    {ok, Req, #state{section=edfa, version=Version}};
+rest_init(Req, params) ->
+	{ok, Req, #state{section=params}};
 rest_init(Req, sys) ->
     case cowboy_req:binding(name, Req) of
 		{<<"login">>, Req2} -> {ok, Req2, #state{section=sys, sys=login}};
@@ -139,7 +145,7 @@ content_types_provided(Req, State) ->
 
 is_authorized(Req, #state{section=sys, sys=login}=State) ->
     {true, Req, State};
-is_authorized(Req, #state{section=Sec}=State) when Sec =:= sys; Sec =:= firmware ->
+is_authorized(Req, #state{section=Sec}=State) when Sec =:= sys orelse Sec =:= firmware ->
     require_auth(Req, State);
 is_authorized(Req, #state{section={firmware, _}}=State) ->
     require_auth(Req, State);
@@ -190,16 +196,16 @@ allow_missing_post(Req, State) ->
     {false, Req, State}.
 
 
-to_json(Req, #state{section=mcu, index=undefined}=S) ->
+to_json(Req, #state{section=mcu, index=undefined, version=Version}=S) ->
     Mcus = mnesia:dirty_match_object(#ampTable{_='_'}),
-    Ejson = lists:map(fun bkfw_mcu:get_kv/1, Mcus),
+    Ejson = lists:map(fun (Mcu) -> bkfw_mcu:get_kv(Mcu, Version) end, Mcus),
     {jsx:encode(Ejson, ?JSX_OPTS), Req, S};
 
-to_json(Req, #state{section=mcu, mcu=Mcu}=S) ->
-    {jsx:encode(bkfw_mcu:get_kv(Mcu), ?JSX_OPTS), Req, S};
+to_json(Req, #state{section=mcu, mcu=Mcu, version=Version}=S) ->
+    {jsx:encode(bkfw_mcu:get_kv(Mcu, Version), ?JSX_OPTS), Req, S};
 
-to_json(Req, #state{section=edfa}=S) ->
-    {jsx:encode(bkfw_edfa:get_kv(), ?JSX_OPTS), Req, S};
+to_json(Req, #state{section=edfa, version=Version}=S) ->
+    {jsx:encode(bkfw_edfa:get_kv(Version), ?JSX_OPTS), Req, S};
 
 to_json(Req, #state{section=sys, sys=Cat}=S) when Cat =:= login;
 												  Cat =:= net;
@@ -212,6 +218,16 @@ to_json(Req, #state{section=sys, sys=Cat}=S) when Cat =:= login;
 
 to_json(Req, #state{section=firmware}=S) ->
     {jsx:encode(bkfw_config:get_kv(firmware)), Req, S};
+
+to_json(Req, #state{section=params}=S) ->
+	Json = [
+			{'has_PC_mode', true},
+			{'has_GC_mode', true},
+			{'has_input_PD', true},
+			{'has_output_PD', true},
+			{'number_of_edfa', 1}
+		   ],
+    {jsx:encode(Json, ?JSX_OPTS), Req, S};
 
 to_json(Req, #state{section=sys, sys=_}=S) ->
     {<<"{}">>, Req, S}.

@@ -17,7 +17,8 @@
 		 encode_password/1,
 		 set_app_conf/4,
 		 get_kv/1,
-		 set_kv/2]).
+		 set_kv/2,
+		 get_script/1]).
 
 -export([upgrade/2,
 		 cmd/1,
@@ -89,6 +90,14 @@ upgrade("amp", Filename) ->
 encode_password(Passwd) when is_list(Passwd); is_binary(Passwd) ->
     binary_to_list(base64:encode(hexstring(crypto:hash(md5, Passwd)))).
 
+
+get_script(Name) ->
+	case application:get_env(bkfw, scripts_dir, {priv_dir, "scripts"}) of
+		{priv_dir, Path} ->
+			filename:join([code:priv_dir(bkfw), Path, Name]);
+		Path when is_list(Path) ->
+			filename:join([Path, Name])
+	end.
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -347,14 +356,6 @@ load_resources() ->
 		{ok, [{application, bkfw, Props}]} -> Props;
 		_ -> []
     end.
-
-get_script(Name) ->
-	case application:get_env(bkfw, scripts_dir, {priv_dir, "scripts"}) of
-		{priv_dir, Path} ->
-			filename:join([code:priv_dir(bkfw), Path, Name]);
-		Path when is_list(Path) ->
-			filename:join([Path, Name])
-	end.
 
 script(Cmd, Args) ->
     cmd(get_script(Cmd) ++ " " ++ Args).
