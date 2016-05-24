@@ -24,7 +24,10 @@
 				  snmp,
 				  mnesia
                  ]},
-  {mod, { bkfw_app, []}},
+  {mod, { application_starter, [bkfw, []] }},
+  {start_phases, [
+				  {http, []}
+				 ]},
   {env, [
 		 {com, "/dev/ttyAMA0"},
 		 {edfa_period, 2000},

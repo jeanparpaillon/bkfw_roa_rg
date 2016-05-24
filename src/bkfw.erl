@@ -1,14 +1,20 @@
--module(bkfw_app).
+-module(bkfw).
 
 -behaviour(application).
 
 -include("bkfw.hrl").
 
+-export([start/0]).
+
 %% Application callbacks
 -export([start/2, 
+		 start_phase/3,
 		 stop/1,
 		 restart/0,
 		 reboot/0]).
+
+start() ->
+	_ = application:ensure_all_started().
 
 %% ===================================================================
 %% Application callbacks
@@ -24,6 +30,14 @@ start(_StartType, _StartArgs) ->
 stop(_State) ->
     ok.
 
+
+start_phase(http, normal, _Args) ->
+	%%% Wait for HTTP API to be ready
+	timer:sleep(1000),
+	bkfw_sup:post_http();
+
+start_phase(_, _, _) ->
+	{error, bas_phase}.
 
 %%%
 %%% Priv

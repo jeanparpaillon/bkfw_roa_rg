@@ -56,6 +56,7 @@ class Resource(object):
     self.load()
 
   def load(self):
+    print "GET(%s)" % (self.url)
     r = requests.get(self.url)
     if r.status_code != 200:
       raise Exception("GET(%s): status_code=%d" % (self.url, r.status_code))
