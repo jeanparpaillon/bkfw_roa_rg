@@ -145,8 +145,8 @@ s_string(<< C, R/bits >>, _Acc, _) ->
 
 s_str_or_atom(Str, Rest) ->
     case kw_to_atom(Str) of
-	A when is_atom(A) -> {ok, A, Rest};
-	B -> {ok, B, Rest}
+		A when is_atom(A) -> {ok, A, Rest};
+		B -> {ok, B, Rest}
     end.
 
 s_num_i(<<>>, _, SoFar) -> {more, SoFar};
@@ -249,6 +249,8 @@ kw_to_atom(<<"LC">>)        -> lc;
 kw_to_atom(<<"LI">>)        -> li;
 kw_to_atom(<<"LO">>)        -> lo;
 kw_to_atom(<<"LT">>)        -> lt;
+kw_to_atom(<<"MAX">>)       -> max;
+kw_to_atom(<<"MIN">>)       -> min;
 kw_to_atom(<<"MODE">>)      -> mode;
 kw_to_atom(<<"MODULE=">>)   -> module;
 kw_to_atom(<<"MUTE">>)      -> mute;
@@ -275,8 +277,11 @@ kw_to_atom(<<"RGC">>)       -> rgc;
 kw_to_atom(<<"RI">>)        -> ri;
 kw_to_atom(<<"RIT">>)       -> rit;
 kw_to_atom(<<"RLC">>)       -> rlc;
+kw_to_atom(<<"RLCC">>)      -> rlcc;
+kw_to_atom(<<"RLGC">>)      -> rlgc;
 kw_to_atom(<<"RLI">>)       -> rli;
 kw_to_atom(<<"RLO">>)       -> rlo;
+kw_to_atom(<<"RLPC">>)      -> rlpc;
 kw_to_atom(<<"RLT">>)       -> rlt;
 kw_to_atom(<<"RMODE">>)     -> rmode;
 kw_to_atom(<<"RN">>)        -> rn;

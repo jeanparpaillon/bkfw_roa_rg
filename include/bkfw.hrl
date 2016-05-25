@@ -22,18 +22,18 @@
 -define(error(Msg), error_logger:error_msg("ERROR: " ++ Msg)).
 -define(error(Msg, Data), error_logger:error_msg("ERROR: " ++ Msg, Data)).
 
-												% scan & parse structs
--type terminal() :: adi | alarms | bref | cc | 'edfa_temp' | 'edfa_psu' | fwVer | gc | hwRev | 
+%% scan & parse structs
+-type terminal() :: adi | alarms | bref | cc | 'edfa_temp' | 'edfa_psu' | fwVer | gc | hwRev | fan1 | fan2 | fan3 | fan4 |
 					hwVer | it | i | lc | li | lo | lt | mode | moduleType | mute | n | off | partNum | pc | pd | 
-					pin | pout | productDate | psu1 | psu2 | 'pump_bias' | 'pump_temp' | ra | 
-					rcc | rgc | ri | rit | rlc | rli | rlo | rlt | rmode | rn | rpc | rpm |
+					pin | pout | productDate | psu | psu1 | psu2 | 'pump_bias' | 'pump_temp' | ra | 
+					rcc | rgc | ri | rit | rlcc | rlc | rlpc | rlgc | rli | rlo | rlt | rmode | rn | rpc | rpm |
 					rv | scc | sgc | sli | slo | smode | spc | swVer | vendor | v.
 -type token() :: integer() | float() | terminal() | binary().
 
 -type msg_line() :: [Args :: [token()]].
 -type msg() :: {Addr :: integer(), Cmd :: atom(), Lines :: [msg_line()]}.
 
-												% SNMP table record
+%% SNMP table record
 -include("SMM-MIB.hrl").
 
 -record(ampTable, {index                                         :: integer(),
@@ -58,7 +58,8 @@
 				   fwVer              = "N/A"                    :: string(),
 				   partNum            = "N/A"                    :: string(),
 				   serialNum          = "N/A"                    :: string(),
-				   productDate        = "N/A"                    :: string()
+				   productDate        = "N/A"                    :: string(),
+				   data               = #{}
 				  }).
 -type ampTable() :: #ampTable{}.
 

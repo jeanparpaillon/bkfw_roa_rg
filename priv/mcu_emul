@@ -258,6 +258,24 @@ handle_msg(#mcu{index=Addr, curAmp=LC}=Mcu, rlc, [Pos], S) when is_integer(Pos) 
     reply(S, Addr, io_lib:format("LC ~p ~.2f mA", [Pos, LC])),
     {S, Mcu#mcu{curAmp=ran(LC)}};
 
+handle_msg(#mcu{index=Addr, limits=Limits}=Mcu, rlcc, [Pos], S) when is_integer(Pos) ->
+	L = case Pos of
+			1 -> maps:get('cc1', Limits);
+			2 -> maps:get('cc2', Limits)
+		end,
+    reply(S, Addr, io_lib:format("MAX Current LD~b ~.2f mA", [Pos, L])),
+    {S, Mcu};
+
+handle_msg(#mcu{index=Addr, limits=Limits}=Mcu, rlpc, [], S) ->
+	{Min, Max} = maps:get('pc', Limits),
+    reply(S, Addr, io_lib:format("PC MIN ~.2f dBm\r\n\r\nPC MAX ~.2f dBm", [Min, Max])),
+    {S, Mcu};
+
+handle_msg(#mcu{index=Addr, limits=Limits}=Mcu, rlgc, [], S) ->
+	{Min, Max} = maps:get('gc', Limits),
+    reply(S, Addr, io_lib:format("GC MIN ~.2f dBm\r\n\r\nGC MAX ~.2f dBm", [Min, Max])),
+    {S, Mcu};
+
 handle_msg(#edfa{internalTemp=IT}=Edfa, rit, [], S) ->
     reply(S, 0, io_lib:format("IT ~.2f C", [IT])),
     {S, Edfa#edfa{internalTemp=ran(IT)}};

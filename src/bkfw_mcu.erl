@@ -24,11 +24,12 @@
 		 read_v/1, 
 		 read_li/1, 
 		 read_lo/1, 
-		 read_a/1]).
+		 read_a/1,
+		 read_limits/1]).
 
 -define(PERIOD, 100).
 -define(FUNS, [read_cc, read_gc, read_pc, read_mode, read_lt, read_lc, read_it, read_pm,
-			   read_i, read_v, read_li, read_lo, read_a]).
+			   read_i, read_v, read_li, read_lo, read_a, read_limits]).
 -define(POSITIONS, [1]).
 
 loop(#ampTable{}=Amp) ->
@@ -74,13 +75,13 @@ get_kv(#ampTable{}=T, 2) ->
     [
      {index,               T#ampTable.index},
 	 {mode,                T#ampTable.operatingMode},
-	 {max_current_LD1,     0.0},
-	 {max_current_LD2,     5000.0},
+	 {max_current_LD1,     maps:get(cc1, T#ampTable.data, 0.0)},
+	 {max_current_LD2,     maps:get(cc2, T#ampTable.data, 0.0)},
 	 {min_pc,              0.0},
 	 {max_pc,              23.0},
 	 {min_gc,              0.0},
 	 {max_gc,              33.0},
-	 {number_of_laser,     2},
+	 {number_of_laser,     maps:get(nb_lasers, T#ampTable.data)},
 	 {has_settable_LD1,    true},
 	 {alarms,              []},
 	 {'LD1_current',       0.0},
@@ -249,14 +250,15 @@ read_it(#ampTable{index=Idx}=E) ->
 read_i(#ampTable{}=E) ->
 	{ok, E}.
 
-read_pm(#ampTable{index=Idx}=E) ->
+read_pm(#ampTable{index=Idx, data=Data}=E) ->
     case bkfw_srv:command(Idx, rpm, []) of
 		{ok, {Idx, pd, Lines}} ->
-			Defaults = { E#ampTable.powerPd1,
+			Acc0 = { E#ampTable.powerPd1,
 						 E#ampTable.powerPd2,
-						 E#ampTable.powerPd3 },
-			{Pd1, Pd2, Pd3} = parse_pd(Lines, Defaults),
-			{ok, E#ampTable{powerPd1=Pd1, powerPd2=Pd2, powerPd3=Pd3}};
+						 E#ampTable.powerPd3,
+						 0 },
+			{Pd1, Pd2, Pd3, Nr} = parse_pd(Lines, Acc0),
+			{ok, E#ampTable{powerPd1=Pd1, powerPd2=Pd2, powerPd3=Pd3, data=Data#{ nb_lasers => Nr }}};
 		{ok, _Ret} ->
 			{error, {string, io_lib:format("RPM invalid answer: ~p~n", [_Ret])}};
 		{error, Err} ->
@@ -293,6 +295,44 @@ read_lo(#ampTable{index=Idx}=E) ->
 			{error, Err}
     end.
 
+read_limits(#ampTable{index=Idx, data=Data}=E) ->
+    case bkfw_srv:command(Idx, rlcc, [<<"1">>]) of
+		{ok, {Idx, max, [<<"Current">>, <<"LD1">>, X, <<"mA">>]}} ->
+			E1 = E#ampTable{data=Data#{ cc1 => X }},
+			case maps:get(nb_lasers, Data, 1) of
+				1 ->
+					{ok, E1};
+				_ ->
+					read_limits2(E1)
+			end;
+		{ok, _Ret} ->
+			{error, iolist_to_binary(io_lib:format("RLCC 1 invalid answer: ~p~n", [_Ret]))};
+		{error, Err} ->
+			{error, Err}
+    end.
+
+read_limits2(#ampTable{index=Idx, data=Data}=E) ->
+    case bkfw_srv:command(Idx, rlcc, [<<"2">>]) of
+		{ok, {Idx, max, [<<"Current">>, <<"LD2">>, X, <<"mA">>]}} ->
+			E1 = E#ampTable{data=Data#{ cc2 => X }},
+			read_limits_pc(E1);
+		{ok, _Ret} ->
+			{error, iolist_to_binary(io_lib:format("RLCC 2 invalid answer: ~p~n", [_Ret]))};
+		{error, Err} ->
+			{error, Err}
+    end.
+
+read_limits_pc(#ampTable{index=Idx, data=_Data}=E) ->
+    case bkfw_srv:command(Idx, rlpc, []) of
+		{ok, {Idx, pc, Lines}} ->
+			?debug("rlpc -> ~p", [Lines]),
+			{ok, E};
+		{ok, _Ret} ->
+			{error, iolist_to_binary(io_lib:format("RLCC 2 invalid answer: ~p~n", [_Ret]))};
+		{error, Err} ->
+			{error, Err}
+    end.
+
 %%%
 %%% Convenience functions
 %%%
@@ -302,9 +342,9 @@ parse_mode(cc, _) -> ?ampOperatingMode_cc;
 parse_mode(off, _) -> ?ampOperatingMode_off.
 
 parse_pd([], Acc) -> Acc;
-parse_pd([ [1, P, <<"dBm">>] | Tail], {_, Pd2, Pd3}) -> parse_pd(Tail, {P, Pd2, Pd3});
-parse_pd([ [2, P, <<"dBm">>] | Tail], {Pd1, _, Pd3}) -> parse_pd(Tail, {Pd1, P, Pd3});
-parse_pd([ [3, P, <<"dBm">>] | Tail], {Pd1, Pd2, _}) -> parse_pd(Tail, {Pd1, Pd2, P});
+parse_pd([ [1, P, <<"dBm">>] | Tail], {_, Pd2, Pd3, I}) -> parse_pd(Tail, {P, Pd2, Pd3, I+1});
+parse_pd([ [2, P, <<"dBm">>] | Tail], {Pd1, _, Pd3, I}) -> parse_pd(Tail, {Pd1, P, Pd3, I+1});
+parse_pd([ [3, P, <<"dBm">>] | Tail], {Pd1, Pd2, _, I}) -> parse_pd(Tail, {Pd1, Pd2, P, I+1});
 parse_pd([ _ | Tail], Acc) -> parse_pd(Tail, Acc).
 
 %% get_info(Key, Infos, Default) ->
