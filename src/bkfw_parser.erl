@@ -28,6 +28,8 @@ parse_msg({eof, Rest}, {_, pd, _}=Msg) ->
     {ok, Msg, Rest};
 parse_msg({eof, Rest}, {_, pc, _}=Msg) ->
     {ok, Msg, Rest};
+parse_msg({eof, Rest}, {_, gc, _}=Msg) ->
+    {ok, Msg, Rest};
 parse_msg({eof, Rest}, Msg) when is_list(Msg) ->
 	{ok, lists:reverse(Msg), Rest};
 parse_msg({ok, _, _}=Tok, {_, i, _}=Msg) ->
@@ -35,6 +37,8 @@ parse_msg({ok, _, _}=Tok, {_, i, _}=Msg) ->
 parse_msg({ok, _, _}=Tok, {_, pd, _}=Msg) ->
     parse_cmd(Tok, Msg);
 parse_msg({ok, _, _}=Tok, {_, pc, _}=Msg) ->
+    parse_cmd(Tok, Msg);
+parse_msg({ok, _, _}=Tok, {_, gc, _}=Msg) ->
     parse_cmd(Tok, Msg);
 parse_msg({ok, N, Rest}, undefined) when is_integer(N) ->
     parse_cmd(bkfw_scanner:token(Rest), {N, undefined, []});
@@ -113,6 +117,8 @@ is_multiline({_, i, _}=Msg, Rest) -> {more, Msg, Rest};
 is_multiline({_, pd, _}=Msg, Rest) -> {more, Msg, Rest};
 is_multiline({_, pc, [ [min | _ ] ]}=Msg, Rest) -> {more, Msg, Rest};
 is_multiline({_, pc, [ [min | _ ], [max | _ ] ]}=Msg, Rest) -> {ok, Msg, Rest};
+is_multiline({_, gc, [ [min | _ ] ]}=Msg, Rest) -> {more, Msg, Rest};
+is_multiline({_, gc, [ [min | _ ], [max | _ ] ]}=Msg, Rest) -> {ok, Msg, Rest};
 is_multiline({A, C, []}, Rest) -> {ok, {A, C, []}, Rest};
 is_multiline({A, C, [Line]}, Rest) -> {ok, {A, C, Line}, Rest}.
 
@@ -131,12 +137,17 @@ parse_gc_test() ->
 parse_lcc_test() ->
 	?assertMatch({ok, {0, max, [<<"Current">>, <<"LD1">>, 345.21, <<"mA">>]}, <<>>}, 
 				 parse(<<"0x00 MAX Current LD1 345.21 mA\r\n">>)).
-	
+
 parse_lpc_test() ->
 	?assertMatch({more, {0, pc, [ [min, 21.0, <<"dBm">>] ]}, <<"PC MAX 45.3 dBm\r\n">>}, 
 				 parse(<<"0x00 PC MIN 21.0 dBm\r\nPC MAX 45.3 dBm\r\n">>)),
 	?assertMatch({ok, {0, pc, [ [min, 21.0, <<"dBm">>], [max, 45.3, <<"dBm">>] ]}, <<>>}, 
 				 parse(<<"PC MAX 45.3 dBm\r\n">>, {0, pc, [ [min, 21.0, <<"dBm">>] ]})).
 
+parse_lgc_test() ->
+	?assertMatch({more, {0, gc, [ [min, 21.0, <<"dBm">>] ]}, <<"GC MAX 45.3 dBm\r\n">>}, 
+				 parse(<<"0x00 GC MIN 21.0 dBm\r\nGC MAX 45.3 dBm\r\n">>)),
+	?assertMatch({ok, {0, gc, [ [min, 21.0, <<"dBm">>], [max, 45.3, <<"dBm">>] ]}, <<>>}, 
+				 parse(<<"GC MAX 45.3 dBm\r\n">>, {0, gc, [ [min, 21.0, <<"dBm">>] ]})).
 
 -endif.
