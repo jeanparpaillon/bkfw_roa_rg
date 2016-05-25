@@ -28,9 +28,17 @@
 		 read_limits/1]).
 
 -define(PERIOD, 100).
--define(FUNS, [read_cc, read_gc, read_pc, read_mode, read_lt, read_lc, read_it, read_pm,
+-define(FUNS, [read_pm, read_cc, read_gc, read_pc, read_mode, read_lt, read_lc, read_it,
 			   read_i, read_v, read_li, read_lo, read_a, read_limits]).
--define(POSITIONS, [1]).
+
+-record(laser, {index,
+				amp           = 0.0,
+				amp_consign   = 0.0, 
+				power         = 0.0,
+				cc_limit      = 0.0,
+				temp          = 0.0,
+				settable      = false}).
+-define(default_laser(I), #laser{index=I}).
 
 loop(#ampTable{}=Amp) ->
     loop(Amp, ?FUNS).
@@ -71,28 +79,36 @@ get_kv(#ampTable{}=T, 1) ->
      {productDate,         T#ampTable.productDate}
     ];
 
-get_kv(#ampTable{}=T, 2) ->
+get_kv(#ampTable{ lasers=Lasers, pc_limit={MinPC, MaxPC}, gc_limit={MinGC, MaxGC} }=T, 2) ->
+	Laser1 = case lists:keyfind(1, 2, Lasers) of
+				 false -> #laser{index=1};
+				 L1 -> L1
+			 end,
+	Laser2 = case lists:keyfind(2, 2, Lasers) of
+				 false -> #laser{index=2};
+				 L2 -> L2
+			 end,						  
     [
      {index,               T#ampTable.index},
 	 {mode,                T#ampTable.operatingMode},
-	 {max_current_LD1,     maps:get(cc1, T#ampTable.data, 0.0)},
-	 {max_current_LD2,     maps:get(cc2, T#ampTable.data, 0.0)},
-	 {min_pc,              0.0},
-	 {max_pc,              23.0},
-	 {min_gc,              0.0},
-	 {max_gc,              33.0},
-	 {number_of_laser,     maps:get(nb_lasers, T#ampTable.data)},
-	 {has_settable_LD1,    true},
+	 {max_current_LD1,     Laser1#laser.cc_limit},
+	 {max_current_LD2,     Laser2#laser.cc_limit},
+	 {min_pc,              MinPC},
+	 {max_pc,              MaxPC},
+	 {min_gc,              MinGC},
+	 {max_gc,              MaxGC},
+	 {number_of_laser,     length(Lasers)},
+	 {has_settable_LD1,    Laser1#laser.settable},
 	 {alarms,              []},
-	 {'LD1_current',       0.0},
-	 {'LD2_current',       0.0},
+	 {'LD1_current',       Laser1#laser.amp},
+	 {'LD2_current',       Laser1#laser.amp},
 	 {input_power,         0.0},
-	 {output_power,        21.0},
-	 {internal_temp,       25.0},
-	 {'CC1_setpoint',      150},
-	 {'CC2_setpoint',      5000},
-	 {'PC_setpoint',       25.5},
-	 {'GC_setpoint',       20.5}
+	 {output_power,        T#ampTable.outputPowerConsign},
+	 {internal_temp,       T#ampTable.curInternalTemp},
+	 {'CC1_setpoint',      Laser1#laser.amp_consign},
+	 {'CC2_setpoint',      Laser2#laser.amp_consign},
+	 {'PC_setpoint',       T#ampTable.outputPowerConsign},
+	 {'GC_setpoint',       T#ampTable.gainConsign}
     ].
 
 
@@ -153,11 +169,13 @@ table_func(Op, RowIndex, Cols, NameDb) ->
 %%%
 %%% Internals
 %%%
-read_cc(#ampTable{index=Idx}=E) ->
-    F = fun(X, {ok, Acc}) ->
+read_cc(#ampTable{index=Idx, lasers=Lasers}=E) ->
+    F = fun(#laser{index=X}=L, {ok, Acc}) ->
 				case bkfw_srv:command(Idx, rcc, [integer_to_binary(X)]) of
+					{ok, {1, cc, [X, A, <<"mA">>]}} when is_float(A); is_integer(A) ->
+						{ok, Acc#ampTable{ ampConsign=A, lasers=lists:keystore(1, 2, Lasers, L#laser{ amp_consign=A }) }};
 					{ok, {Idx, cc, [X, A, <<"mA">>]}} when is_float(A); is_integer(A) ->
-						{ok, Acc#ampTable{ampConsign=A}};
+						{ok, Acc#ampTable{ lasers=lists:keystore(Idx, 2, Lasers, L#laser{ amp_consign=A }) }};
 					{ok, _Ret} ->
 						{error, {string, io_lib:format("RCC invalid answer: ~p~n", [_Ret])}};
 					{error, Err} ->
@@ -166,7 +184,7 @@ read_cc(#ampTable{index=Idx}=E) ->
 		   (_, {error, Err}) ->
 				{error, Err}
 		end,
-    lists:foldl(F, {ok, E}, ?POSITIONS).
+    lists:foldl(F, {ok, E}, Lasers).
 
 read_gc(#ampTable{index=Idx}=E) ->
     case bkfw_srv:command(Idx, rgc, []) of
@@ -209,11 +227,13 @@ read_a(#ampTable{index=Idx}=E) ->
 			{error, Err}
     end.
 
-read_lt(#ampTable{index=Idx}=E) ->
-    F = fun(X, {ok, Acc}) ->
+read_lt(#ampTable{ index=Idx, lasers=Lasers }=E) ->
+    F = fun(#laser{ index=X }=L, {ok, Acc}) ->
 				case bkfw_srv:command(Idx, rlt, [integer_to_binary(X)]) of
+					{ok, {1, lt, [X, T, <<"C">>]}} when is_float(T); is_integer(T) ->
+						{ok, Acc#ampTable{ curLaserTemp=T, lasers=lists:keystore(1, 2, Lasers, L#laser{ temp=T }) } };
 					{ok, {Idx, lt, [X, T, <<"C">>]}} when is_float(T); is_integer(T) ->
-						{ok, Acc#ampTable{curLaserTemp=T}};
+						{ok, Acc#ampTable{ curLaserTemp=T, lasers=lists:keystore(Idx, 2, Lasers, L#laser{ temp=T }) } };
 					{ok, _Ret} ->
 						{error, {string, io_lib:format("RLT invalid answer: ~p~n", [_Ret])}};
 					{error, Err} ->
@@ -222,20 +242,22 @@ read_lt(#ampTable{index=Idx}=E) ->
 		   (_, {error, Err}) ->
 				{error, Err}
 		end,
-    lists:foldl(F, {ok, E}, ?POSITIONS).
+    lists:foldl(F, {ok, E}, Lasers).
 
-read_lc(#ampTable{index=Idx}=E) ->
-    F = fun(X, {ok, Acc}) ->
+read_lc(#ampTable{ index=Idx, lasers=Lasers }=E) ->
+    F = fun(#laser{ index=X }=L, {ok, Acc}) ->
 				case bkfw_srv:command(Idx, rlc, [integer_to_binary(X)]) of
+					{ok, {1, lc, [X, A, <<"mA">>]}} when is_float(A); is_integer(A) ->
+						{ok, Acc#ampTable{ curAmp=A, lasers=lists:keystore(1, 2, Lasers, L#laser{ amp=A }) } };
 					{ok, {Idx, lc, [X, A, <<"mA">>]}} when is_float(A); is_integer(A) ->
-						{ok, Acc#ampTable{curAmp=A}};
+						{ok, Acc#ampTable{ curAmp=A, lasers=lists:keystore(Idx, 2, Lasers, L#laser{ amp=A }) } };
 					{ok, _Ret} ->
 						{error, {string, io_lib:format("RLC invalid answer: ~p~n", [_Ret])}};
 					{error, Err} ->
 						{error, Err}
 				end
 		end,
-    lists:foldl(F, {ok, E}, ?POSITIONS).
+    lists:foldl(F, {ok, E}, Lasers).
 
 read_it(#ampTable{index=Idx}=E) ->
     case bkfw_srv:command(Idx, rit, []) of
@@ -250,15 +272,11 @@ read_it(#ampTable{index=Idx}=E) ->
 read_i(#ampTable{}=E) ->
 	{ok, E}.
 
-read_pm(#ampTable{index=Idx, data=Data}=E) ->
+read_pm(#ampTable{index=Idx}=E) ->
     case bkfw_srv:command(Idx, rpm, []) of
 		{ok, {Idx, pd, Lines}} ->
-			Acc0 = { E#ampTable.powerPd1,
-						 E#ampTable.powerPd2,
-						 E#ampTable.powerPd3,
-						 0 },
-			{Pd1, Pd2, Pd3, Nr} = parse_pd(Lines, Acc0),
-			{ok, E#ampTable{powerPd1=Pd1, powerPd2=Pd2, powerPd3=Pd3, data=Data#{ nb_lasers => Nr }}};
+			E1 = parse_pd(Lines, E),
+			{ok, E1};
 		{ok, _Ret} ->
 			{error, {string, io_lib:format("RPM invalid answer: ~p~n", [_Ret])}};
 		{error, Err} ->
@@ -295,40 +313,43 @@ read_lo(#ampTable{index=Idx}=E) ->
 			{error, Err}
     end.
 
-read_limits(#ampTable{index=Idx, data=Data}=E) ->
-    case bkfw_srv:command(Idx, rlcc, [<<"1">>]) of
-		{ok, {Idx, max, [<<"Current">>, <<"LD1">>, X, <<"mA">>]}} ->
-			E1 = E#ampTable{data=Data#{ cc1 => X }},
-			case maps:get(nb_lasers, Data, 1) of
-				1 ->
-					{ok, E1};
-				_ ->
-					read_limits2(E1)
-			end;
-		{ok, _Ret} ->
-			{error, iolist_to_binary(io_lib:format("RLCC 1 invalid answer: ~p~n", [_Ret]))};
-		{error, Err} ->
-			{error, Err}
-    end.
-
-read_limits2(#ampTable{index=Idx, data=Data}=E) ->
-    case bkfw_srv:command(Idx, rlcc, [<<"2">>]) of
-		{ok, {Idx, max, [<<"Current">>, <<"LD2">>, X, <<"mA">>]}} ->
-			E1 = E#ampTable{data=Data#{ cc2 => X }},
+read_limits(#ampTable{index=Idx, lasers=Lasers}=E) ->
+    F = fun(#laser{ index=X }=L, {ok, Acc}) ->
+				case bkfw_srv:command(Idx, rlcc, [integer_to_binary(X)]) of
+					{ok, {Idx, max, [_, _, A, <<"mA">>]}} when is_float(A); is_integer(A) ->
+						{ok, Acc#ampTable{ lasers=lists:keystore(Idx, 2, Lasers, L#laser{ cc_limit=A }) } };
+					{ok, _Ret} ->
+						{error, {string, io_lib:format("RLCC ~b invalid answer: ~p~n", [_Ret, X])}};
+					{error, Err} ->
+						{error, Err}
+				end
+		end,
+    case lists:foldl(F, {ok, E}, Lasers) of
+		{ok, E1} ->
 			read_limits_pc(E1);
+		{error, Err} ->
+			{error, Err}
+	end.
+
+read_limits_pc(#ampTable{ index=Idx }=E) ->
+    case bkfw_srv:command(Idx, rlpc, []) of
+		{ok, {Idx, pc, [ [min, Min, _], [max, Max, _] ]}} ->
+			E1 = E#ampTable{ pc_limit={Min, Max} },
+			read_limits_gc(E1);
 		{ok, _Ret} ->
-			{error, iolist_to_binary(io_lib:format("RLCC 2 invalid answer: ~p~n", [_Ret]))};
+			{error, iolist_to_binary(io_lib:format("RLPC invalid answer: ~p~n", [_Ret]))};
 		{error, Err} ->
 			{error, Err}
     end.
 
-read_limits_pc(#ampTable{index=Idx, data=_Data}=E) ->
-    case bkfw_srv:command(Idx, rlpc, []) of
-		{ok, {Idx, pc, Lines}} ->
-			?debug("rlpc -> ~p", [Lines]),
-			{ok, E};
+
+read_limits_gc(#ampTable{ index=Idx }=E) ->
+    case bkfw_srv:command(Idx, rlgc, []) of
+		{ok, {Idx, gc, [ [min, Min, _], [max, Max, _] ]}} ->
+			E1 = E#ampTable{ gc_limit={Min, Max} },
+			{ok, E1};
 		{ok, _Ret} ->
-			{error, iolist_to_binary(io_lib:format("RLCC 2 invalid answer: ~p~n", [_Ret]))};
+			{error, iolist_to_binary(io_lib:format("RLGC invalid answer: ~p~n", [_Ret]))};
 		{error, Err} ->
 			{error, Err}
     end.
@@ -341,11 +362,30 @@ parse_mode(gc, _) -> ?ampOperatingMode_gc;
 parse_mode(cc, _) -> ?ampOperatingMode_cc;
 parse_mode(off, _) -> ?ampOperatingMode_off.
 
-parse_pd([], Acc) -> Acc;
-parse_pd([ [1, P, <<"dBm">>] | Tail], {_, Pd2, Pd3, I}) -> parse_pd(Tail, {P, Pd2, Pd3, I+1});
-parse_pd([ [2, P, <<"dBm">>] | Tail], {Pd1, _, Pd3, I}) -> parse_pd(Tail, {Pd1, P, Pd3, I+1});
-parse_pd([ [3, P, <<"dBm">>] | Tail], {Pd1, Pd2, _, I}) -> parse_pd(Tail, {Pd1, Pd2, P, I+1});
-parse_pd([ _ | Tail], Acc) -> parse_pd(Tail, Acc).
+
+parse_pd([], Acc) -> 
+	Acc;
+
+parse_pd([ [Idx, P, <<"dBm">>] | Tail], #ampTable{ lasers=Lasers }=E) -> 
+	Laser = case lists:keyfind(Idx, 2, Lasers) of
+				false -> #laser{ index=Idx, power=P };
+				L -> L#laser{ power=P }
+			end,
+	parse_pd2(Idx, P, Tail, E#ampTable{ lasers=lists:keystore(Idx, 2, Lasers, Laser) }).
+
+
+parse_pd2(1, P, Tail, E) ->
+	parse_pd(Tail, E#ampTable{ powerPd1=P });
+
+parse_pd2(2, P, Tail, E) ->
+	parse_pd(Tail, E#ampTable{ powerPd2=P });
+
+parse_pd2(3, P, Tail, E) ->
+	parse_pd(Tail, E#ampTable{ powerPd3=P });
+
+parse_pd2(_, _, Tail, E) ->
+	parse_pd(Tail, E).
+
 
 %% get_info(Key, Infos, Default) ->
 %%     try proplists:get_value(Key, Infos, Default) of

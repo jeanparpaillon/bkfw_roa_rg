@@ -59,7 +59,9 @@
 				   partNum            = "N/A"                    :: string(),
 				   serialNum          = "N/A"                    :: string(),
 				   productDate        = "N/A"                    :: string(),
-				   data               = #{}
+				   lasers             = []                       :: list(),
+				   pc_limit           = {0.0, 0.0}               :: {float(), float()},
+				   gc_limit           = {0.0, 0.0}               :: {float(), float()}
 				  }).
 -type ampTable() :: #ampTable{}.
 
