@@ -43,6 +43,22 @@ Example:
 * `logo` (string, default: bktel logo): full path to logo, eg: /root/mylogo.png. width: 250px
 * `netif` (string, default: "eth0"): network interface name
 
+## Informations
+
+Vendor infos are provided in the `i` tuple:
+```
+{i, [{vendor, "BKTel Photonics"},
+	 {moduleType, ""},
+	 {hwVer, ""},
+	 {hwRev, ""},
+	 {swVer, ""},
+	 {fwVer, ""},
+	 {partNum, "409152"},
+	 {serialNum, "P1549GB03250"},
+	 {productDate, "04/05/2016"}
+	]}
+```
+
 ## Performance parameters
 
 * `edfa_period` (integer, default: 2000): refreshing time (ms) for EDFA
