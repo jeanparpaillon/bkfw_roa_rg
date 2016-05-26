@@ -1,21 +1,17 @@
 #!/bin/sh
 set -e
 
-BASEDIR=$(cd $(dirname $0) && pwd)
+BASEDIR=$(cd "$(dirname "$0")" && pwd)
 ebindir=${BASEDIR}/ebin
-depsdir=${BASEDIR}/deps/*/ebin
+depsdir="${BASEDIR}/deps/*/ebin"
 reldir=${BASEDIR}/rel
-cmd="${BASEDIR}/$(basename $0) $*"
-
-
-USERCONF=/var/tmp/bkfw_user.conf
 
 usage() {
     echo "Usage: $0 [-p XXXX] [-u /path/to/usbtty] /path/to/com"
 }
 
 port=8000
-usbtty=
+usbtty="undefined"
 while getopts ":p:u:" opt; do
     case $opt in
 	p)
@@ -24,7 +20,7 @@ while getopts ":p:u:" opt; do
 	    ;;
 	u)
 	    shift $((OPTIND -1))
-	    usbtty=$OPTARG
+	    usbtty="\"$OPTARG\""
 	    ;;
 	:)
 	    usage
@@ -60,8 +56,9 @@ erl -sname agent \
     -bkfw system_cmd "false" \
     -bkfw net "\"${BASEDIR}/priv/interfaces\"" \
     -bkfw scripts_dir "\"${BASEDIR}/priv/scripts\"" \
+	-bkfw usbtty "${usbtty}" \
     -bkfw debug "true" \
-    -config ${reldir}/dev/sys \
+    -config "${reldir}/dev/sys" \
     -s bkfw
 
 exit 0
