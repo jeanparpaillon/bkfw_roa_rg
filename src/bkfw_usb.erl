@@ -3,7 +3,7 @@
 
 -include("bkfw.hrl").
 
-% API
+												% API
 -export([start_link/0]).
 
 %% gen_server callbacks
@@ -44,7 +44,7 @@ init(_) ->
 							{ok, #state{com_fd=ComFd, com=ComPort, usb_fd=UsbFd, usb=UsbPort}};
 						{error, ComErr} ->
 							?error("Error opening port ~p: ~p", [ComDev, ComErr]),
-					{stop, ComErr}
+							{stop, ComErr}
 					end;
 				{error, enoent} ->
 					?info("No such USB port, ignoring: ~p", [UsbDev]),
