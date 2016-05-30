@@ -28,8 +28,20 @@
 		 read_limits/1]).
 
 -define(PERIOD, 100).
--define(FUNS, [read_pm, read_cc, read_gc, read_pc, read_mode, read_lt, read_lc, read_it,
-			   read_i, read_v, read_li, read_lo, read_a, read_limits]).
+-define(FUNS, [fun read_pm/1, 
+			   fun read_cc/1,
+			   fun read_gc/1,
+			   fun read_pc/1,
+			   fun read_mode/1,
+			   fun read_lt/1,
+			   fun read_lc/1,
+			   fun read_it/1,
+			   fun read_i/1,
+			   fun read_v/1,
+			   fun read_li/1,
+			   fun read_lo/1,
+			   fun read_a/1,
+			   fun read_limits/1]).
 
 -record(laser, {index,
 				amp           = 0.0,
@@ -45,8 +57,9 @@ loop(#ampTable{}=Amp) ->
 
 loop(Amp, []) ->
     {ok, Amp};
+
 loop(Amp, [ Fun | Tail ]) ->
-    case apply(?MODULE, Fun, [Amp]) of
+    case Fun(Amp) of
 		{ok, Amp2} ->
 			loop(Amp2, Tail);
 		{error, timeout} -> {error, timeout};

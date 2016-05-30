@@ -7,7 +7,6 @@
 
 -export([start_link/1,
 		 stop/1,
-		 send/3,
 		 more/2,
 		 release/1,
 		 raw/2]).
@@ -33,10 +32,6 @@ start_link(Dev) ->
 stop(Com) ->
     ?debug("Stopping COM~n", []),
     gen_server:call(Com, stop).
-
--spec send(Com :: pid(), To :: integer(), Msg :: iolist()) -> ok | {error, Err :: term()}.
-send(Com, To, Msg) when is_integer(To) ->
-    gen_server:call(Com, {To, Msg}).
 
 -spec raw(Com :: pid(), Raw :: iolist()) -> ok | {error, Err :: term()}.
 raw(Com, Raw) ->

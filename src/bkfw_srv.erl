@@ -3,173 +3,169 @@
 
 -include("bkfw.hrl").
 
+-behaviour(gen_server).
+
 % API
 -export([start_link/0,
-		 flush/0,
-		 wait/0,
-		 release/1,
+		 call/2,
+		 call/3,
 		 command/3,
-		 command/5,
-		 command/6]).
+		 command/4]).
 
-% Internal
--export([init/0]).
+%% gen_server callbacks
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2,
+		 terminate/2, code_change/3]).
 
--define(FSM, ?MODULE).
--define(TIMEOUT, 1000).
 
--type comref() :: {reference(), atom()}.
+-define(TIMEOUT, 5000).
+
+-record(state, {
+		  com       :: pid(),
+		  current   :: {pid(), reference()}
+		 }).
 
 %%%
 %%% API
 %%%
 start_link() ->
-    Pid = spawn_link(?MODULE, init, []),
-    register(?FSM, Pid),
-    {ok, Pid}.
+	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 
-flush() ->
-	?info("Flushing command server", []),
-	case wait() of
-		{ok, {_, Com}} ->
-			bkfw_com:stop(Com);
-		{error, _} ->
-			ignore
-	end.
+call(Handler, State0) ->
+	call(Handler, State0, ?TIMEOUT).
 
 
--spec command(ComRef :: comref(), 
-			  Idx :: iolist(), 
-			  Cmd :: atom(), Args :: list(), 
-			  Timeout :: integer()) -> {ok, term()} | {error, term()}.
-command(ComRef, Idx, Cmd, Args, Timeout) ->
-	Parser = parse_cmd_ans(Cmd),
-	command(ComRef, Idx, Cmd, Args, Timeout, Parser).
-
-
--spec command(ComRef :: comref(), 
-			  Idx :: iolist(), 
-			  Cmd :: atom(), Args :: list(), 
-			  Timeout :: integer(),
-			  Parser :: fun()) -> {ok, term()} | {error, term()}.
-command({_, Com}, Idx, Cmd, Args, Timeout, Parser) ->
-    CmdName = string:to_upper(atom_to_list(Cmd)),
-    ArgsStr = case Args of
-				  [] -> "";
-				  _ -> [" ", Args]
-			  end,
-    Bin = [Idx, " ", [CmdName, ArgsStr], $\r, $\n],
-	bkfw_com:raw(Com, Bin),
-	wait_answer(Idx, Parser, Com, Timeout).
-
-
--spec command(Idx :: integer() | iolist(), Cmd :: atom(), Args :: list()) -> {ok, term()} | {error, term()}.
-command(Idx, Cmd, Args) when is_integer(Idx), is_atom(Cmd) ->
-	command(["0x", io_lib:format("~2.16.0b", [Idx])], Cmd, Args);
-command(Idx, Cmd, Args) ->
-	case wait() of
-		{ok, ComRef} ->
-			Timeout = application:get_env(bkfw, timeout, ?TIMEOUT),
-			Ret = command(ComRef, Idx, Cmd, Args, Timeout),
-			release(ComRef),
-			Ret;
-		{error, _} = Err ->
+-spec call(Handler :: fun(), State0 :: term(), Timeout :: integer()) -> term().
+call(Handler, State0, Timeout) when is_function(Handler)  ->
+	Mutex = bkfw_mutex:wait(),
+	case gen_server:call(?MODULE, {call, Handler, State0}, Timeout) of
+		{ok, Ref} ->
+			receive
+				{Ref, {error, _}=Err} ->
+					?info("Error waiting answer<1>: ~p", [Err]),
+					bkfw_mutex:signal(Mutex),
+					Err;
+				{Ref, {ok, _}=Ok} ->
+					bkfw_mutex:signal(Mutex),
+					Ok;
+				{Ref, ok} ->
+					bkfw_mutex:signal(Mutex),
+					ok
+			after Timeout ->
+					bkfw_mutex:signal(Mutex),
+					{error, timeout}
+			end;
+		{error, _}=Err ->
+			bkfw_mutex:signal(Mutex),
 			Err
 	end.
 
--spec wait() -> {ok, comref()} | {error, term()}.
-wait() ->
-    Ref = make_ref(),
-    ?FSM ! {wait, self(), Ref},
-	receive
-		{com, Com} -> {ok, {Ref, Com}}
-	after 1000*300 ->
-			?FSM ! {signal, Ref},
-			{error, timeout}
-	end.
 
--spec release(term()) -> ok.
-release({Ref, _}) ->
-	?FSM ! {signal, Ref},
+command(Idx, Cmd, Args) ->
+	command(Idx, Cmd, Args, ?TIMEOUT).
+
+
+-spec command(integer(), binary(), list()) -> {ok, term()} | {error, term()}.
+command(Idx, Cmd, Args, Timeout) ->
+	Fun = fun(init, Com, _) ->
+				  CmdName = string:to_upper(atom_to_list(Cmd)),
+				  ArgStr = case Args of
+							   [] -> "";
+							   _ -> [" ", Args]
+						   end,
+				  Bin = [io_lib:format("0x~2.16.0b ", [Idx]), [CmdName, ArgStr], $\r, $\n],
+				  ok = bkfw_com:raw(Com, Bin),
+				  {ok, undefined};
+
+			 ({msg, Data}, Com, SoFar) ->
+				  case bkfw_parser:parse(Data, SoFar) of
+					  {ok, Msg, _} -> 
+						  match_ans(cmd_to_ans(Cmd), Msg);
+					  {more, Msg, Rest} -> 
+						  bkfw_com:more(Com, Rest),
+						  {more, Msg};
+					  {error, _}=Err ->
+						  Err
+				  end
+		  end,
+	call(Fun, undefined, Timeout).
+
+
+%%%
+%%% gen_server callbacks
+%%%
+init([]) ->
+    ?info("Starting command server", []),
+    Dev = application:get_env(bkfw, com, undefined),
+    case bkfw_com:start_link(Dev) of
+		{ok, Com} ->
+			?info("Command server started: ~p", [Com]),
+			{ok, #state{ com=Com, current=undefined }};
+		ignore ->
+			?error("Error starting COM port: ignore", []),
+			{stop, ignore};
+		{error, Err} -> 
+			?error("Error starting COM port: ~p", [Err]),
+			{stop, Err}
+    end.
+
+
+handle_call({call, Handler, State0}, {_Pid, Tag}=From, #state{ com=Com, current=undefined }=S) ->
+	case Handler(init, Com, State0) of
+		{ok, State1} ->
+			{reply, {ok, {self(), Tag}}, S#state{ current={From, Handler, State1} } };
+		{error, _}=Err ->
+			{reply, Err, S}
+	end;
+
+handle_call(_Call, _From, S) ->
+	{reply, ok, S}.
+
+
+handle_cast(_Cast, S) ->
+	{noreply, S}.
+
+
+handle_info({msg, Msg}, #state{ current=undefined }=S) ->
+	?info("Ignoring message (unknown recipient): ~p", [Msg]),
+	{noreply, S};
+
+handle_info({msg, Msg}, #state{ com=Com, current={{Pid, Tag}=From, Handler, State0} }=S) ->
+	case Handler({msg, Msg}, Com, State0) of
+		{ok, State1} ->
+			Pid ! { {self(), Tag}, {ok, State1} },
+			{noreply, S#state{ current=undefined }};
+		ok ->
+			Pid ! { {self(), Tag}, ok },
+			{noreply, S#state{ current=undefined }};
+		{more, State1} ->
+			{noreply, S#state{ current={From, Handler, State1} } };
+		{error, _}=Err ->
+			Pid ! { {self(), Tag}, Err },
+			{noreply, S#state{ current=undefined }}
+	end;
+
+handle_info(_Info, S) ->
+	{noreply, S}.
+
+
+terminate(_Reason, _S) ->
 	ok.
+
+
+code_change(_OldVsn, S, _Extra) ->
+	{ok, S}.
+
 
 %%%
 %%% Priv
 %%%
-wait_answer(Idx, Parser, Com, T) ->
-	wait_answer(Idx, Parser, Com, T, undefined).
-
-
-wait_answer(Idx, Parser, Com, T, SoFar) ->
-	receive
-		{error, _} = Err ->
-			?info("Error waiting answer<1>: ~p", [Err]),
-			Err;
-		{msg, Data} ->
-			case Parser(Data, SoFar) of
-				{ok, _} = Ret  ->
-					bkfw_com:release(Com),
-					Ret;
-				{more, Msg, Rest} ->
-					bkfw_com:more(Com, Rest),
-					wait_answer(Idx, Parser, Com, T, Msg);
-				{error, Err} when is_list(Err) ->
-					?info("Error waiting answer<2>: ~s", [Err]),
-					{error, Err};
-				{error, Err} ->
-					?info("Error waiting answer<3>: ~p", [Err]),
-					{error, Err}
-			end
-	after T ->
-			?info("Timeout waiting answer", []),
-			{error, timeout}
-	end.
-
-parse_cmd_ans(Cmd) ->
-	fun(Data, SoFar) ->
-			case bkfw_parser:parse(Data, SoFar) of
-				{ok, Msg, _} -> match_ans(cmd_to_ans(Cmd), Msg);
-				{more, Msg, Rest} -> {more, Msg, Rest};
-				{error, Err, _} -> {error, Err}
-			end
-	end.
-
 match_ans('_', Msg) -> {ok, Msg};
 match_ans(Ans, {_, Ans, _}=Msg) -> {ok, Msg};
 match_ans(E, R) -> 
 	?error("<Parse error> expected: ~p received ~p", [E, R]),
 	{error, {unexpected, answer}}.
 
-init() ->
-    ?info("Starting command server", []),
-    Dev = application:get_env(bkfw, com, undefined),
-    case bkfw_com:start_link(Dev) of
-		{ok, Com} ->
-			?info("Command server started: ~p", [Com]),
-			free(Com);
-		ignore ->
-			?error("Error starting COM port: ignore", []),
-			ok;
-		{error, Err} -> 
-			?error("Error starting COM port: ~p", [Err]),
-			ok
-    end.
-
-free(Com) ->
-    receive {wait, By, Ref} ->
-			By ! {com, Com},
-			busy(Com, Ref)
-    end.
-
-busy(Com, Ref) ->
-    Timeout = application:get_env(bkfw, timeout, ?TIMEOUT),
-    receive 
-		{signal, Ref} ->
-			free(Com)
-    after Timeout ->
-			free(Com)
-    end.
 
 cmd_to_ans(rcc) -> cc;
 cmd_to_ans(scc) -> scc;

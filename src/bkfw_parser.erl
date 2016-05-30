@@ -150,4 +150,10 @@ parse_lgc_test() ->
 	?assertMatch({ok, {0, gc, [ [min, 21.0, <<"dBm">>], [max, 45.3, <<"dBm">>] ]}, <<>>}, 
 				 parse(<<"GC MAX 45.3 dBm\r\n">>, {0, gc, [ [min, 21.0, <<"dBm">>] ]})).
 
+parse_rn_test() ->
+	?assertMatch({ok, {3, rn, []}, <<>>}, parse(<<"0x03 RN\r\n">>)).
+
+parse_n_test() ->
+	?assertMatch({ok, {3, n, [3]}, <<>>}, parse(<<"0x03 N 0x3\r\n">>)).
+
 -endif.

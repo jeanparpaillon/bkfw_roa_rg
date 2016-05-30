@@ -27,15 +27,18 @@ start(_StartType, _StartArgs) ->
     load_mibs(bkfw, ["BKTEL-PHOTONICS-SMI", "SMM-MIB"]),
     bkfw_sup:start_link().
 
+
 stop(_State) ->
     ok.
 
 
+start_phase(mutex, normal, _Args) ->
+	bkfw_sup:post_mutex();
+
 start_phase(http, normal, _Args) ->
 	%% Wait for HTTP API to be ready
 	timer:sleep(1000),
-	%%bkfw_sup:post_http();
-	ok;
+	bkfw_sup:post_http();
 
 start_phase(_, _, _) ->
 	{error, bas_phase}.
@@ -48,6 +51,7 @@ init_db() ->
 									   [{snmp, [{key, integer}]},
 										{attributes, record_info(fields, ampTable)}]).
 
+
 load_mibs(App, Mibs) ->
     Paths = lists:map(fun (Path) ->
 							  ?info("Loading MIB: ~p", [Path]),
@@ -56,11 +60,13 @@ load_mibs(App, Mibs) ->
 					  end, Mibs),
     ok = snmpa:load_mibs(snmp_master_agent, Paths).
 
+
 restart() ->
     spawn(fun() ->
 				  timer:sleep(1000),
 				  init:restart()
 		  end).
+
 
 reboot() ->
     spawn(fun() ->

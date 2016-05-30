@@ -26,6 +26,7 @@
                  ]},
   {mod, { application_starter, [bkfw, []] }},
   {start_phases, [
+				  {mutex, []},
 				  {http, []}
 				 ]},
   {env, [

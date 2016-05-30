@@ -3,7 +3,7 @@
 
 -include("bkfw.hrl").
 
-												% API
+%% API
 -export([start_link/0]).
 
 %% gen_server callbacks
@@ -14,11 +14,8 @@
 -define(TIMEOUT, 1000).
 
 -record(state, {
-		  com_fd,
 		  usb_fd,
-		  com,
-		  usb,
-		  enable = false   :: boolean()
+		  usb
 		 }).
 
 %%%
@@ -38,14 +35,7 @@ init(_) ->
 		UsbDev ->
 			case open_com_port(UsbDev) of
 				{ok, UsbFd, UsbPort} ->
-					ComDev = application:get_env(bkfw, com, undefined),
-					case open_com_port(ComDev) of
-						{ok, ComFd, ComPort} ->
-							{ok, #state{com_fd=ComFd, com=ComPort, usb_fd=UsbFd, usb=UsbPort}};
-						{error, ComErr} ->
-							?error("Error opening port ~p: ~p", [ComDev, ComErr]),
-							{stop, ComErr}
-					end;
+					{ok, #state{usb_fd=UsbFd, usb=UsbPort}};
 				{error, enoent} ->
 					?info("No such USB port, ignoring: ~p", [UsbDev]),
 					{ok, #state{}};
@@ -62,29 +52,16 @@ handle_cast(_Cast, S) ->
     {noreply, S}.
 
 
-handle_info({From, {data, Bin}}, #state{com=Com, usb=Usb}=S) ->
-	To = case From of 
-			 Com -> S#state.usb;
-			 Usb -> S#state.com
-		 end,
-	Ans = case Bin of
-			  {noeol, Data} -> Data;
-			  {eol, Data} -> [Data, $\r, $\n]
-		  end,
-	To ! {self(), {command, Ans}},
+handle_info({Usb, {data, Bin}}, #state{usb=Usb}=S) ->
+	?debug("Receive data from USB: ~p", [Bin]),
+	bkfw_srv:raw(Bin),
 	{noreply, S};
 
 handle_info(_Info, S) ->
     {noreply, S}.
 
 
-terminate(_Reason, #state{com=undefined}) ->
-	ok;
-terminate(_Reason, #state{com_fd=ComFd, com=ComPort, usb_fd=UsbFd, usb=UsbPort}) ->
-	ComPort ! {self(), close},
-	receive _ -> cereal:close_tty(ComFd)
-	after 500 -> ok
-	end,
+terminate(_Reason, #state{usb_fd=UsbFd, usb=UsbPort}) ->
 	UsbPort ! {self(), close},
 	receive	_ -> cereal:close_tty(UsbFd)
 	after 500 -> ok

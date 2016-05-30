@@ -7,6 +7,7 @@
 %% API
 -export([start_link/0,
 		 post_http/0,
+		 post_mutex/0,
 		 set_upgrade/1,
 		 get_usbmode/0,
 		 set_usbmode/1,
@@ -77,31 +78,51 @@ set_usbmode(true) ->
 				  ?NON_USB_CHILDREN),
 	start_or_restart(?CHILD(bkfw_usb, worker)).
 
-post_http() ->
-	Spec = #{ id => bkfw_lcd,
-			  start => {bkfw_lcd, start_link, []},
-			  type => worker },
-	case supervisor:start_child(?SRV, Spec) of
-		{ok, _} ->
-			ok;
-		{error, _}=Err ->
-			Err
-	end.
 
-%% ===================================================================
-%% Supervisor callbacks
-%% ===================================================================
-
-init([]) ->
-    Children = [
-				?CHILD(bkfw_config, worker),
-				?CHILD(bkfw_mutex, worker),
+post_mutex() ->
+	Children = [
 				{bkfw_alarms, {gen_event, start_link, [{local, bkfw_alarms}]}, permanent, 5000, worker, [gen_event]},
 				?CHILD(bkfw_srv, worker),
 				?CHILD(bkfw_edfa, worker),
 				bkfw_http:get_config()
 			   ],
-    {ok, { {one_for_one, 5, 10}, Children} }.
+	start_children(Children).
+
+
+post_http() ->
+	_Spec = #{ id => bkfw_lcd,
+			  start => {bkfw_lcd, start_link, []},
+			  type => worker },
+	start_children([]).
+
+
+%% ===================================================================
+%% Supervisor callbacks
+%% ===================================================================
+init([]) ->
+	Children = [
+				#{ id => bkfw_config,
+				   start => {bkfw_config, start_link, []},
+				   type => worker
+				 },
+				#{ id => bkfw_mutex, 
+				   start => {bkfw_mutex, start_link, []},
+				   type => worker }
+			   ],
+	{ok, { {one_for_one, 5, 10}, Children} }.
+
+
+start_children([]) ->
+	ok;
+
+start_children([ Spec | Children ]) ->
+	case supervisor:start_child(?SRV, Spec) of
+		{ok, _} ->
+			start_children(Children);
+		{error, _}=Err ->
+			Err
+	end.
+	
 
 start_or_restart(Spec = {Id, _, _, _, _, _}) ->
     case supervisor:restart_child(?SRV, Id) of

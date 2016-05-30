@@ -7,56 +7,59 @@
 %%   (c) Francesco Cesarini and Simon Thompson
 
 -module(bkfw_mutex).
--export([start_link/0, stop/0]).
--export([wait/0, signal/0]).
+-export([start_link/0,
+		 wait/0,
+		 signal/1]).
+
 -export([init/0]).
 
 -define(SRV, ?MODULE).
 
+-define(TIMEOUT, 1000*300).
+
 start_link() ->
     Pid = spawn_link(?MODULE, init, []),
+	process_flag(trap_exit, true),
     register(?SRV, Pid),
     {ok, Pid}.
 
-stop() ->
-    ?SRV ! stop.
 
+-spec wait() -> ok | timeout.
 wait() ->
-    ?SRV ! {wait, self()},
-    receive ok -> ok end.
+	Mutex = make_ref(),
+    ?SRV ! {wait, self(), Mutex},
+    receive ok -> Mutex 
+	after ?TIMEOUT ->
+			?SRV ! {signal, Mutex},
+			throw(timeout)
+	end.
 
-signal() ->
-    ?SRV ! {signal, self()}, 
+
+-spec signal(reference()) -> ok.
+signal(Mutex) ->
+    ?SRV ! {signal, Mutex},
     ok.
 
+
 init() ->
-    process_flag(trap_exit, true),
     free().
+
 
 free() ->
     receive
-        {wait, Pid} ->
+        {wait, Pid, Ref} ->
             link(Pid),
             Pid ! ok,
-            busy(Pid);
-        stop ->
-            terminate()
+            busy(Pid, Ref)
     end.
 
-busy(Pid) ->
+
+busy(Pid, Ref) ->
     receive
-        {signal, Pid} ->
+        {signal, Ref} ->
             unlink(Pid),
             free();
-        {'EXIT', Pid, _Reason} ->
-            free()
-    end.
-
-terminate() ->
-    receive
-        {wait, Pid} ->
-            exit(Pid, kill),
-            terminate()
-    after
-        0 -> ok
+		{'EXIT', Pid, _} ->
+			unlink(Pid),
+			free()
     end.

@@ -70,64 +70,60 @@ upgrade_amp([ #ampTable{index=Idx} | Tail ], Data) ->
 upgrade_micro(Idx, Fw) ->
 	?debug("Upgrading firmware on unit: ~p~n", [Idx]),
 	ok = bkfw_sup:set_upgrade(true),
-	case bkfw_srv:wait() of
-		{ok, ComRef} ->
-			IdxStr = ["0x", io_lib:format("~2.16.0b", [Idx])],
-			Ret = upgrade_micro(ComRef, IdxStr, Fw),
-			bkfw_srv:release(ComRef),
-			ok = bkfw_sup:set_upgrade(false),
-			Ret;
-		{error, _} = Err ->
-			Err
-	end.
-
-upgrade_micro(ComRef, Idx, Fw) ->
-	case bkfw_srv:command(ComRef, Idx, ucan, [], ?TIMEOUT) of
-		{ok, [ok]} ->
-			upg_flash_open(ComRef, Idx, Fw);
-		{ok, [nok, error, Code]} ->
-			{error, code_to_err(Code)};
-		{ok, _Else} ->
-			{error, unexpected};
-		{error, _} = Err ->
-			Err
-	end.
-
-upg_flash_open(ComRef, Idx, Fw) ->
-	case bkfw_srv:command(ComRef, Idx, flash, ["OPEN"], ?TIMEOUT) of
-		{ok, [ok | _]} ->
-			upg_flash_clear(ComRef, Idx, Fw);
-		{ok, [nok, error, Code]} ->
-			{error, code_to_err(Code)};
-		{ok, _} ->
-			{error, unexpected};
-		{error, _} = Err ->
-			Err
-	end.
-
-upg_flash_clear(ComRef, Idx, Fw) ->
-	case bkfw_srv:command(ComRef, Idx, flash, ["CLEAR"], ?TIMEOUT * 4) of
-		{ok, [ok | _]} ->
-			upg_flash_write(ComRef, Idx, Fw, ?FW_START);
-		{ok, [nok, error, Code]} ->
-			{error, code_to_err(Code)};
-		{ok, _} ->
-			{error, unexpected};
-		{error, _} = Err ->
-			Err
-	end.
+	Fun = fun (init, Com, S) ->
+				  IdxStr = ["0x", io_lib:format("~2.16.0b", [Idx])],
+				  Bin = [IdxStr, " UCAN", $\r, $\n],
+				  ok = bkfw_com:raw(Com, Bin),
+				  {more, S#{ idx => IdxStr, fw => Fw, sofar => undefined, state => open, adr => ?FW_START }};
+			  ({msg, Data}, Com, #{ sofar := SoFar }=S) ->
+				  case bkfw_parser:parse(Data, SoFar) of
+					  {ok, [ Cmd | Args ]} ->
+						  upgrade(Com, Cmd, Args, S);
+					  {error, _}=Err ->
+						  Err
+				  end
+		  end,
+	bkfw_srv:call(Fun, #{}, 1000*300).
 
 
-upg_flash_write(ComRef, Idx, <<>>, _) ->
-	?debug("firmware written, starting", []),
-	EncAdr = io_lib:format("0x~8.16.0b", [?FW_START]),
-	case bkfw_srv:command(ComRef, Idx, flash, ["START ", EncAdr], ?TIMEOUT) of
-		{ok, [ok]} -> ok;
-		{ok, _} -> {error, unexpected};
-		{error, _} = Err -> Err
-	end;
+upgrade(Com, ok, [], #{ idx := Idx, state := open }=S) ->
+	ok = bkfw_com:raw(Com, [Idx, " FLASH OPEN", $\r, $\n]),
+	{more, S#{ state := clear }};
 
-upg_flash_write(ComRef, Idx, Fw, Adr) ->
+upgrade(Com, ok, [], #{ idx := Idx, state := clear }=S) ->
+	ok = bkfw_com:raw(Com, [Idx, " FLASH CLEAR", $\r, $\n]),
+	{more, S#{ state := init_write }};
+
+upgrade(Com, ok, [], #{ state := init_write }=S) ->
+	S1 = write(Com, S),
+	{more, S1};
+
+upgrade(Com, ok, [PrevPayload], #{ fw := <<>>, payload := PrevPayload, idx := Idx, state := write }=S) ->
+	ok = bkfw_com:raw(Com, [Idx, " FLASH START ", io_lib:format("0x~8.16.0b", [?FW_START]) ]),
+	{more, #{ state := start }=S};
+
+upgrade(Com, ok, [PrevPayload], #{ payload := PrevPayload, state := write }=S) ->
+	S1 = write(Com, S),
+	{more, S1};
+
+upgrade(_Com, ok, [_OtherPayload], #{ payload := _PrevPayload, state := write }) ->
+	{error, invalid_payload};
+
+upgrade(Com, ok, [], #{ idx := Idx, state := read, to_read := ToRead }=S) ->
+	ok = bkfw_com:raw(Com, [Idx, " FLASH READ ", ToRead, $\r, $\n]),
+	{more, S#{ state := write }};
+
+upgrade(_Com, ok, [], #{ state := start }) ->
+	ok;
+
+upgrade(_Com, nok, [error, Code], _S) ->
+	{error, code_to_err(Code)};
+
+upgrade(_Com, _, _, _) ->
+	{error, unexpected}.
+
+
+write(Com, #{ idx := Idx, fw := Fw, adr := Adr }=S) ->	
 	{Payload, Rest, Length} = if 
 								  byte_size(Fw) < ?FW_LENGTH -> 
 									  {Fw, <<>>, byte_size(Fw)};
@@ -138,30 +134,14 @@ upg_flash_write(ComRef, Idx, Fw, Adr) ->
 	EncAdr = io_lib:format("0x~8.16.0b", [Adr]),
 	EncLength = io_lib:format("~b", [Length]),
 	EncPayload = encode(Payload),
-	%?debug("write: ~p", [EncPayload]),
-	case bkfw_srv:command(ComRef, Idx, flash, ["WRITE ", EncAdr, " ", EncLength, " ", EncPayload], ?TIMEOUT) of
-		{ok, [ok]} ->
-			case bkfw_srv:command(ComRef, Idx, flash, ["READ ", EncAdr, " ", EncLength], ?TIMEOUT) of
-				{ok, [ok, EncPayload]} ->
-					upg_flash_write(ComRef, Idx, Rest, Adr + Length);
-				{ok, [ok, _Else]} -> 
-					{error, invalid_payload};
-				{ok, _Else} -> 
-					{error, unexpected};
-				{error, Err} ->	
-					?error("Error checking firmware: ~s", [Err]),
-					{error, Err}
-			end;
-		{ok, [nok, error, Code]} -> 
-			{error, code_to_err(Code)};
-		{ok, _} ->
-			{error, unexpected};
-		{error, Err}  ->
-			?error("Error writing firmware: ~p", [Err]),
-			{error, Err}
-	end.
+	ok = bkfw_com:raw(Com, [Idx, " FLASH WRITE ", EncAdr, " ", EncLength, " ", EncPayload, $\r, $\n]),
+	{more, S#{ state := read, to_read := [EncAdr, " ", EncLength], 
+			   payload := EncPayload, 
+			   adr := Adr + Length, fw := Rest }}.
+
 
 encode(Bin) -> base64:encode(Bin).
+
 
 code_to_err(1) -> not_ready;
 code_to_err(2) -> not_opened;
