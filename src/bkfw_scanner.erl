@@ -16,13 +16,13 @@
 token(<< 0, Bin/bits >>) -> token(Bin);
 token(Bin) -> token(Bin, <<>>).
 
-token(<<>>, SoFar) -> {eof, SoFar};
+token(<<>>, SoFar) -> {eof, strip(SoFar)};
 token(<< $\r, $\n >>, _) -> {eof, <<>>};
-token(<< $\r, $\n, R/bits>>, _) -> {eof, R};
+token(<< $\r, $\n, R/bits>>, _) -> {eof, strip(R)};
 token(<< $\s, R/bits >>, SoFar) -> token(R, << SoFar/bits, $\s >>);
 token(<< $\t, R/bits >>, SoFar) -> token(R, << SoFar/bits, $\t >>);
 token(<< $=, R/bits >>, SoFar) -> s_value(R, <<>>, << SoFar/bits, $= >>);
-token(<< "0x", R/bits >>, SoFar)                    -> s_hex_i(R, << SoFar/bits, "0x" >>);
+token(<< "0x", R/bits >>, SoFar) -> s_hex_i(R, << SoFar/bits, "0x" >>);
 token(<< Alpha, R/bits >>, SoFar) when Alpha >= 65, Alpha =< 90 -> 
     s_string(R, << Alpha >>, << SoFar/bits, Alpha >>);   % Upper-case alpha
 token(<< Alpha, R/bits >>, SoFar) when Alpha >= 97, Alpha =< 122 -> 
@@ -53,6 +53,11 @@ buf(Length, Data) -> buf(Length, Data, <<>>).
 buf(0, Rest, Buf) -> {ok, Buf, Rest};
 buf(_, <<>>, Buf) -> {more, Buf};
 buf(L, << C, R/bits >>, Buf) -> buf(L-1, R, << Buf/bits, C >>).
+
+
+strip(<< $\r, Rest/binary >>) -> strip(Rest);
+strip(<< $\n, Rest/binary >>) -> strip(Rest);
+strip(Rest) -> Rest.
 
 
 s_hex_i(<<>>, SoFar) -> {more, SoFar};
@@ -101,7 +106,7 @@ s_hex(<< C, R/bits >>, _Acc, _SoFar) -> {error, io_lib:format("Invalid hex: ~p",
 
 s_value(<<>>, _, SoFar) -> {more, SoFar};
 s_value(<< $\r, $\n>>, Acc, _) -> {ok, Acc, <<>>};
-s_value(<< $\r, $\n, R/bits>>, Acc, _) -> {ok, Acc, <<$\r, $\n, R/bits>>};
+s_value(<< $\r, $\n, R/bits>>, Acc, _) -> {ok, Acc, <<R/binary>>};
 s_value(<< C, R/bits >>, Acc, SoFar) ->  s_value(R, << Acc/binary, C >>, << SoFar/bits, C >>).
 
 s_string(<<>>, _, SoFar) -> {more, SoFar};
