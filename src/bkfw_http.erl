@@ -143,12 +143,18 @@ content_types_provided(Req, State) ->
      ], Req, State}.
 
 
+is_authorized(Req, #state{version=2}=State) ->
+    require_auth(Req, State);
+
 is_authorized(Req, #state{section=sys, sys=login}=State) ->
     {true, Req, State};
+
 is_authorized(Req, #state{section=Sec}=State) when Sec =:= sys orelse Sec =:= firmware ->
     require_auth(Req, State);
+
 is_authorized(Req, #state{section={firmware, _}}=State) ->
     require_auth(Req, State);
+
 is_authorized(Req, State) ->
     case cowboy_req:method(Req) of
 		{<<"POST">>, Req2} ->
@@ -391,11 +397,11 @@ require_auth(Req, State) ->
 				{basic, Auth} ->
 					auth_basic_user(Auth, Req, State);
 				{digest, _Auth} ->
-												% Unsupported
+					%% Unsupported
 					{{false, auth_header(Req, State)}, Req2, State};
 				{error, Err} ->
 					?error("Error authenticating: ~p~n", [Err]),
-					{halt, Req2, State}
+					{{false, auth_header(Req, State)}, Req2, State}
 			end
     end.
 
