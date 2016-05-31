@@ -96,11 +96,11 @@ parse_msg({error, Err, Bin}, _) ->
 parse_cmd({error, Err, Rest}, _) ->
     {error, Err, Rest};
 
-%%parse_cmd({eof, Rest}, {Addr, pd, Lines}) ->
-%%    {ok, {Addr, pd, Lines}, Rest};
+parse_cmd({eof, Rest}, {Addr, pd, Lines}) ->
+    {ok, {Addr, pd, Lines}, Rest};
 
-%%parse_cmd({eof, Rest}, {Addr, i, Lines}) ->
-%%    {ok, {Addr, i, Lines}, Rest};
+parse_cmd({eof, Rest}, {Addr, i, Lines}) ->
+    {ok, {Addr, i, Lines}, Rest};
 
 parse_cmd({eof, Rest}, _) ->
     {error, eof, Rest};
@@ -227,18 +227,20 @@ parse_lgc_test() ->
 				 parse(<<"\r\n">>, {0, gc, [ [max, 45.3, <<"dBm">>], [min, 21.0, <<"dBm">>] ]})).
 
 
-parse_rn_test() ->
-	?assertMatch({ok, {3, rn, []}, <<>>}, parse(<<"0x03 RN\r\n">>)).
-
 parse_n_test() ->
+	?assertMatch({ok, {3, rn, []}, <<>>}, parse(<<"0x03 RN\r\n">>)),
 	?assertMatch({ok, {3, n, [3]}, <<>>}, parse(<<"0x03 N 0x3\r\n">>)).
+
 
 parse_rpm_test() ->
 	?assertMatch({ok, {1, rpm, []}, <<>>}, parse(<<"0x01 RPM\r\n">>)),
+
 	?assertMatch({more, {1, pd, [ [1, 1.85, <<"dBm">>] ]}, <<"PD2 4.83 dBm\r\n\r\n">>}, 
 				 parse(<<"0x01 PD1 1.85 dBm\r\nPD2 4.83 dBm\r\n\r\n">>)),
+
 	?assertMatch({more, {1, pd, [ [2, 4.83, <<"dBm">>], [1, 1.85, <<"dBm">>] ]}, <<"\r\n">>}, 
 				 parse(<<"PD2 4.83 dBm\r\n\r\n">>, {1, pd, [ [1, 1.85, <<"dBm">>] ]})),
+
 	?assertMatch({ok, {1, pd, [ [1, 1.85, <<"dBm">>], [2, 4.83, <<"dBm">>] ]}, <<>>}, 
 				 parse(<<"\r\n">>, {1, pd, [ [2, 4.83, <<"dBm">>], [1, 1.85, <<"dBm">>] ]})).
 

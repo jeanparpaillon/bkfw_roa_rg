@@ -21,7 +21,8 @@
 
 -record(state, {
 		  com       :: pid(),
-		  current   :: {pid(), reference()}
+		  current   :: {pid(), reference()},
+		  sofar     :: undefined
 		 }).
 
 %%%
@@ -42,7 +43,6 @@ call(Handler, State0, Timeout) when is_function(Handler)  ->
 		{ok, Ref} ->
 			receive
 				{Ref, {error, _}=Err} ->
-					?info("Error waiting answer<1>: ~p", [Err]),
 					bkfw_mutex:signal(Mutex),
 					Err;
 				{Ref, {ok, _}=Ok} ->
@@ -55,6 +55,9 @@ call(Handler, State0, Timeout) when is_function(Handler)  ->
 					bkfw_mutex:signal(Mutex),
 					{error, timeout}
 			end;
+		ok ->
+			bkfw_mutex:signal(Mutex),
+			ok;
 		{error, _}=Err ->
 			bkfw_mutex:signal(Mutex),
 			Err
@@ -77,16 +80,8 @@ command(Idx, Cmd, Args, Timeout) ->
 				  ok = bkfw_com:raw(Com, Bin),
 				  {ok, undefined};
 
-			 ({msg, Data}, Com, SoFar) ->
-				  case bkfw_parser:parse(Data, SoFar) of
-					  {ok, Msg, _} -> 
-						  match_ans(cmd_to_ans(Cmd), Msg);
-					  {more, Msg, Rest} -> 
-						  bkfw_com:more(Com, Rest),
-						  {more, Msg};
-					  {error, _}=Err ->
-						  Err
-				  end
+			 ({msg, Msg}, _, _) ->
+				  match_ans(cmd_to_ans(Cmd), Msg)
 		  end,
 	call(Fun, undefined, Timeout).
 
@@ -114,6 +109,8 @@ handle_call({call, Handler, State0}, {_Pid, Tag}=From, #state{ com=Com, current=
 	case Handler(init, Com, State0) of
 		{ok, State1} ->
 			{reply, {ok, {self(), Tag}}, S#state{ current={From, Handler, State1} } };
+		ok ->
+			{reply, ok, S};
 		{error, _}=Err ->
 			{reply, Err, S}
 	end;
@@ -126,23 +123,33 @@ handle_cast(_Cast, S) ->
 	{noreply, S}.
 
 
-handle_info({msg, Msg}, #state{ current=undefined }=S) ->
-	?info("Ignoring message (unknown recipient): ~p", [Msg]),
-	{noreply, S};
-
-handle_info({msg, Msg}, #state{ com=Com, current={{Pid, Tag}=From, Handler, State0} }=S) ->
-	case Handler({msg, Msg}, Com, State0) of
-		{ok, State1} ->
-			Pid ! { {self(), Tag}, {ok, State1} },
-			{noreply, S#state{ current=undefined }};
-		ok ->
-			Pid ! { {self(), Tag}, ok },
-			{noreply, S#state{ current=undefined }};
-		{more, State1} ->
-			{noreply, S#state{ current={From, Handler, State1} } };
-		{error, _}=Err ->
-			Pid ! { {self(), Tag}, Err },
-			{noreply, S#state{ current=undefined }}
+handle_info({data, Data}, #state{ com=Com, sofar=SoFar, current={{Pid, Tag}=From, Handler, State0} }=S) ->
+	case bkfw_parser:is_raw(Data, SoFar) of
+		true ->
+			bkfw_usb:send(Data);
+		false ->
+			case bkfw_parser:parse(Data, SoFar) of
+				{ok, Msg, _} ->
+					case Handler({msg, Msg}, Com, State0) of
+						{ok, State1} ->
+							Pid ! { {self(), Tag}, {ok, State1} },
+							{noreply, S#state{ current=undefined, sofar=undefined }};
+						ok ->
+							Pid ! { {self(), Tag}, ok },
+							{noreply, S#state{ current=undefined, sofar=undefined }};
+						{more, State1} ->
+							{noreply, S#state{ current={From, Handler, State1} }};
+						{error, _}=Err ->
+							Pid ! { {self(), Tag}, Err },
+							{noreply, S#state{ current=undefined, sofar=undefined }}
+					end;
+				{more, Msg, Rest} ->
+					bkfw_com:more(Com, Rest),
+					{noreply, S#state{ sofar=Msg } };
+				{error, Reason, _} ->
+					Pid ! { {self(), Tag}, {error, Reason} },
+					{noreply, S#state{ current=undefined, sofar=undefined }}
+			end
 	end;
 
 handle_info(_Info, S) ->

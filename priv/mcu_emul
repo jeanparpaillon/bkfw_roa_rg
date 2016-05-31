@@ -268,12 +268,12 @@ handle_msg(#mcu{index=Addr, limits=Limits}=Mcu, rlcc, [Pos], S) when is_integer(
 
 handle_msg(#mcu{index=Addr, limits=Limits}=Mcu, rlpc, [], S) ->
 	{Min, Max} = maps:get('pc', Limits),
-    reply(S, Addr, io_lib:format("PC MIN ~.2f dBm\r\n\r\nPC MAX ~.2f dBm", [Min, Max])),
+    reply(S, Addr, io_lib:format("PC MIN ~.2f dBm\r\n\r\nPC MAX ~.2f dBm\r\n\r\n", [Min, Max])),
     {S, Mcu};
 
 handle_msg(#mcu{index=Addr, limits=Limits}=Mcu, rlgc, [], S) ->
 	{Min, Max} = maps:get('gc', Limits),
-    reply(S, Addr, io_lib:format("GC MIN ~.2f dBm\r\n\r\nGC MAX ~.2f dBm", [Min, Max])),
+    reply(S, Addr, io_lib:format("GC MIN ~.2f dBm\r\n\r\nGC MAX ~.2f dBm\r\n\r\n", [Min, Max])),
     {S, Mcu};
 
 handle_msg(#edfa{internalTemp=IT}=Edfa, rit, [], S) ->

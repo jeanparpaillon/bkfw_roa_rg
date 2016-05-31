@@ -261,6 +261,7 @@ loop_mcu(Key, S) ->
 				{error, Err, Amp2} ->
 					case Err of
 						{string, E} -> ?error("Error monitoring AMP ~p: ~s~n", [Key, E]);
+						E when is_list(E) -> ?error("Error monitoring AMP ~p: ~s~n", [Key, E]);
 						E -> ?error("Error monitoring AMP ~p: ~p~n", [Key, E])
 					end,
 					mnesia:transaction(fun() -> mnesia:write(Amp2) end),

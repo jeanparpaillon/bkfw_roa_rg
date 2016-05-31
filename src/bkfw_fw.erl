@@ -74,14 +74,9 @@ upgrade_micro(Idx, Fw) ->
 				  IdxStr = ["0x", io_lib:format("~2.16.0b", [Idx])],
 				  Bin = [IdxStr, " UCAN", $\r, $\n],
 				  ok = bkfw_com:raw(Com, Bin),
-				  {more, S#{ idx => IdxStr, fw => Fw, sofar => undefined, state => open, adr => ?FW_START }};
-			  ({msg, Data}, Com, #{ sofar := SoFar }=S) ->
-				  case bkfw_parser:parse(Data, SoFar) of
-					  {ok, [ Cmd | Args ]} ->
-						  upgrade(Com, Cmd, Args, S);
-					  {error, _}=Err ->
-						  Err
-				  end
+				  {more, S#{ idx => IdxStr, fw => Fw, state => open, adr => ?FW_START }};
+			  ({msg, {_Idx, Cmd, Args}}, Com, S) ->
+				  upgrade(Com, Cmd, Args, S)
 		  end,
 	bkfw_srv:call(Fun, #{}, 1000*300).
 

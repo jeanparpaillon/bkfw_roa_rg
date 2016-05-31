@@ -8,7 +8,6 @@
 -export([start_link/1,
 		 stop/1,
 		 more/2,
-		 release/1,
 		 raw/2]).
 
 %% gen_server callbacks
@@ -27,7 +26,7 @@
 %%% API
 %%%
 start_link(Dev) ->
-    gen_server:start_link(?MODULE, Dev, []).
+    gen_server:start_link(?MODULE, {Dev, self()}, []).
 
 stop(Com) ->
     ?debug("Stopping COM~n", []),
@@ -40,10 +39,6 @@ raw(Com, Raw) ->
 -spec more(Com :: pid(), Rest :: term()) -> ok | {error, Err :: term()}.
 more(Com, Rest) ->
 	gen_server:call(Com, {more, Rest}).
-
--spec release(Com :: pid()) -> ok | {error, Err :: term()}.
-release(Com) ->
-	gen_server:call(Com, release).
 
 %%%
 %%% gen_server callbacks
@@ -60,14 +55,11 @@ release(Com) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
--spec init(Com :: string() | undefined) -> {ok, term()} | {error, term()} | ignore.
-init(undefined) ->
+-spec init({Com :: string() | undefined, pid()}) -> {ok, term()} | {error, term()} | ignore.
+init({undefined, _}) ->
     ?error("COM port undefined"),
     {stop, {undefined_com}};
-init([]) ->
-    ?error("COM port undefined"),
-    {stop, {undefined_com}};
-init(Com) when is_list(Com) ->
+init({Com, Owner}) when is_list(Com) ->
     ?info("Opening com port: ~p", [Com]),
     Trace = case application:get_env(bkfw, debug, true) of
 				true -> 
@@ -80,11 +72,12 @@ init(Com) when is_list(Com) ->
     case cereal:open_tty(Com) of
 		{ok, Fd} ->
 			Port = open_port({fd, Fd, Fd}, [binary, stream, {line, 80}]),
-			{ok, #state{com=Fd, port=Port, trace=Trace, crlf=$\n}};
+			{ok, #state{com=Fd, port=Port, trace=Trace, crlf=$\n, owner=Owner}};
 		{error, Err} ->
 			?error("Error opening com port: ~p", [Err]),
 			{stop, {error, Err}}
     end;
+
 init(_Args) ->
     ?error("Invalid args: ~p", [_Args]),
     {stop, {error, badarg}}.
@@ -103,16 +96,13 @@ init(_Args) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({raw, Data}, {Pid, _Tag}, #state{port=Port, trace=Trace}=S) ->
+handle_call({raw, Data}, {Pid, _Tag}, #state{port=Port, trace=Trace, owner=Pid}=S) ->
     debug_com(Trace, ["[COM] Send raw command: ", Data, "\n"]),
     Port ! {self(), {command, iolist_to_binary(Data)}},
     {reply, ok, S#state{owner=Pid}};
 
-handle_call({more, Data}, {Pid, _Tag}, S) ->
+handle_call({more, Data}, {Pid, _Tag}, #state{ owner=Pid }=S) ->
 	{reply, ok, S#state{owner=Pid, data=Data}};
-
-handle_call(release, {Pid, _Tag}, #state{owner=Pid}=S) ->
-	{reply, ok, S#state{owner=Pid}};
 
 handle_call(stop, _From, S) ->
     {stop, stop, S};
@@ -144,9 +134,10 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info({Port, {data, {_, Bin}}}, #state{port=Port, owner=undefined}=S) ->
-    ?debug("Garbage data: ~p~n", [Bin]),
-    {noreply, S#state{data= <<>>}};
+%%handle_info({Port, {data, {_, Bin}}}, #state{port=Port, owner=undefined}=S) ->
+%%    ?debug("Garbage data: ~p~n", [Bin]),
+%%    {noreply, S#state{data= <<>>}};
+
 handle_info({Port, {data, {noeol, Bin}}}, #state{port=Port, data=Acc, trace=Trace}=S) ->
     debug_com(Trace, ["[RPI <- CPU] ", Bin]),
     {noreply, S#state{data= << Acc/binary, Bin/binary >>}};
@@ -158,10 +149,11 @@ handle_info({Port, {data, {eol, Bin}}}, #state{port=Port, crlf=$\n, trace=Trace}
 handle_info({Port, {data, {eol, Bin}}}, #state{owner=Owner, crlf=$\r,
 											   port=Port, data=Data, trace=Trace}=S) ->
     debug_com(Trace, ["[RPI <- CPU] ", Bin, "\n"]),
-	Owner ! {msg, << Data/binary, Bin/binary, $\r, $\n >>},
+	Owner ! {data, << Data/binary, Bin/binary, $\r, $\n >>},
 	{noreply, S#state{crlf=$\n}};
 
-handle_info(_Info, State) ->
+handle_info(Info, State) ->
+	?debug("<bkfw_com>Invalid info: ~p (state=~p", [Info, State]),
     {noreply, State}.
 
 %%--------------------------------------------------------------------

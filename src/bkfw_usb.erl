@@ -4,14 +4,12 @@
 -include("bkfw.hrl").
 
 %% API
--export([start_link/0]).
+-export([start_link/0,
+		 send/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 		 terminate/2, code_change/3]).
-
--define(FSM, ?MODULE).
--define(TIMEOUT, 1000).
 
 -record(state, {
 		  usb_fd,
@@ -23,6 +21,10 @@
 %%%
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+
+
+send(Bin) ->
+	gen_server:cast(?MODULE, {send, Bin}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -48,17 +50,22 @@ init(_) ->
 handle_call(_Call, _From, S) ->
     {reply, ok, S}.
 
+
+handle_cast({send, Bin}, #state{ usb=Port }=S) ->
+	Port ! {self(), {command, iolist_to_binary(Bin)}},
+	{noreply, S};
+
 handle_cast(_Cast, S) ->
     {noreply, S}.
 
 
 handle_info({Usb, {data, Bin}}, #state{usb=Usb}=S) ->
 	?debug("Receive data from USB: ~p", [Bin]),
-	bkfw_srv:raw(Bin),
-	{noreply, S};
-
-handle_info(_Info, S) ->
-    {noreply, S}.
+	bkfw_srv:call(fun (init, Com, _) ->
+						  bkfw_com:raw(Com, Bin),
+						  ok
+				  end, undefined),
+	{noreply, S}.
 
 
 terminate(_Reason, #state{usb_fd=UsbFd, usb=UsbPort}) ->
