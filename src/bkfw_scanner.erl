@@ -16,9 +16,9 @@
 token(<< 0, Bin/bits >>) -> token(Bin);
 token(Bin) -> token(Bin, <<>>).
 
-token(<<>>, SoFar) -> {eof, strip(SoFar)};
+token(<<>>, SoFar) -> {eof, SoFar};
 token(<< $\r, $\n >>, _) -> {eof, <<>>};
-token(<< $\r, $\n, R/bits>>, _) -> {eof, strip(R)};
+token(<< $\r, $\n, R/bits>>, _) -> {eof, R};
 token(<< $\s, R/bits >>, SoFar) -> token(R, << SoFar/bits, $\s >>);
 token(<< $\t, R/bits >>, SoFar) -> token(R, << SoFar/bits, $\t >>);
 token(<< $=, R/bits >>, SoFar) -> s_value(R, <<>>, << SoFar/bits, $= >>);
@@ -53,11 +53,6 @@ buf(Length, Data) -> buf(Length, Data, <<>>).
 buf(0, Rest, Buf) -> {ok, Buf, Rest};
 buf(_, <<>>, Buf) -> {more, Buf};
 buf(L, << C, R/bits >>, Buf) -> buf(L-1, R, << Buf/bits, C >>).
-
-
-strip(<< $\r, Rest/binary >>) -> strip(Rest);
-strip(<< $\n, Rest/binary >>) -> strip(Rest);
-strip(Rest) -> Rest.
 
 
 s_hex_i(<<>>, SoFar) -> {more, SoFar};
