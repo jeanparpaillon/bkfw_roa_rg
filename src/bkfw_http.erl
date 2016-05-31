@@ -68,7 +68,7 @@ get_config() ->
 %%%
 %%% Cowboy callbacks
 %%%
-init(_, _, _) ->
+init(_, _Req, _) ->
     {upgrade, protocol, cowboy_rest}.
 
 rest_init(Req, {Version, mcu}) ->
@@ -420,8 +420,10 @@ auth_basic_user(Auth, Req, State) ->
 			{{false, auth_header(Req, State)}, Req, State}
     end.
 
-auth_header(_, _) ->
-    [ "x-basic realm=\"", ?REALM, "\""].
+
+auth_header(_Req, _) ->
+	[ "x-basic realm=\"", ?REALM, "\""].
+
 
 auth_user(<<"admin">>, Password) ->
     case get_password() of
@@ -432,8 +434,10 @@ auth_user(<<"admin">>, Password) ->
 				_ -> false
 			end
     end;
+
 auth_user(_, _) ->
     false.
+
 
 get_password() ->
     case application:get_env(bkfw, password, undefined) of
@@ -444,9 +448,11 @@ get_password() ->
 		_ -> undefined
     end.
 
+
 -spec parse_auth(binary()) -> {basic | digest | error, term()}.
 parse_auth(Bin) ->
     parse_method(parse_next(Bin)).
+
 
 parse_method({Method, Rest}) ->
     case to_lower(Method) of
@@ -454,6 +460,7 @@ parse_method({Method, Rest}) ->
 		<<"x-digest">> -> parse_digest(Rest);
 		M -> {error, {invalid_method, M}}
     end.
+
 
 parse_basic_hash(Bin) ->
     {basic, Bin}.
