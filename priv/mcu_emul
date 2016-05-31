@@ -23,7 +23,7 @@
 -define(mcu_alarms, {"PIN", "POUT", "PUMP_TEMP", "PUMP_BIAS", "EDFA_TEMP", "EDFA_PSU", "BREF", "ADI", "MUTE"}).
 -define(edfa_alarms, {"EDFA_TEMP", "EDFA_PSU", "FAN1", "FAN2", "FAN3", "FAN4", "PSU"}).
 
--define(WAIT, true).
+-define(WAIT, timer:sleep(50)).
 
 -record(mcu, {index              ,
 			  ampConsign         ,
