@@ -81,15 +81,15 @@ get_kv(#ampTable{}=T, 1) ->
      {powerSupply,         T#ampTable.powerSupply},
      {inputLossThreshold,  T#ampTable.inputLossThreshold},
      {outputLossThreshold, T#ampTable.outputLossThreshold},
-     {vendor,              T#ampTable.vendor},
-     {moduleType,          T#ampTable.moduleType},
-     {hwVer,               T#ampTable.hwVer},
-     {hwRev,               T#ampTable.hwRev},
-     {swVer,               T#ampTable.swVer},
-     {fwVer,               T#ampTable.fwVer},
-     {partNum,             T#ampTable.partNum},
-     {serialNum,           T#ampTable.serialNum},
-     {productDate,         T#ampTable.productDate}
+     {vendor,              list_to_binary(T#ampTable.vendor)},
+     {moduleType,          list_to_binary(T#ampTable.moduleType)},
+     {hwVer,               list_to_binary(T#ampTable.hwVer)},
+     {hwRev,               list_to_binary(T#ampTable.hwRev)},
+     {swVer,               list_to_binary(T#ampTable.swVer)},
+     {fwVer,               list_to_binary(T#ampTable.fwVer)},
+     {partNum,             list_to_binary(T#ampTable.partNum)},
+     {serialNum,           list_to_binary(T#ampTable.serialNum)},
+     {productDate,         list_to_binary(T#ampTable.productDate)}
     ];
 
 get_kv(#ampTable{ lasers=Lasers, pc_limit={MinPC, MaxPC}, gc_limit={MinGC, MaxGC} }=T, 2) ->
@@ -185,10 +185,14 @@ table_func(Op, RowIndex, Cols, NameDb) ->
 read_cc(#ampTable{index=Idx, lasers=Lasers}=E) ->
     F = fun(#laser{index=X}=L, {ok, Acc}) ->
 				case bkfw_srv:command(Idx, rcc, [integer_to_binary(X)]) of
-					{ok, {1, cc, [X, A, <<"mA">>]}} when is_float(A); is_integer(A) ->
-						{ok, Acc#ampTable{ ampConsign=A, lasers=lists:keystore(1, 2, Lasers, L#laser{ amp_consign=A }) }};
 					{ok, {Idx, cc, [X, A, <<"mA">>]}} when is_float(A); is_integer(A) ->
-						{ok, Acc#ampTable{ lasers=lists:keystore(Idx, 2, Lasers, L#laser{ amp_consign=A }) }};
+						Lasers1 = lists:keystore(X, 2, Lasers, L#laser{ amp_consign=A }),
+						case Idx of
+							1 ->
+								{ok, Acc#ampTable{ ampConsign=A, lasers=Lasers1 }};
+							_ ->
+								{ok, Acc#ampTable{ lasers=Lasers1 }}
+						end;
 					{ok, _Ret} ->
 						{error, {string, io_lib:format("RCC invalid answer: ~p~n", [_Ret])}};
 					{error, Err} ->
@@ -243,10 +247,14 @@ read_a(#ampTable{index=Idx}=E) ->
 read_lt(#ampTable{ index=Idx, lasers=Lasers }=E) ->
     F = fun(#laser{ index=X }=L, {ok, Acc}) ->
 				case bkfw_srv:command(Idx, rlt, [integer_to_binary(X)]) of
-					{ok, {1, lt, [X, T, <<"C">>]}} when is_float(T); is_integer(T) ->
-						{ok, Acc#ampTable{ curLaserTemp=T, lasers=lists:keystore(1, 2, Lasers, L#laser{ temp=T }) } };
 					{ok, {Idx, lt, [X, T, <<"C">>]}} when is_float(T); is_integer(T) ->
-						{ok, Acc#ampTable{ curLaserTemp=T, lasers=lists:keystore(Idx, 2, Lasers, L#laser{ temp=T }) } };
+						Lasers1 = lists:keystore(X, 2, Lasers, L#laser{ temp=T }),
+						case Idx of
+							1 ->
+								{ok, Acc#ampTable{ curLaserTemp=T, lasers=Lasers1 } };
+							_ ->
+								{ok, Acc#ampTable{ lasers=Lasers1 } }
+						end;
 					{ok, _Ret} ->
 						{error, {string, io_lib:format("RLT invalid answer: ~p~n", [_Ret])}};
 					{error, Err} ->
@@ -260,10 +268,14 @@ read_lt(#ampTable{ index=Idx, lasers=Lasers }=E) ->
 read_lc(#ampTable{ index=Idx, lasers=Lasers }=E) ->
     F = fun(#laser{ index=X }=L, {ok, Acc}) ->
 				case bkfw_srv:command(Idx, rlc, [integer_to_binary(X)]) of
-					{ok, {1, lc, [X, A, <<"mA">>]}} when is_float(A); is_integer(A) ->
-						{ok, Acc#ampTable{ curAmp=A, lasers=lists:keystore(1, 2, Lasers, L#laser{ amp=A }) } };
 					{ok, {Idx, lc, [X, A, <<"mA">>]}} when is_float(A); is_integer(A) ->
-						{ok, Acc#ampTable{ curAmp=A, lasers=lists:keystore(Idx, 2, Lasers, L#laser{ amp=A }) } };
+						Lasers1 = lists:keystore(X, 2, Lasers, L#laser{ amp=A }),
+						case Idx of 
+							1 ->
+								{ok, Acc#ampTable{ curAmp=A, lasers=Lasers1 } };
+							_ ->
+								{ok, Acc#ampTable{ lasers=Lasers1 } }
+						end;
 					{ok, _Ret} ->
 						{error, {string, io_lib:format("RLC invalid answer: ~p~n", [_Ret])}};
 					{error, Err} ->
@@ -330,7 +342,7 @@ read_limits(#ampTable{index=Idx, lasers=Lasers}=E) ->
     F = fun(#laser{ index=X }=L, {ok, Acc}) ->
 				case bkfw_srv:command(Idx, rlcc, [integer_to_binary(X)]) of
 					{ok, {Idx, max, [_, _, A, <<"mA">>]}} when is_float(A); is_integer(A) ->
-						{ok, Acc#ampTable{ lasers=lists:keystore(Idx, 2, Lasers, L#laser{ cc_limit=A }) } };
+						{ok, Acc#ampTable{ lasers=lists:keystore(X, 2, Lasers, L#laser{ cc_limit=A }) } };
 					{ok, _Ret} ->
 						{error, {string, io_lib:format("RLCC ~b invalid answer: ~p~n", [_Ret, X])}};
 					{error, Err} ->
