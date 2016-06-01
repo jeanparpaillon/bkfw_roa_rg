@@ -46,7 +46,7 @@ Example:
 ## Informations
 
 Vendor infos are provided in the `i` tuple:
-```
+```erlang
 {i, [{vendor, "BKTel Photonics"},
 	 {moduleType, ""},
 	 {hwVer, ""},
@@ -57,6 +57,15 @@ Vendor infos are provided in the `i` tuple:
 	 {serialNum, "P1549GB03250"},
 	 {productDate, "04/05/2016"}
 	]}
+```
+
+## Parameters
+
+```erlang
+{'has_PC_mode', true},
+{'has_GC_mode', true},
+{'has_input_PD', true},
+{'has_output_PD', true}
 ```
 
 ## Performance parameters

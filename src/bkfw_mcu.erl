@@ -5,7 +5,7 @@
 
 -export([loop/1,
 		 get_kv/2,
-		 set_kv/2]).
+		 set_kv/3]).
 
 %%% SNMP functions
 -export([table_func/2,
@@ -125,13 +125,43 @@ get_kv(#ampTable{ lasers=Lasers, pc_limit={MinPC, MaxPC}, gc_limit={MinGC, MaxGC
     ].
 
 
-set_kv(Idx, Kv) ->
+set_kv(Idx, Kv, 1) ->
     case get_kv_integer(operatingMode, Kv) of
 		undefined ->
 			set_thresholds(Idx, Kv);
-		Mode ->
-			set_operating_mode(Idx, Mode, Kv)
-    end.
+		?ampOperatingMode_off ->
+			set_operating_mode(Idx, ?ampOperatingMode_off);
+		?ampOperatingMode_cc ->
+			set_operating_mode(Idx, {?ampOperatingMode_cc, 1, get_consign(ampConsign, Kv)});
+		?ampOperatingMode_gc ->
+			set_operating_mode(Idx, {?ampOperatingMode_gc, get_consign(gainConsign, Kv)});
+		?ampOperatingMode_pc ->
+			set_operating_mode(Idx, {?ampOperatingMode_pc, get_consign(outputPowerConsign, Kv)})
+    end;
+
+set_kv(Idx, Kv, 2) ->
+	lists:foldl(fun (_, {error, _}=Err) ->
+						Err;
+					({mode, ?ampOperatingMode_off}, _Acc) ->
+						bkfw_srv:command(Idx, smode, [<<"OFF">>]);
+					({mode, ?ampOperatingMode_cc}, _Acc) ->
+						bkfw_srv:command(Idx, smode, [<<"CC">>]);
+					({mode, ?ampOperatingMode_gc}, _Acc) ->
+						bkfw_srv:command(Idx, smode, [<<"GC">>]);
+					({mode, ?ampOperatingMode_pc}, _Acc) ->
+						bkfw_srv:command(Idx, smode, [<<"PC">>]);
+					({'CC1_setpoint', V}, _Acc) ->
+						bkfw_srv:command(Idx, scc, [io_lib:format("~b ~.2f", [1, V])]);
+					({'CC2_setpoint', V}, _Acc) ->
+						bkfw_srv:command(Idx, scc, [io_lib:format("~b ~.2f", [2, V])]);
+					({'GC_setpoint', V}, _Acc) ->
+						bkfw_srv:command(Idx, sgc, [io_lib:format("~.2f", [V])]);
+					({'PC_setpoint', V}, _Acc) ->
+						bkfw_srv:command(Idx, spc, [io_lib:format("~.2f", [V])]);
+					(_, _Acc) ->
+						{error, invalid_key}
+				end, ok, Kv).
+
 
 %%% SNMP functions
 table_func(new, NameDb) ->
@@ -480,47 +510,43 @@ set_from_snmp(_, [{Col, _} | _]) ->
     {error, Col}.
 
 
-set_operating_mode(Idx, ?ampOperatingMode_off, _) ->
+set_operating_mode(Idx, ?ampOperatingMode_off) ->
     bkfw_srv:command(Idx, smode, [<<"OFF">>]),
     ok;
-set_operating_mode(Idx, ?ampOperatingMode_cc, Kv) ->
-    case get_consign(ampConsign, Kv) of
-		undefined -> {error, missing_consign};
-		V -> 
-			case bkfw_srv:command(Idx, scc, [<<"1 ">>, io_lib:format("~.2f", [V])]) of
-				{ok, {Idx, scc, [1, ofr]}} ->
-					{error, ofr};
-				_ ->
-					bkfw_srv:command(Idx, smode, [<<"CC">>]),
-					ok
-			end
-    end;
-set_operating_mode(Idx, ?ampOperatingMode_gc, Kv) ->
-    case get_consign(gainConsign, Kv) of
-		undefined -> {error, missing_consign};
-		V -> 
-			case bkfw_srv:command(Idx, sgc, [io_lib:format("~.2f", [V])]) of
-				{ok, {Idx, sgc, [ofr]}} ->
-					{error, ofr};
-				_ ->
-					bkfw_srv:command(Idx, smode, [<<"GC">>]),
-					ok
-			end
-    end;
-set_operating_mode(Idx, ?ampOperatingMode_pc, Kv) ->
-    case get_consign(outputPowerConsign, Kv) of
-		undefined -> {error, mising_consign};
-		V ->
-			case bkfw_srv:command(Idx, spc, [io_lib:format("~.2f", [V])]) of
-				{ok, {Idx, spc, [ofr]}} ->
-					{error, ofr};
-				_ ->
-					bkfw_srv:command(Idx, smode, [<<"PC">>]),
-					ok
-			end
-    end;
-set_operating_mode(_, _, _) ->
+
+set_operating_mode(Idx, {?ampOperatingMode_cc, Laser, V}) ->
+	case bkfw_srv:command(Idx, scc, [io_lib:format("~b ~.2f", [Laser, V])]) of
+		{ok, {Idx, scc, [Laser, ofr]}} ->
+			{error, ofr};
+		_ ->
+			bkfw_srv:command(Idx, smode, [<<"CC">>]),
+			ok
+	end;
+
+set_operating_mode(Idx, {?ampOperatingMode_gc, V}) ->
+	case bkfw_srv:command(Idx, sgc, [io_lib:format("~.2f", [V])]) of
+		{ok, {Idx, sgc, [ofr]}} ->
+			{error, ofr};
+		_ ->
+			bkfw_srv:command(Idx, smode, [<<"GC">>]),
+			ok
+	end;
+
+set_operating_mode(Idx, {?ampOperatingMode_pc, V}) ->
+	case bkfw_srv:command(Idx, spc, [io_lib:format("~.2f", [V])]) of
+		{ok, {Idx, spc, [ofr]}} ->
+			{error, ofr};
+		_ ->
+			bkfw_srv:command(Idx, smode, [<<"PC">>]),
+			ok
+	end;
+
+set_operating_mode(_, {_, undefined}) ->
+	{error, missing_consign};
+
+set_operating_mode(_, _) ->
     {error, internal}.
+
 
 set_thresholds(Idx, Kv) ->
     case get_kv_float(inputLossThreshold, Kv) of

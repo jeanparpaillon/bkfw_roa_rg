@@ -226,12 +226,13 @@ to_json(Req, #state{section=firmware}=S) ->
     {jsx:encode(bkfw_config:get_kv(firmware)), Req, S};
 
 to_json(Req, #state{section=params}=S) ->
+	{value, Number} = bkfw_edfa:variable_func(get, smmNumber),
 	Json = [
-			{'has_PC_mode', true},
-			{'has_GC_mode', true},
-			{'has_input_PD', true},
-			{'has_output_PD', true},
-			{'number_of_edfa', 1}
+			{'has_PC_mode', application:get_env(bkfw, 'has_PC_mode', true)},
+			{'has_GC_mode', application:get_env(bkfw, 'has_GC_mode', true)},
+			{'has_input_PD', application:get_env(bkfw, 'has_input_PD', true)},
+			{'has_output_PD', application:get_env(bkfw, 'has_output_PD', true)},
+			{'number_of_edfa', Number}
 		   ],
     {jsx:encode(Json, ?JSX_OPTS), Req, S};
 
@@ -261,9 +262,10 @@ from_json(Req, #state{section=mcu, index=undefined}=S) ->
 			case Err of
 				[] -> {true, Req2, S};
 				Errors -> {false, ?set_errors(Errors, Req2), S}
-			end		
+			end
     end;
-from_json(Req, #state{section=mcu, index=I}=S) ->
+
+from_json(Req, #state{section=mcu, index=I, version=V}=S) ->
     case parse_body(Req) of
 		{error, invalid_body, Req2} ->
 			{false, ?set_error(invalid_body, Req2), S};
@@ -273,7 +275,7 @@ from_json(Req, #state{section=mcu, index=I}=S) ->
 		{ok, Json, Req2} ->
 			?debug("POST /api/mcu/~p\n"
 				   "       ~p\n", [I, Json]),
-			case bkfw_mcu:set_kv(I, Json) of
+			case bkfw_mcu:set_kv(I, Json, V) of
 				ok ->
 					?debug("Set MCU kv=ok\n"),
 					{true, Req2, S};
@@ -282,6 +284,7 @@ from_json(Req, #state{section=mcu, index=I}=S) ->
 					{false, ?set_error(Err, Req2), S}
 			end
     end;
+
 from_json(Req, #state{section=sys, sys=login}=S) ->
     case parse_body(Req) of
 		{error, invalid_body, Req2} ->
@@ -297,6 +300,7 @@ from_json(Req, #state{section=sys, sys=login}=S) ->
 					{false, ?set_error(invalid_login, Req2), S}
 			end
     end;
+
 from_json(Req, #state{section=sys, sys=Cat}=S) ->
     case parse_body(Req) of
 		{error, invalid_body, Req2} ->
@@ -313,6 +317,7 @@ from_json(Req, #state{section=sys, sys=Cat}=S) ->
 					{false, ?set_error(Err, Req2), S}
 			end
     end.
+
 
 from_multipart(Req, #state{section={firmware, Fw}, firmware=Path}=S) ->
     case cowboy_req:part(Req) of
