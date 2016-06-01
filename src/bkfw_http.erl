@@ -431,7 +431,7 @@ auth_header(_Req, _) ->
 
 
 auth_user(<<"admin">>, Password) ->
-    case get_password() of
+    case bkfw_config:get_passwd() of
 		undefined -> false;
 		{md5, Hash} ->
 			case base64:encode(Password) of
@@ -442,16 +442,6 @@ auth_user(<<"admin">>, Password) ->
 
 auth_user(_, _) ->
     false.
-
-
-get_password() ->
-    case application:get_env(bkfw, password, undefined) of
-		undefined -> undefined;
-		{Method, Hash} when Method =:= md5;
-							Method =:= sha ->
-			{Method, list_to_binary(Hash)};
-		_ -> undefined
-    end.
 
 
 -spec parse_auth(binary()) -> {basic | digest | error, term()}.

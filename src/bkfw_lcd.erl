@@ -34,7 +34,13 @@ init([]) ->
 	RoaPath = os:find_executable("roa.py"),
 	HttpOpts = application:get_env(bkfw, http, [{port, 80}]),
 	Baseurl = iolist_to_binary(io_lib:format("http://localhost:~b", [proplists:get_value(port, HttpOpts, 80)])),
-	Port = open_port({spawn_executable, RoaPath}, [{args, [Baseurl]}, exit_status]),
+	Args = case bkfw_config:get_passwd() of
+			   undefined ->
+				   [ Baseurl ];
+			   {md5, Hash} ->
+				   [ Baseurl, "md5", Hash ]
+		   end,
+	Port = open_port({spawn_executable, RoaPath}, [{args, Args}, exit_status]),
 	{ok, Port}.
 
 

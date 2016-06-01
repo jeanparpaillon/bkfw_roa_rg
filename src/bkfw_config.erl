@@ -18,7 +18,8 @@
 		 set_app_conf/4,
 		 get_kv/1,
 		 set_kv/2,
-		 get_script/1]).
+		 get_script/1,
+		 get_passwd/0]).
 
 -export([upgrade/2,
 		 cmd/1,
@@ -98,6 +99,16 @@ get_script(Name) ->
 		Path when is_list(Path) ->
 			filename:join([Path, Name])
 	end.
+
+
+get_passwd() ->
+    case application:get_env(bkfw, password, undefined) of
+		undefined -> undefined;
+		{Method, Hash} when Method =:= md5;
+							Method =:= sha ->
+			{Method, list_to_binary(Hash)};
+		_ -> undefined
+    end.
 
 %%%===================================================================
 %%% gen_server callbacks

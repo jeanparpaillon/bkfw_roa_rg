@@ -90,10 +90,10 @@ post_mutex() ->
 
 
 post_http() ->
-	_Spec = #{ id => bkfw_lcd,
+	Spec = #{ id => bkfw_lcd,
 			  start => {bkfw_lcd, start_link, []},
 			  type => worker },
-	start_children([]).
+	start_children([Spec]).
 
 
 %% ===================================================================
