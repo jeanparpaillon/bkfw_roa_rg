@@ -13,25 +13,30 @@
 -include("bkfw.hrl").
 
 %% API
--export([start_link/0]).
+-export([start_link/0,
+		 enabled/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 		 terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
+-define(SCRIPT, "roa.py").
 
 start_link() ->
 	?info("Start LCD controller", []),
 	gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 
+enabled() -> os:find_executable(?SCRIPT) =/= false.
+		
+	
 %%%
 %%% gen_server callbacks
 %%%
 init([]) ->
 	process_flag(trap_exit, true),
-	RoaPath = os:find_executable("roa.py"),
+	RoaPath = os:find_executable(?SCRIPT),
 	HttpOpts = application:get_env(bkfw, http, [{port, 80}]),
 	Baseurl = iolist_to_binary(io_lib:format("http://localhost:~b", [proplists:get_value(port, HttpOpts, 80)])),
 	Args = case bkfw_config:get_passwd() of

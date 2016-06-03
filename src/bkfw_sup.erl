@@ -90,10 +90,16 @@ post_mutex() ->
 
 
 post_http() ->
-	Spec = #{ id => bkfw_lcd,
-			  start => {bkfw_lcd, start_link, []},
-			  type => worker },
-	start_children([Spec]).
+	case bkfw_lcd:enabled() of
+		true ->
+			Spec = #{ id => bkfw_lcd,
+					  start => {bkfw_lcd, start_link, []},
+					  type => worker },
+			start_children([Spec]);
+		false ->
+			?info("LCD control disabled", []),
+			ok
+	end.
 
 
 %% ===================================================================
