@@ -15,7 +15,7 @@ if [ `id -u` != 0 ]; then
     exit 0
 fi
 
-dpkg -i --force-overwrite $1 > /dev/null \
+opkg install --force-overwrite --force-reinstall $1 > /dev/null \
     && echo "ok" \
     || echo "err_dpkg"
 

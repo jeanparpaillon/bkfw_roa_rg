@@ -6,7 +6,7 @@ if [ $# != 1 ]; then
 fi
 
 EXPECT=bkfw
-PKG=$(LANG=C dpkg -I $1 2> /dev/null | awk '/^ Package:/ { print $2 }')
+PKG=$(LANG=C opkg info $1 2> /dev/null | awk '/^Package:/ { print $2 }')
 if [ "${PKG}" = "${EXPECT}" ]; then
     echo "ok"
 else
