@@ -257,7 +257,7 @@ handle_call({set_kv, protocol, Props}, _From, State) ->
 							   (_, Acc) -> Acc
 						   end, [], Props),
     Ret = save_user_config(snmp, agent, lists:keystore(versions, 1, AgentEnv, {versions, Versions})),
-    bkfw_app:restart(),
+    bkfw:restart(),
     {reply, Ret, State};
 
 handle_call({set_kv, targets, Props}, _From, State) ->
@@ -279,11 +279,11 @@ handle_call({set_kv, reset, Props}, _From, State) ->
 					set_network_static(application:get_env(bkfw, netif, "eth0"),
 									   ?DEFAULT_NETCONF),
 					set_snmp_com(get_snmp_configdir(), ?DEFAULT_COMMUNITY),
-					bkfw_app:restart(),
+					bkfw:restart(),
 					{reply, ok, State};
 				{error, eacces} ->
 												% For debugging purpose...
-					bkfw_app:restart(),
+					bkfw:restart(),
 					{reply, ok, State};
 				{error, Err} ->
 					{reply, {error, Err}, State}
@@ -294,7 +294,7 @@ handle_call({set_kv, reset, Props}, _From, State) ->
 handle_call({set_kv, reboot, Props}, _From, State) ->
     case proplists:get_value(reboot, Props, false) of
 		true ->
-			bkfw_app:reboot(),
+			bkfw:reboot(),
 			{reply, ok, State};
 		false ->
 			{reply, ok, State}

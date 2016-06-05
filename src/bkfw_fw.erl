@@ -22,7 +22,7 @@ upgrade_fw(Filename) ->
     case bkfw_config:script("check_pkg.sh", Filename) of
 		ok ->
 			bkfw_config:script("upgrade.sh", Filename),
-			bkfw_app:reboot(),
+			bkfw:reboot(),
 			ok;
 		{error, Err} -> {error, Err}
     end.
