@@ -45,15 +45,15 @@
               </td>
               <td>&deg;C</td>
             </tr>
-            <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('curAmp')}">
-              <td>{{ mcu.label.curAmp }}</td>
+            <tr ng-repeat="laser in mcu.detail.lasers", ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('curAmp')}">
+              <td>{{ mcu.label.curAmp }} #{{ laser.index }}</td>
               <td>
                 <span
                 ng-show="mcu.detail.hasAlarmOn('curAmp')"
                 class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
                 aria-hidden="true">
                 </span>
-                {{ mcu.detail.curAmp | numeraljs:'0.00' }}
+                {{ laser.amp | numeraljs:'0.00' }}
               </td>
               <td>mA</td>
             </tr>

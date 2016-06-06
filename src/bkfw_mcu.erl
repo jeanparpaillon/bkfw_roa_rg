@@ -91,7 +91,8 @@ get_kv(#ampTable{ lasers=Lasers }=T, 1) ->
 	 {serialNum,           list_to_binary(T#ampTable.serialNum)},
 	 {productDate,         list_to_binary(T#ampTable.productDate)},
 	 {lasers, lists:map(fun (Laser) ->
-								{ Laser#laser.index, [ {amp, Laser#laser.amp},
+								{ Laser#laser.index, [ {index, Laser#laser.index},
+													   {amp, Laser#laser.amp},
 													   {amp_consign, Laser#laser.amp_consign},
 													   {power, Laser#laser.power},
 													   {cc_limit, Laser#laser.cc_limit},
