@@ -54,7 +54,6 @@ get_config() ->
 				{"/api/alarms",             bkfw_http_ws, []},
 				{"/api/sys/firmware/[:fw]", bkfw_http, firmware},
 				{"/api/sys/:name",          bkfw_http, sys},
-				{"/api2/params",            bkfw_http, params},
 				{"/logo",                   cowboy_static, {file, Logo, [{mimetypes, cow_mimetypes, all}]}},
 				{"/[...]",                  cowboy_static, {dir, Dir, [{mimetypes, cow_mimetypes, all}]}}
 			   ],
@@ -85,8 +84,6 @@ rest_init(Req, {Version, mcu}) ->
     end;
 rest_init(Req, {Version, edfa}) ->
     {ok, Req, #state{section=edfa, version=Version}};
-rest_init(Req, params) ->
-	{ok, Req, #state{section=params}};
 rest_init(Req, sys) ->
     case cowboy_req:binding(name, Req) of
 		{<<"login">>, Req2} -> {ok, Req2, #state{section=sys, sys=login}};
@@ -224,17 +221,6 @@ to_json(Req, #state{section=sys, sys=Cat}=S) when Cat =:= login;
 
 to_json(Req, #state{section=firmware}=S) ->
     {jsx:encode(bkfw_config:get_kv(firmware)), Req, S};
-
-to_json(Req, #state{section=params}=S) ->
-	{value, Number} = bkfw_edfa:variable_func(get, smmNumber),
-	Json = [
-			{'has_PC_mode', application:get_env(bkfw, 'has_PC_mode', true)},
-			{'has_GC_mode', application:get_env(bkfw, 'has_GC_mode', true)},
-			{'has_input_PD', application:get_env(bkfw, 'has_input_PD', true)},
-			{'has_output_PD', application:get_env(bkfw, 'has_output_PD', true)},
-			{'number_of_edfa', Number}
-		   ],
-    {jsx:encode(Json, ?JSX_OPTS), Req, S};
 
 to_json(Req, #state{section=sys, sys=_}=S) ->
     {<<"{}">>, Req, S}.

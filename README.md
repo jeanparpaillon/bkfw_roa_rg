@@ -59,13 +59,25 @@ Vendor infos are provided in the `i` tuple:
 	]}
 ```
 
-## Parameters
+## Amps Parameters
 
 ```erlang
-{'has_PC_mode', true},
-{'has_GC_mode', true},
-{'has_input_PD', true},
-{'has_output_PD', true}
+{amps, [
+	    { 1, [
+		       {'has_PC_mode', true},
+			   {'has_GC_mode', true},
+			   {'has_input_PD', true},
+			   {'has_output_PD', true}
+			 ]
+		 },
+	    { 2, [
+		       {'has_PC_mode', true},
+			   {'has_GC_mode', false},
+			   {'has_input_PD', false},
+			   {'has_output_PD', true}
+			 ]
+		 }
+]}
 ```
 
 ## Performance parameters

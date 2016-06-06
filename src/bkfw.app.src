@@ -55,9 +55,20 @@
 			  {serialNum, "P1549GB03250"},
 			  {productDate, "04/05/2016"}
 			 ]},
-		 {'has_PC_mode', true},
-		 {'has_GC_mode', true},
-		 {'has_input_PD', true},
-		 {'has_output_PD', true}
+		 {amps, [
+				 {1, [
+					  {'has_PC_mode', true},
+					  {'has_GC_mode', true},
+					  {'has_input_PD', true},
+					  {'has_output_PD', true}
+					 ]
+				 },
+				 {2, [
+					  {'has_PC_mode', true},
+					  {'has_GC_mode', true},
+					  {'has_input_PD', true},
+					  {'has_output_PD', true}
+					 ]}
+				]}
 		]}
  ]}.

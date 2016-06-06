@@ -194,7 +194,7 @@ handle_slots(Mask, Idx, S) when Mask band (1 bsl Idx) /= 0 ->
     case mnesia:dirty_match_object(#ampTable{index=Idx+1, _='_'}) of
 		[] ->
 			%% Amp was not there
-			Amp = #ampTable{index=Idx+1},
+			Amp = bkfw_mcu:new(Idx+1),
 			mnesia:transaction(fun() -> mnesia:write(Amp) end);
 		_ ->
 			%% Amp is already there

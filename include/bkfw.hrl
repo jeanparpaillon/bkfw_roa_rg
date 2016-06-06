@@ -61,7 +61,8 @@
 				   productDate        = "N/A"                    :: string(),
 				   lasers             = []                       :: list(),
 				   pc_limit           = {0.0, 0.0}               :: {float(), float()},
-				   gc_limit           = {0.0, 0.0}               :: {float(), float()}
+				   gc_limit           = {0.0, 0.0}               :: {float(), float()},
+				   params             = []                       :: []
 				  }).
 -type ampTable() :: #ampTable{}.
 

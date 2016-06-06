@@ -3,7 +3,8 @@
 
 -include("bkfw.hrl").
 
--export([loop/1,
+-export([new/1,
+		 loop/1,
 		 get_kv/2,
 		 set_kv/3]).
 
@@ -52,6 +53,15 @@
 				settable      = false}).
 -define(default_laser(I), #laser{index=I}).
 
+new(Idx) ->
+	Config = proplists:get_value(Idx, application:get_env(bkfw, amps, []), []),
+	Params = [ { 'has_PC_mode', proplists:get_value('has_PC_mode', Config, true) },
+			   { 'has_GC_mode', proplists:get_value('has_GC_mode', Config, true) },
+			   { 'has_input_PD', proplists:get_value('has_input_PD', Config, true) },
+			   { 'has_output_PD', proplists:get_value('has_output_PD', Config, true) } ],
+	#ampTable{ index=Idx, params=Params }.
+
+
 loop(#ampTable{}=Amp) ->
     loop(Amp, ?FUNS).
 
@@ -66,7 +76,7 @@ loop(Amp, [ Fun | Tail ]) ->
 		{error, Err} -> {error, Err, Amp}
     end.
 
-get_kv(#ampTable{ lasers=Lasers }=T, 1) ->
+get_kv(#ampTable{ lasers=Lasers, params=Params }=T, 1) ->
     [
 	 {index,               T#ampTable.index},
 	 {ampConsign,          T#ampTable.ampConsign},
@@ -90,20 +100,15 @@ get_kv(#ampTable{ lasers=Lasers }=T, 1) ->
 	 {partNum,             list_to_binary(T#ampTable.partNum)},
 	 {serialNum,           list_to_binary(T#ampTable.serialNum)},
 	 {productDate,         list_to_binary(T#ampTable.productDate)},
-	 {lasers, lists:map(fun (Laser) ->
-								{ Laser#laser.index, [ {index, Laser#laser.index},
-													   {amp, Laser#laser.amp},
-													   {amp_consign, Laser#laser.amp_consign},
-													   {power, Laser#laser.power},
-													   {cc_limit, Laser#laser.cc_limit},
-													   {temp, Laser#laser.temp},
-													   {settable, Laser#laser.settable}] }
-						end, Lasers)
-	 }
+	 {lasers,              lists:map(fun get_laser_kv/1, Lasers)},
+	 {'has_PC_mode',       proplists:get_value('has_PC_mode', Params, true)},
+	 {'has_GC_mode',       proplists:get_value('has_GC_mode', Params, true)},
+	 {'has_input_PD',      proplists:get_value('has_input_PD', Params, true)},
+	 {'has_output_PD',     proplists:get_value('has_output_PD', Params, true)}
 	];
 
 
-get_kv(#ampTable{ lasers=Lasers, pc_limit={MinPC, MaxPC}, gc_limit={MinGC, MaxGC} }=T, 2) ->
+get_kv(#ampTable{ params=Params, lasers=Lasers, pc_limit={MinPC, MaxPC}, gc_limit={MinGC, MaxGC} }=T, 2) ->
 	Laser1 = case lists:keyfind(1, 2, Lasers) of
 				 false -> #laser{index=1};
 				 L1 -> L1
@@ -132,7 +137,12 @@ get_kv(#ampTable{ lasers=Lasers, pc_limit={MinPC, MaxPC}, gc_limit={MinGC, MaxGC
 	 {'CC1_setpoint',      Laser1#laser.amp_consign},
 	 {'CC2_setpoint',      Laser2#laser.amp_consign},
 	 {'PC_setpoint',       T#ampTable.outputPowerConsign},
-	 {'GC_setpoint',       T#ampTable.gainConsign}
+	 {'GC_setpoint',       T#ampTable.gainConsign},
+	 {lasers,              lists:map(fun get_laser_kv/1, Lasers)},
+	 {'has_PC_mode',       proplists:get_value('has_PC_mode', Params, true)},
+	 {'has_GC_mode',       proplists:get_value('has_GC_mode', Params, true)},
+	 {'has_input_PD',      proplists:get_value('has_input_PD', Params, true)},
+	 {'has_output_PD',     proplists:get_value('has_output_PD', Params, true)}
     ].
 
 
@@ -453,14 +463,6 @@ parse_pd2(_, _, Tail, E) ->
 	parse_pd(Tail, E).
 
 
-%% get_info(Key, Infos, Default) ->
-%%     try proplists:get_value(Key, Infos, Default) of
-%% 		Str -> Str
-%%     catch error:badarg ->
-%% 			Default
-%%     end.
-
-
 handle_alarms([], E) -> {ok, E};
 handle_alarms([Name  | Tail], E) -> 
     gen_event:notify(bkfw_alarms, #smmAlarm{index=E#ampTable.index,
@@ -611,3 +613,14 @@ get_kv_float(Key, Props) ->
 					end
 			end
     end.
+
+
+get_laser_kv(Laser) ->
+	{ Laser#laser.index, [ {index, Laser#laser.index},
+						   {amp, Laser#laser.amp},
+						   {amp_consign, Laser#laser.amp_consign},
+						   {power, Laser#laser.power},
+						   {cc_limit, Laser#laser.cc_limit},
+						   {temp, Laser#laser.temp},
+						   {settable, Laser#laser.settable}
+						 ] }.
