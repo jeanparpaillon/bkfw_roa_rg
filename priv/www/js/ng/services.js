@@ -246,6 +246,10 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
       mute: {
         msg: "Mute input is active"
       },
+      psu: {
+        msg: "Power Supply Unit default",
+        field: "psu"
+      },
       psu1: {
         msg: "Power Supply Unit #1 default",
         field: "psu1"

@@ -16,63 +16,22 @@
         {{ edfa.info.curInternalTemp | numeraljs:'0.00' }}
       </td>
 
-      <td><strong>{{ edfa.label.hwVer }}</strong></td>
-      <td>{{ edfa.info.hwVer }}</td>
-    </tr>
-    <tr>
-      <td ng-class="{'danger text-danger': edfa.info.hasAlarmOn('powerSupply')}">
-        <strong>{{ edfa.label.powerSupply }}</strong>
-      </td>
-      <td ng-class="{'danger text-danger': edfa.info.hasAlarmOn('powerSupply')}">
-        <span
-          ng-show="edfa.info.hasAlarmOn('powerSupply')"
-          class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
-          aria-hidden="true">
-        </span>
-        {{ edfa.info.powerSupply | numeraljs:'0.00' }}
-      </td>
-
-      <td><strong>{{ edfa.label.hwRev }}</strong></td>
-      <td>{{ edfa.info.hwRev }}</td>
+      <td><strong>{{ edfa.label.partNum }}</strong></td>
+      <td>{{ edfa.info.partNum }}</td>
     </tr>
     <tr>
       <td><strong>{{ edfa.label.vendor }}</strong></td>
       <td>{{ edfa.info.vendor }}</td>
 
-      <td><strong>{{ edfa.label.swVer }}</strong></td>
-      <td>{{ edfa.info.swVer }}</td>
+      <td><strong>{{ edfa.label.serialNum }}</strong></td>
+      <td>{{ edfa.info.serialNum }}</td>
     </tr>
     <tr>
       <td><strong>{{ edfa.label.moduleType }}</strong></td>
       <td>{{ edfa.info.moduleType }}</td>
 
-      <td><strong>{{ edfa.label.fwVer }}</strong></td>
-      <td>{{ edfa.info.fwVer }}</td>
-    </tr>
-    <tr>
-      <td><strong>{{ edfa.label.partNum }}</strong></td>
-      <td>{{ edfa.info.partNum }}</td>
-
-      <td><strong>{{ edfa.label.serialNum }}</strong></td>
-      <td>{{ edfa.info.serialNum }}</td>
-    </tr>
-    <tr>
       <td><strong>{{ edfa.label.productDate }}</strong></td>
       <td>{{ edfa.info.productDate }}</td>
-
-      <td ng-class="{'danger text-danger': edfa.info.hasAlarmOn('psu1') || edfa.info.hasAlarmOn('psu2')}" colspan="2">
-        <span
-          ng-show="edfa.info.hasAlarmOn('psu1') || edfa.info.hasAlarmOn('psu2')"
-          class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
-          aria-hidden="true">
-        </span>
-	<span ng-show="edfa.info.hasAlarmOn('psu1')">
-          <strong>Default on Power Supply Unit #1</strong>
-	</span>
-	<span ng-show="edfa.info.hasAlarmOn('psu2')">
-          <strong>Default on Power Supply Unit #2</strong>
-	</span>
-      </td>
     </tr>
   </table>
 
