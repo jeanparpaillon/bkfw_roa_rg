@@ -38,7 +38,10 @@
                 class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
                 aria-hidden="true">
               </span>
-              {{ mcu.curAmp | numeraljs:'0.00' }}
+							<div class="row" ng-repeat="laser in mcu.lasers">
+								<span class="col-md-6">Laser #{{ laser.index }}: </span>
+								<span class="col-md-6">{{ laser.amp | numeraljs:'0.00' }} mA</span>
+							</div>
             </td>
             <td>{{ mcu.curInternalAmp | numeraljs:'0.00' }}</td>
             <td ng-class="{'danger text-danger': mcu.hasAlarmOn('powerInput')}">
