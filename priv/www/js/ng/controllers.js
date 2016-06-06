@@ -23,7 +23,10 @@ angular.module('bkfwApp.controllers', ['uiSwitch'])
 .controller('mcuCtrl', ['$http', '$scope', '$stateParams', 'mcu', 'dialogs', function($http, $scope, $stateParams, mcu, dialogs) {
 
   this.mode = mcu.mode;
-  this.modeID = mcu.modeID;
+  this.modeID = {
+		'3': {name: 'CC', valueType: 'mA'},
+		'4': {name: 'OFF', valueType: null},
+	}
   this.label = mcu.label;
 
   this.detail = {};
@@ -59,6 +62,12 @@ angular.module('bkfwApp.controllers', ['uiSwitch'])
         if (this.outputLossThreshold === null) {
           this.outputLossThreshold = this.detail.outputLossThreshold;
         }
+				if (this.detail["has_PC_mode"]) {
+					this.modeID['1'] = {name: 'PC', valueType: 'dBm'};
+				}
+				if (this.detail["has_GC_mode"]) {
+					this.modeID['2'] = {name: 'GC', valueType: 'dB'};
+				}
       }
     })
   );
