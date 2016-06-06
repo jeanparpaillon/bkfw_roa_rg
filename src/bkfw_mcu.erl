@@ -66,31 +66,41 @@ loop(Amp, [ Fun | Tail ]) ->
 		{error, Err} -> {error, Err, Amp}
     end.
 
-get_kv(#ampTable{}=T, 1) ->
+get_kv(#ampTable{ lasers=Lasers }=T, 1) ->
     [
-     {index,               T#ampTable.index},
-     {ampConsign,          T#ampTable.ampConsign},
-     {gainConsign,         T#ampTable.gainConsign},
-     {outputPowerConsign,  T#ampTable.outputPowerConsign},
-     {operatingMode,       T#ampTable.operatingMode},
-     {curLaserTemp,        T#ampTable.curLaserTemp},
-     {curAmp,              T#ampTable.curAmp},
-     {curInternalAmp,      T#ampTable.curInternalTemp},
-     {powerInput,          T#ampTable.powerPd1},
-     {powerOutput,         T#ampTable.powerPd2},
-     {powerSupply,         T#ampTable.powerSupply},
-     {inputLossThreshold,  T#ampTable.inputLossThreshold},
-     {outputLossThreshold, T#ampTable.outputLossThreshold},
-     {vendor,              list_to_binary(T#ampTable.vendor)},
-     {moduleType,          list_to_binary(T#ampTable.moduleType)},
-     {hwVer,               list_to_binary(T#ampTable.hwVer)},
-     {hwRev,               list_to_binary(T#ampTable.hwRev)},
-     {swVer,               list_to_binary(T#ampTable.swVer)},
-     {fwVer,               list_to_binary(T#ampTable.fwVer)},
-     {partNum,             list_to_binary(T#ampTable.partNum)},
-     {serialNum,           list_to_binary(T#ampTable.serialNum)},
-     {productDate,         list_to_binary(T#ampTable.productDate)}
-    ];
+	 {index,               T#ampTable.index},
+	 {ampConsign,          T#ampTable.ampConsign},
+	 {gainConsign,         T#ampTable.gainConsign},
+	 {outputPowerConsign,  T#ampTable.outputPowerConsign},
+	 {operatingMode,       T#ampTable.operatingMode},
+	 {curLaserTemp,        T#ampTable.curLaserTemp},
+	 {curAmp,              T#ampTable.curAmp},
+	 {curInternalAmp,      T#ampTable.curInternalTemp},
+	 {powerInput,          T#ampTable.powerPd1},
+	 {powerOutput,         T#ampTable.powerPd2},
+	 {powerSupply,         T#ampTable.powerSupply},
+	 {inputLossThreshold,  T#ampTable.inputLossThreshold},
+	 {outputLossThreshold, T#ampTable.outputLossThreshold},
+	 {vendor,              list_to_binary(T#ampTable.vendor)},
+	 {moduleType,          list_to_binary(T#ampTable.moduleType)},
+	 {hwVer,               list_to_binary(T#ampTable.hwVer)},
+	 {hwRev,               list_to_binary(T#ampTable.hwRev)},
+	 {swVer,               list_to_binary(T#ampTable.swVer)},
+	 {fwVer,               list_to_binary(T#ampTable.fwVer)},
+	 {partNum,             list_to_binary(T#ampTable.partNum)},
+	 {serialNum,           list_to_binary(T#ampTable.serialNum)},
+	 {productDate,         list_to_binary(T#ampTable.productDate)},
+	 {lasers, lists:map(fun (Laser) ->
+								{ Laser#laser.index, [ {amp, Laser#laser.amp},
+													   {amp_consign, Laser#laser.amp_consign},
+													   {power, Laser#laser.power},
+													   {cc_limit, Laser#laser.cc_limit},
+													   {temp, Laser#laser.temp},
+													   {settable, Laser#laser.settable}] }
+						end, Lasers)
+	 }
+	];
+
 
 get_kv(#ampTable{ lasers=Lasers, pc_limit={MinPC, MaxPC}, gc_limit={MinGC, MaxGC} }=T, 2) ->
 	Laser1 = case lists:keyfind(1, 2, Lasers) of
