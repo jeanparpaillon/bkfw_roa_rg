@@ -3,6 +3,11 @@
   <h2>Management Controller info</h2>
 
   <table class="table table-hover">
+    <tr class="danger text-danger" ng-repeat="alarm in edfa.info.alarms()">
+      <td colspan="4">{{ alarm.data.msg }}
+        <span class="glyphicon glyphicon-exclamation-sign text-danger pull-right"></span>
+      </td>
+    </tr>
     <tr> 
       <td ng-class="{'danger text-danger': edfa.info.hasAlarmOn('curInternalTemp')}">
         <strong>{{ edfa.label.curInternalTemp }}</strong>

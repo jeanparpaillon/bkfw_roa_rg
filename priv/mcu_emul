@@ -231,7 +231,7 @@ handle_msg(#mcu{index=Addr}=Mcu, smode, [Mode], S) when Mode == pc;
     {S, Mcu#mcu{operatingMode=ModeStr}};
 
 handle_msg(#edfa{}=Edfa, ra, [], S) ->
-    case random:uniform(4) of
+	case random:uniform(4) of
 		1 ->
 			Alarm = element(random:uniform(size(?edfa_alarms)), ?edfa_alarms),
 			reply(S, 0, ["ALARMS: ", Alarm]);
@@ -241,13 +241,13 @@ handle_msg(#edfa{}=Edfa, ra, [], S) ->
     {S, Edfa};
 
 handle_msg(#mcu{index=Addr}=Mcu, ra, [], S) ->
-    case random:uniform(4) of
-		1 ->
+	case random:uniform(4) of
+	 	1 ->
 			Alarm = element(random:uniform(size(?mcu_alarms)), ?mcu_alarms),
 			reply(S, Addr, ["ALARMS: ", Alarm]);
 		_ ->
 			reply(S, Addr, "ALARMS:")
-    end,
+	end,
     {S, Mcu};
 
 handle_msg(#mcu{index=Addr, curLaserTemp=LT}=Mcu, rlt, [Pos], S) when is_integer(Pos) ->

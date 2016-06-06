@@ -257,6 +257,22 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
       psu2: {
         msg: "Power Supply Unit #2 default",
         field: "psu2"
+      },
+      fan1: {
+        msg: "Fan #1 default",
+        field: "fan1"
+      },
+      fan2: {
+        msg: "Fan #2 default",
+        field: "fan2"
+      },
+      fan3: {
+        msg: "Fan #3 default",
+        field: "fan3"
+      },
+      fan4: {
+        msg: "Fan #4 default",
+        field: "fan4"
       }
     },
 
