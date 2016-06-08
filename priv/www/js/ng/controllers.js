@@ -32,6 +32,7 @@ angular.module('bkfwApp.controllers', ['uiSwitch'])
   this.detail = {};
   this.controlMode = null;
   this.controlValue = null;
+  this.controlValues = [ 0.0, 0.0 ];
 
   this.inputLossThreshold = null;
   this.outputLossThreshold = null;
@@ -55,6 +56,10 @@ angular.module('bkfwApp.controllers', ['uiSwitch'])
           this.controlValue = mcu.getControlValue(this.detail, this.controlMode);
           console.debug("Control value is " + this.controlValue);
         }
+        if (this.controlValues[0] === 0.0 && this.controlValues[1] === 0.0) {
+					this.controlValues = [ this.detail.ampConsign, this.detail.ampConsign2 ];
+          console.debug("Control values are " + this.controlValues);
+        }
 
         if (this.inputLossThreshold === null) {
           this.inputLossThreshold = this.detail.inputLossThreshold;
@@ -73,7 +78,11 @@ angular.module('bkfwApp.controllers', ['uiSwitch'])
   );
 
   this.updateControlValue = function() {
-    this.controlValue = mcu.getControlValue(this.detail, this.controlMode);
+		if (this.controlMode == this.mode.CC) {
+			this.controlValues = mcu.getControlValue(this.detail, this.controlMode);
+		} else {
+			this.controlValue = mcu.getControlValue(this.detail, this.controlMode);			
+		}
   };
 
   this.setThresholds = function() {
@@ -112,7 +121,12 @@ angular.module('bkfwApp.controllers', ['uiSwitch'])
       dialogs.confirm("Confirm setting operating mode on all amps:")
       .then(angular.bind(this, function() {
         var infos = { operatingMode: this.controlMode };
-        infos[mcu.getControlValueName(this.controlMode)] = this.controlValue;
+				if (this.controlMode == this.mode.CC) {
+					infos['ampConsign'] = this.controlValues[0];
+					infos['ampConsign2'] = this.controlValues[1];
+				} else {
+					infos[mcu.getControlValueName(this.controlMode)] = this.controlValue;
+				}
         $http.post('/api/mcu/', infos)
         .then(angular.bind(this, function() {
           dialogs.success("Operating mode set on all amps");
@@ -128,7 +142,12 @@ angular.module('bkfwApp.controllers', ['uiSwitch'])
 
         var newMcu  = angular.copy(this.detail);
         newMcu.operatingMode = this.controlMode;
-        newMcu[mcu.getControlValueName(this.controlMode)] = this.controlValue;
+				if (this.controlMode == this.mode.CC) {
+					newMcu['ampConsign'] = this.controlValues[0];
+					newMcu['ampConsign2'] = this.controlValues[1];
+				} else {
+					newMcu[mcu.getControlValueName(this.controlMode)] = this.controlValue;
+				}
 
         console.debug("Save mcu " + JSON.stringify(newMcu));
 
@@ -138,6 +157,7 @@ angular.module('bkfwApp.controllers', ['uiSwitch'])
 
           this.controlMode = null;
           this.controlValue = null;
+					//this.controlValues = [0.0, 0.0];
 
           dialogs.success("Consign applied");
         }));

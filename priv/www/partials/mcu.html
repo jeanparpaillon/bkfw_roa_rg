@@ -150,26 +150,39 @@
 
           <div class="form-group" ng-if="mcu.controlMode != mcu.mode.OFF && mcu.controlMode != mcu.mode.CC">
             <label class="col-md-4 control-label" >Value in {{ mcu.modeID[mcu.controlMode].valueType }}</label>
-            <div class="col-md-8">
+            <div class="col-md-4">
               <input type="text" ng-model="mcu.controlValue"
                                  class="form-control" />
             </div>
+						<div class="col-md-4" ng-if="mcu.controlMode == mcu.mode.GC">
+							Min {{ mcu.detail.gcMin }} dB / Max {{ mcu.detail.gcMax }} dB
+						</div>
+						<div class="col-md-4" ng-if="mcu.controlMode == mcu.mode.PC">
+							Min {{ mcu.detail.pcMin }} dBm / Max {{ mcu.detail.pcMax }} dBm
+						</div>
           </div>
 
-          <div class="form-group" ng-if="mcu.controlMode == mcu.mode.CC && mcu.detail['has_settable_LD1']">
+          <div class="form-group" ng-if="mcu.controlMode == mcu.mode.CC">
             <label class="col-md-4 control-label" >Value in {{ mcu.modeID[mcu.controlMode].valueType }} (laser #1)</label>
-            <div class="col-md-8">
-              <input type="text" ng-model="mcu.controlValue2"
-                                 class="form-control" />
+            <div class="col-md-4">
+              <input type="text" ng-model="mcu.controlValues[0]"
+                     class="form-control"
+										 ng-disabled="{{ !mcu.detail['has_settable_LD1']}}" />
             </div>
+						<div class="col-md-4">
+							Max {{ mcu.detail.ccMax1 }} mA
+						</div>
           </div>
 
           <div class="form-group" ng-if="mcu.controlMode == mcu.mode.CC">
             <label class="col-md-4 control-label" >Value in {{ mcu.modeID[mcu.controlMode].valueType }} (laser #2)</label>
-            <div class="col-md-8">
-              <input type="text" ng-model="mcu.controlValue"
+            <div class="col-md-4">
+              <input type="text" ng-model="mcu.controlValues[1]"
                                  class="form-control" />
             </div>
+						<div class="col-md-4">
+							Max {{ mcu.detail.ccMax2 }} mA
+						</div>
           </div>
 
           <div class="form-group">

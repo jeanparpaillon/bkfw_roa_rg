@@ -494,9 +494,18 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
     },
 
     getControlValue: function(mcu, operatingMode) {
-      if (operatingMode != this.mode.OFF) {
-        return mcu[this.getControlValueName(operatingMode)];
-      }
+			if (operatingMode == this.mode.OFF) {
+				return null;
+			}
+			if (operatingMode == this.mode.PC) {
+				return mcu.outputPowerConsign;
+			}
+			if (operatingMode == this.mode.GC) {
+				return mcu.gainConsign;
+			}
+			if (operatingMode == this.mode.CC) {
+				return [mcu.ampConsign, mcu.ampConsign2];
+			}
       return null;
     },
 

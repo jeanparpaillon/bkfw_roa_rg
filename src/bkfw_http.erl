@@ -513,6 +513,7 @@ err_to_string(invalid_snmp_authkey) -> <<"Authentication key must be at least 8-
 err_to_string(invalid_snmp_privkey) -> <<"Privacy key must be at least 8-chars long">>;
 err_to_string(invalid_payload) -> <<"Error writing firmware">>;
 err_to_string(ofr) -> <<"Consign out of range, check your manual">>;
+err_to_string(unsettableLD1) -> <<"Laser Diode 1 current can't be set">>;
 err_to_string(empty_password) -> <<"Invalid value: empty password">>;
 err_to_string({unexpected, _}) -> <<"Internal error in backend">>;
 err_to_string(Else) when is_atom(Else) -> atom_to_binary(Else, utf8);

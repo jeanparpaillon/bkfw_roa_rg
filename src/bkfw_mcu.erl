@@ -88,6 +88,8 @@ get_kv(#ampTable{ params=Params }=T, 1) ->
 	 {powerSupply,         T#ampTable.powerSupply},
 	 {inputLossThreshold,  T#ampTable.inputLossThreshold},
 	 {outputLossThreshold, T#ampTable.outputLossThreshold},
+	 {ccMax1,              T#ampTable.ccMax1},
+	 {ccMax2,              T#ampTable.ccMax2},
 	 {pcMin,               T#ampTable.pcMin},
 	 {pcMax,               T#ampTable.pcMax},
 	 {gcMin,               T#ampTable.gcMin},
@@ -131,17 +133,23 @@ get_kv(#ampTable{ params=Params }=T, 2) ->
 
 
 set_kv(Idx, Kv, 1) ->
+	[Amp] = mnesia:dirty_read(ampTable, Idx),
     case get_kv_integer(operatingMode, Kv) of
 		undefined ->
 			set_thresholds(Idx, Kv);
 		?ampOperatingMode_off ->
-			set_operating_mode(Idx, ?ampOperatingMode_off);
+			set_operating_mode(Idx, ?ampOperatingMode_off, Amp);
 		?ampOperatingMode_cc ->
-			set_operating_mode(Idx, {?ampOperatingMode_cc, 1, get_consign(ampConsign, Kv)});
+			case set_operating_mode(Idx, {?ampOperatingMode_cc, 1, get_consign(ampConsign, Kv)}, Amp) of
+				ok ->
+					set_operating_mode(Idx, {?ampOperatingMode_cc, 2, get_consign(ampConsign2, Kv)}, Amp);
+				{error, _}=Err ->
+					Err
+			end;
 		?ampOperatingMode_gc ->
-			set_operating_mode(Idx, {?ampOperatingMode_gc, get_consign(gainConsign, Kv)});
+			set_operating_mode(Idx, {?ampOperatingMode_gc, get_consign(gainConsign, Kv)}, Amp);
 		?ampOperatingMode_pc ->
-			set_operating_mode(Idx, {?ampOperatingMode_pc, get_consign(outputPowerConsign, Kv)})
+			set_operating_mode(Idx, {?ampOperatingMode_pc, get_consign(outputPowerConsign, Kv)}, Amp)
     end;
 
 set_kv(Idx, Kv, 2) ->
@@ -513,11 +521,22 @@ set_from_snmp(_, [{Col, _} | _]) ->
     {error, Col}.
 
 
-set_operating_mode(Idx, ?ampOperatingMode_off) ->
+set_operating_mode(Idx, ?ampOperatingMode_off, _Amp) ->
     bkfw_srv:command(Idx, smode, [<<"OFF">>]),
     ok;
 
-set_operating_mode(Idx, {?ampOperatingMode_cc, Laser, V}) ->
+set_operating_mode(_Idx, {?ampOperatingMode_cc, 1, _V}, #ampTable{ params=#{ 'has_settable_LD1' := false } }) ->
+	{error, unsettableLD1};
+
+set_operating_mode(_Idx, {?ampOperatingMode_cc, 1, V}, #ampTable{ ccMax1=Max }) 
+  when V > Max ->
+	{error, ofr};
+
+set_operating_mode(_Idx, {?ampOperatingMode_cc, 2, V}, #ampTable{ ccMax2=Max }) 
+  when V > Max ->
+	{error, ofr};
+
+set_operating_mode(Idx, {?ampOperatingMode_cc, Laser, V}, _Amp) ->
 	case bkfw_srv:command(Idx, scc, [io_lib:format("~b ~.2f", [Laser, V])]) of
 		{ok, {Idx, scc, [Laser, ofr]}} ->
 			{error, ofr};
@@ -526,7 +545,11 @@ set_operating_mode(Idx, {?ampOperatingMode_cc, Laser, V}) ->
 			ok
 	end;
 
-set_operating_mode(Idx, {?ampOperatingMode_gc, V}) ->
+set_operating_mode(_Idx, {?ampOperatingMode_gc, V}, #ampTable{ gcMin=Min, gcMax=Max }) 
+  when V > Max orelse V < Min ->
+	{error, ofr};
+
+set_operating_mode(Idx, {?ampOperatingMode_gc, V}, _Amp) ->
 	case bkfw_srv:command(Idx, sgc, [io_lib:format("~.2f", [V])]) of
 		{ok, {Idx, sgc, [ofr]}} ->
 			{error, ofr};
@@ -535,7 +558,11 @@ set_operating_mode(Idx, {?ampOperatingMode_gc, V}) ->
 			ok
 	end;
 
-set_operating_mode(Idx, {?ampOperatingMode_pc, V}) ->
+set_operating_mode(_Idx, {?ampOperatingMode_pc, V}, #ampTable{ pcMin=Min, pcMax=Max }) 
+  when V > Max orelse V < Min ->
+	{error, ofr};
+
+set_operating_mode(Idx, {?ampOperatingMode_pc, V}, _Amp) ->
 	case bkfw_srv:command(Idx, spc, [io_lib:format("~.2f", [V])]) of
 		{ok, {Idx, spc, [ofr]}} ->
 			{error, ofr};
@@ -544,10 +571,10 @@ set_operating_mode(Idx, {?ampOperatingMode_pc, V}) ->
 			ok
 	end;
 
-set_operating_mode(_, {_, undefined}) ->
+set_operating_mode(_, {_, undefined}, _Amp) ->
 	{error, missing_consign};
 
-set_operating_mode(_, _) ->
+set_operating_mode(_, _, _Amp) ->
     {error, internal}.
 
 
