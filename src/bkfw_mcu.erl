@@ -50,15 +50,17 @@
 				power         = 0.0,
 				cc_limit      = 0.0,
 				temp          = 0.0,
-				settable      = false}).
+				settable      = true}).
 -define(default_laser(I), #laser{index=I}).
 
 new(Idx) ->
 	Config = proplists:get_value(Idx, application:get_env(bkfw, amps, []), []),
-	Params = [ { 'has_PC_mode', proplists:get_value('has_PC_mode', Config, true) },
-			   { 'has_GC_mode', proplists:get_value('has_GC_mode', Config, true) },
-			   { 'has_input_PD', proplists:get_value('has_input_PD', Config, true) },
-			   { 'has_output_PD', proplists:get_value('has_output_PD', Config, true) } ],
+	Params = [ { 'has_PC_mode',       proplists:get_value('has_PC_mode', Config, true) },
+			   { 'has_GC_mode',       proplists:get_value('has_GC_mode', Config, true) },
+			   { 'has_input_PD',      proplists:get_value('has_input_PD', Config, true) },
+			   { 'has_output_PD',     proplists:get_value('has_output_PD', Config, true) },
+			   { 'has_settable_LD1',  proplists:get_value('has_settable_LD1', Config, true) }
+			 ],
 	#ampTable{ index=Idx, params=Params }.
 
 
@@ -442,10 +444,16 @@ parse_mode(off, _) -> ?ampOperatingMode_off.
 parse_pd([], Acc) -> 
 	Acc;
 
-parse_pd([ [Idx, P, <<"dBm">>] | Tail], #ampTable{ lasers=Lasers }=E) -> 
-	Laser = case lists:keyfind(Idx, 2, Lasers) of
-				false -> #laser{ index=Idx, power=P };
-				L -> L#laser{ power=P }
+parse_pd([ [Idx, P, <<"dBm">>] | Tail], #ampTable{ lasers=Lasers, params=Params }=E) -> 
+	Laser0 = case lists:keyfind(Idx, 2, Lasers) of
+				 false -> #laser{ index=Idx, power=P };
+				 L -> L#laser{ power=P }
+			 end,
+	Laser = case Idx of
+				1 ->
+					Laser0#laser{ settable=proplists:get_value('has_settable_LD1', Params, true) };
+				_ ->
+					Laser0
 			end,
 	parse_pd2(Idx, P, Tail, E#ampTable{ lasers=lists:keystore(Idx, 2, Lasers, Laser) }).
 
@@ -616,11 +624,13 @@ get_kv_float(Key, Props) ->
 
 
 get_laser_kv(Laser) ->
-	{ Laser#laser.index, [ {index, Laser#laser.index},
-						   {amp, Laser#laser.amp},
-						   {amp_consign, Laser#laser.amp_consign},
-						   {power, Laser#laser.power},
-						   {cc_limit, Laser#laser.cc_limit},
-						   {temp, Laser#laser.temp},
-						   {settable, Laser#laser.settable}
-						 ] }.
+	{ Laser#laser.index, [
+						  {index, Laser#laser.index},
+						  {amp, Laser#laser.amp},
+						  {amp_consign, Laser#laser.amp_consign},
+						  {power, Laser#laser.power},
+						  {cc_limit, Laser#laser.cc_limit},
+						  {temp, Laser#laser.temp},
+						  {settable, Laser#laser.settable}
+						 ]
+	}.

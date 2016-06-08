@@ -60,14 +60,16 @@
 					  {'has_PC_mode', true},
 					  {'has_GC_mode', true},
 					  {'has_input_PD', true},
-					  {'has_output_PD', true}
+					  {'has_output_PD', true},
+					  {'has_settable_LD1', true}
 					 ]
 				 },
 				 {2, [
 					  {'has_PC_mode', true},
 					  {'has_GC_mode', true},
 					  {'has_input_PD', true},
-					  {'has_output_PD', true}
+					  {'has_output_PD', true},
+					  {'has_settable_LD1', true}
 					 ]}
 				]}
 		]}
