@@ -27,6 +27,7 @@
 
 -record(mcu, {index              ,
 			  ampConsign         ,
+			  ampConsign2         ,
 			  gainConsign        ,
 			  outputPowerConsign ,
 			  operatingMode      ,
@@ -151,6 +152,7 @@ loop(#state{port=Port, tid=Tid, fwtid=FwTid}=S, Acc) ->
 								  #mcu{
 									 index=Idx,
 									 ampConsign=random:uniform()*100,
+									 ampConsign2=random:uniform()*100,
 									 gainConsign=random:uniform()*100,
 									 outputPowerConsign=random:uniform()*100,
 									 operatingMode=element(random:uniform(4), {"PC", "GC", "CC", "OFF"}),
@@ -180,25 +182,38 @@ loop(#state{port=Port, tid=Tid, fwtid=FwTid}=S, Acc) ->
 			loop(S, Acc)
     end.
 
-handle_msg(#mcu{index=Addr}=Mcu, rcc, [Pos], S) when is_integer(Pos) ->
-    reply(S, Addr, io_lib:format("CC ~p ~.2f mA", [Pos, Mcu#mcu.ampConsign])),
+handle_msg(#mcu{index=Addr}=Mcu, rcc, [1], S) ->
+    reply(S, Addr, io_lib:format("CC ~p ~.2f mA", [1, Mcu#mcu.ampConsign])),
     {S, Mcu};
 
-handle_msg(#mcu{index=Addr}=Mcu, scc, [Pos, Cur], S) when is_integer(Pos), 
-														  Cur > 20 ->
-    reply(S, Addr, io_lib:format("SCC ~p OFR", [Pos])),
+handle_msg(#mcu{index=Addr}=Mcu, rcc, [2], S) ->
+    reply(S, Addr, io_lib:format("CC ~p ~.2f mA", [2, Mcu#mcu.ampConsign2])),
     {S, Mcu};
 
-handle_msg(#mcu{index=Addr}=Mcu, scc, [Pos, Cur], S) when is_integer(Pos), 
-														  is_float(Cur) ->
-    reply(S, Addr, io_lib:format("SCC ~p ~.2f", [Pos, Cur])),
+handle_msg(#mcu{index=Addr, limits=#{ 'cc1' := Limit }}=Mcu, scc, [1, Cur], S) 
+  when Cur > Limit ->
+    reply(S, Addr, io_lib:format("SCC ~p OFR", [1])),
+    {S, Mcu};
+
+handle_msg(#mcu{index=Addr}=Mcu, scc, [1, Cur], S) when is_float(Cur) ->
+    reply(S, Addr, io_lib:format("SCC ~p ~.2f", [1, Cur])),
     {S, Mcu#mcu{ampConsign=Cur}};
+
+handle_msg(#mcu{index=Addr, limits=#{ 'cc2' := Limit }}=Mcu, scc, [2, Cur], S) 
+  when Cur > Limit ->
+    reply(S, Addr, io_lib:format("SCC ~p OFR", [2])),
+    {S, Mcu};
+
+handle_msg(#mcu{index=Addr}=Mcu, scc, [2, Cur], S) when is_float(Cur) ->
+    reply(S, Addr, io_lib:format("SCC ~p ~.2f", [2, Cur])),
+    {S, Mcu#mcu{ampConsign2=Cur}};
 
 handle_msg(#mcu{index=Addr}=Mcu, rgc, [], S) ->
     reply(S, Addr, io_lib:format("GC ~.2f dB", [Mcu#mcu.gainConsign])),
     {S, Mcu};
 
-handle_msg(#mcu{index=Addr}=Mcu, sgc, [Gain], S) when Gain > 20 ->
+handle_msg(#mcu{index=Addr, limits=#{ 'gc' := {Min, Max} }}=Mcu, sgc, [Gain], S) 
+  when Gain > Max orelse Gain < Min ->
     reply(S, Addr, "SGC OFR"),
     {S, Mcu};
 
@@ -210,7 +225,8 @@ handle_msg(#mcu{index=Addr}=Mcu, rpc, [], S) ->
     reply(S, Addr, io_lib:format("PC ~.2f dBm", [Mcu#mcu.outputPowerConsign])),
     {S, Mcu};
 
-handle_msg(#mcu{index=Addr}=Mcu, spc, [Pow], S) when Pow > 20 ->
+handle_msg(#mcu{index=Addr, limits=#{ 'pc' := {Min, Max} }}=Mcu, spc, [Pow], S) 
+  when Pow > Max orelse Pow < Min ->
     reply(S, Addr, "SPC OFR"),
     {S, Mcu};
 
