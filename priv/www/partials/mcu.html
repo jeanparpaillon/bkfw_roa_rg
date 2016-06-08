@@ -23,6 +23,11 @@
               <td>{{ mcu.detail.ampConsign }}</td>
               <td>mA</td>
             </tr>
+            <tr ng-if="mcu.detail.lasers.length > 1">
+              <td>{{ mcu.label.ampConsign }} (laser #2)</td>
+              <td>{{ mcu.detail.ampConsign2 }}</td>
+              <td>mA</td>
+            </tr>
             <tr>
               <td>{{ mcu.label.gainConsign }}</td>
               <td>{{ mcu.detail.gainConsign }}</td>
@@ -45,15 +50,22 @@
               </td>
               <td>&deg;C</td>
             </tr>
-            <tr ng-repeat="laser in mcu.detail.lasers", ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('curAmp')}">
-              <td>{{ mcu.label.curAmp }} #{{ laser.index }}</td>
+            <tr ng-class="{'danger text-danger': mcu.detail.hasAlarmOn('curAmp')}">
+              <td>{{ mcu.label.curAmp }}</td>
               <td>
                 <span
                 ng-show="mcu.detail.hasAlarmOn('curAmp')"
                 class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
                 aria-hidden="true">
                 </span>
-                {{ laser.amp | numeraljs:'0.00' }}
+                {{ mcu.detail.curAmp | numeraljs:'0.00' }}
+              </td>
+              <td>mA</td>
+            </tr>
+            <tr>
+              <td>{{ mcu.label.curAmp }} (laser #2)</td>
+              <td>
+                {{ mcu.detail.curAmp2 | numeraljs:'0.00' }}
               </td>
               <td>mA</td>
             </tr>
@@ -136,8 +148,24 @@
             </div>
           </div>
 
-          <div class="form-group" ng-if="mcu.controlMode != mcu.mode.OFF">
+          <div class="form-group" ng-if="mcu.controlMode != mcu.mode.OFF && mcu.controlMode != mcu.mode.CC">
             <label class="col-md-4 control-label" >Value in {{ mcu.modeID[mcu.controlMode].valueType }}</label>
+            <div class="col-md-8">
+              <input type="text" ng-model="mcu.controlValue"
+                                 class="form-control" />
+            </div>
+          </div>
+
+          <div class="form-group" ng-if="mcu.controlMode == mcu.mode.CC && mcu.detail['has_settable_LD1']">
+            <label class="col-md-4 control-label" >Value in {{ mcu.modeID[mcu.controlMode].valueType }} (laser #1)</label>
+            <div class="col-md-8">
+              <input type="text" ng-model="mcu.controlValue2"
+                                 class="form-control" />
+            </div>
+          </div>
+
+          <div class="form-group" ng-if="mcu.controlMode == mcu.mode.CC">
+            <label class="col-md-4 control-label" >Value in {{ mcu.modeID[mcu.controlMode].valueType }} (laser #2)</label>
             <div class="col-md-8">
               <input type="text" ng-model="mcu.controlValue"
                                  class="form-control" />
