@@ -44,6 +44,10 @@ smmModule MODULE-IDENTITY
     REVISION	"201605240000Z"
     DESCRIPTION
 	"Add PSU, FAN{1,2,3,4} traps."
+    REVISION	"201605240000Z"
+    DESCRIPTION
+	"Add laser #2 current and current consigns.
+	Remove amp identity."
     ::= { bktelPhotonics 1 }
 
 smmMIB	OBJECT IDENTIFIER ::= { smmModule 1 }
@@ -177,11 +181,13 @@ AmpEntry ::=
 	SEQUENCE {
 		ampIndex			INTEGER,
 		ampAmpConsign	 	Gauge32,
+		ampAmpConsign2	 	Gauge32,
 		ampGainConsign		Integer32,
 		ampOutputPowerConsign	Gauge32,
 		ampOperatingMode		INTEGER,
 		ampCurLaserTemp		Integer32,
 		ampCurAmp			Gauge32,
+		ampCurAmp2			Gauge32,
 		ampCurInternalTemp		Integer32,
 		ampPowerPd1            	Integer32,
 		ampPowerPd2            	Integer32,
@@ -189,15 +195,12 @@ AmpEntry ::=
 		ampPowerSupply         	Integer32,
 		ampInputLossTh    		Integer32,
 		ampOutputLossTh        	Integer32,
-		ampVendor			DisplayString,
-		ampModuleType		DisplayString,
-		ampHWVer			DisplayString,
-		ampHWRev			DisplayString,
-		ampSWVer			DisplayString,
-		ampFWVer			DisplayString,
-		ampPartNum			DisplayString,
-		ampSerialNum		DisplayString,
-		ampProductDate		DateAndTime
+		ampCCMax1			Gauge32,
+		ampCCMax2			Gauge32,
+		ampPCMin            Gauge32,
+		ampPCMax			Gauge32,
+		ampGCMin			Gauge32,
+		ampGCMax			Gauge32
 	}
 
 ampIndex OBJECT-TYPE
@@ -213,8 +216,16 @@ ampAmpConsign OBJECT-TYPE
     MAX-ACCESS	read-write
     STATUS	current
     DESCRIPTION
-	"The value of the lasers current consign used in current control mode, in mA."
+	"The value of the laser current consign used in current control mode, in mA."
     ::= { ampEntry 2 }
+
+ampAmpConsign2 OBJECT-TYPE
+    SYNTAX	Gauge32
+    MAX-ACCESS	read-write
+    STATUS	current
+    DESCRIPTION
+	"The value of the 2nd laser current consign used in current control mode, in mA."
+    ::= { ampEntry 3 }
 
 ampGainConsign OBJECT-TYPE
     SYNTAX	Integer32
@@ -222,7 +233,7 @@ ampGainConsign OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"The value of the lasers gain consign used in gain control mode, in dBm."
-    ::= { ampEntry 3 }
+    ::= { ampEntry 4 }
 
 ampOutputPowerConsign OBJECT-TYPE
     SYNTAX	Gauge32
@@ -230,11 +241,11 @@ ampOutputPowerConsign OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"The value of the lasers output power consign used in output power control mode, in dBm."
-    ::= { ampEntry 4 }
+    ::= { ampEntry 5 }
 
 ampOperatingMode OBJECT-TYPE
     SYNTAX	INTEGER {
-                    pc(1),
+            pc(1),
 		    gc(2),
 		    cc(3),
 		    off(4)
@@ -243,7 +254,7 @@ ampOperatingMode OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"The current operational mode of the laser."
-    ::= { ampEntry 5 }
+    ::= { ampEntry 6 }
 
 ampCurLaserTemp	OBJECT-TYPE
     SYNTAX	Integer32
@@ -251,15 +262,23 @@ ampCurLaserTemp	OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"The current laser temperature."
-    ::= { ampEntry 6 }
+    ::= { ampEntry 7 }
 
 ampCurAmp	OBJECT-TYPE
     SYNTAX	Gauge32
     MAX-ACCESS	read-only
     STATUS	current
     DESCRIPTION
-	"The current laser electrical current."
-    ::= { ampEntry 7 }
+	"The current laser #1 electrical current."
+    ::= { ampEntry 8 }
+
+ampCurAmp2	OBJECT-TYPE
+    SYNTAX	Gauge32
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"The current laser #2 electrical current."
+    ::= { ampEntry 9 }
 
 ampCurInternalTemp	OBJECT-TYPE
     SYNTAX	Integer32
@@ -267,7 +286,7 @@ ampCurInternalTemp	OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"The current internal temperature."
-    ::= { ampEntry 8 }
+    ::= { ampEntry 10 }
 
 ampPowerPd1	OBJECT-TYPE
     SYNTAX	Integer32
@@ -275,7 +294,7 @@ ampPowerPd1	OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"The power level on the monitoring photodiode(1)."
-    ::= { ampEntry 9 }
+    ::= { ampEntry 11 }
 
 ampPowerPd2	OBJECT-TYPE
     SYNTAX	Integer32
@@ -283,7 +302,7 @@ ampPowerPd2	OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"The power level on the monitoring photodiode(2)."
-    ::= { ampEntry 10 }
+    ::= { ampEntry 12 }
 
 ampPowerPd3	OBJECT-TYPE
     SYNTAX	Integer32
@@ -291,7 +310,7 @@ ampPowerPd3	OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"The power level on the monitoring photodiode(3)."
-    ::= { ampEntry 11 }
+    ::= { ampEntry 13 }
 
 ampPowerSupply	OBJECT-TYPE
     SYNTAX	Integer32
@@ -299,7 +318,7 @@ ampPowerSupply	OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"The power supply voltage."
-    ::= { ampEntry 12 }
+    ::= { ampEntry 14 }
 
 ampInputLossTh	OBJECT-TYPE
     SYNTAX	Integer32
@@ -307,7 +326,7 @@ ampInputLossTh	OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"The loss of input power threshold."
-    ::= { ampEntry 13 }
+    ::= { ampEntry 15 }
 
 ampOutputLossTh OBJECT-TYPE
     SYNTAX	Integer32
@@ -315,79 +334,55 @@ ampOutputLossTh OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"The loss of output power threshold."
-    ::= { ampEntry 14 }
-
-ampVendor	OBJECT-TYPE
-    SYNTAX	DisplayString
-    MAX-ACCESS	read-only
-    STATUS	current
-    DESCRIPTION
-	"Module vendor."
-    ::= { ampEntry 15 }
-
-ampModuleType	OBJECT-TYPE
-    SYNTAX	DisplayString
-    MAX-ACCESS	read-only
-    STATUS	current
-    DESCRIPTION
-	"Module type."
     ::= { ampEntry 16 }
 
-ampHWVer	OBJECT-TYPE
-    SYNTAX	DisplayString
+ampCCMax1 OBJECT-TYPE
+    SYNTAX	Gauge32
     MAX-ACCESS	read-only
     STATUS	current
     DESCRIPTION
-	"Module hardware version."
+	"Maximal consign for laser #1 in CC mode."
     ::= { ampEntry 17 }
 
-ampHWRev	OBJECT-TYPE
-    SYNTAX	DisplayString
+ampCCMax2 OBJECT-TYPE
+    SYNTAX	Gauge32
     MAX-ACCESS	read-only
     STATUS	current
     DESCRIPTION
-	"Module hardware revision."
+	"Maximal consign for laser #2 in CC mode."
     ::= { ampEntry 18 }
 
-ampSWVer	OBJECT-TYPE
-    SYNTAX	DisplayString
+ampPCMin OBJECT-TYPE
+    SYNTAX	Gauge32
     MAX-ACCESS	read-only
     STATUS	current
     DESCRIPTION
-	"Module software version."
+	"Minimal consign for laser #2 in PC mode."
     ::= { ampEntry 19 }
 
-ampFWVer	OBJECT-TYPE
-    SYNTAX	DisplayString
+ampPCMax OBJECT-TYPE
+    SYNTAX	Gauge32
     MAX-ACCESS	read-only
     STATUS	current
     DESCRIPTION
-	"Module firmware version."
+	"Maximal consign for laser #2 in PC mode."
     ::= { ampEntry 20 }
 
-ampPartNum	OBJECT-TYPE
-    SYNTAX	DisplayString
+ampGCMin OBJECT-TYPE
+    SYNTAX	Gauge32
     MAX-ACCESS	read-only
     STATUS	current
     DESCRIPTION
-	"Module part number."
+	"Minimal consign for laser #2 in GC mode."
     ::= { ampEntry 21 }
 
-ampSerialNum	OBJECT-TYPE
-    SYNTAX	DisplayString
+ampGCMax OBJECT-TYPE
+    SYNTAX	Gauge32
     MAX-ACCESS	read-only
     STATUS	current
     DESCRIPTION
-	"Module serial number."
+	"Maximal consign for laser #2 in GC mode."
     ::= { ampEntry 22 }
-
-ampProductDate	OBJECT-TYPE
-    SYNTAX	DisplayString
-    MAX-ACCESS	read-only
-    STATUS	current
-    DESCRIPTION
-	"Module production date."
-    ::= { ampEntry 23 }
 
 ampInputPowerTrap NOTIFICATION-TYPE
     OBJECTS {
