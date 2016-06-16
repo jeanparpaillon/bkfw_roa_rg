@@ -52,6 +52,7 @@ call(Handler, State0, Timeout) when is_function(Handler)  ->
 					bkfw_mutex:signal(Mutex),
 					ok
 			after Timeout ->
+					ok = gen_server:cast(?MODULE, release),
 					bkfw_mutex:signal(Mutex),
 					{error, timeout}
 			end;
@@ -79,7 +80,6 @@ command(Idx, Cmd, Args, Timeout) ->
 				  Bin = [io_lib:format("0x~2.16.0b ", [Idx]), [CmdName, ArgStr], $\r, $\n],
 				  ok = bkfw_com:raw(Com, Bin),
 				  {ok, undefined};
-
 			 ({msg, Msg}, _, _) ->
 				  match_ans(cmd_to_ans(Cmd), Msg)
 		  end,
@@ -106,18 +106,23 @@ init([]) ->
 
 
 handle_call({call, Handler, State0}, {_Pid, Tag}=From, #state{ com=Com, current=undefined }=S) ->
-	case Handler(init, Com, State0) of
+	try Handler(init, Com, State0) of
 		{ok, State1} ->
 			{reply, {ok, {self(), Tag}}, S#state{ current={From, Handler, State1} } };
 		ok ->
 			{reply, ok, S};
 		{error, _}=Err ->
 			{reply, Err, S}
+	catch _Cls:Err ->
+			{reply, {error, Err}, S}
 	end;
 
 handle_call(_Call, _From, S) ->
 	{reply, ok, S}.
 
+
+handle_cast(release, S) ->
+	{noreply, S#state{current=undefined} };
 
 handle_cast(_Cast, S) ->
 	{noreply, S}.

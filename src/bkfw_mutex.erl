@@ -7,6 +7,9 @@
 %%   (c) Francesco Cesarini and Simon Thompson
 
 -module(bkfw_mutex).
+
+-include("bkfw.hrl").
+
 -export([start_link/0,
 		 wait/0,
 		 signal/1]).
