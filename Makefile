@@ -60,34 +60,35 @@ RELBIN=$(PROJECT)_$(PROJECT_VERSION).bin
 dist:
 	git archive --prefix=$(RELDIR)/ HEAD . | gzip -c - > $(RELDIR).source.tar.gz
 
-IMAGE_ID=bkfw-build
+IMAGE_ID=yocto
 
 docker-release: docker-image
-	docker run -v `pwd`:/mnt $(IMAGE_ID) make -C /mnt release ORIG_UID=`id -u` ORIG_GRP=`id -g`
+	docker run -v $(HOME):$(HOME) $(IMAGE_ID) make -C $(CWD) release
 
-docker-image: $(OTP_ARCHIVE)
+docker-image:
 	@if ! $$(docker images | grep -q ^$(IMAGE_ID)); then \
-	  echo "Building $(IMAGE_ID) docker image"; \
-	  docker build --tag=$(IMAGE_ID) docker; \
-	else \
-	  echo "$(IMAGE_ID) docker image up-to-date"; \
+	  echo "Please create $(IMAGE_ID)"; \
+	  false; \
 	fi
 
-$(OTP_ARCHIVE):
-	curl --progress-bar  $(OTP_BASE_URL)/$(OTP_SRC) > $@
-
+POKY_BASEDIR=$(HOME)/BA_Projets/git/poky
+META_BKFW_BASEDIR=$(HOME)/BA_Projets/git/bkfw-yocto
 release:
 	rm -rf $(RELDIR)
 	rm -f $(RELDIR).zip
 	mkdir -p $(RELDIR)
-	dpkg-buildpackage -b
-	cp ../bkfw_$(PROJECT_VERSION)_all.deb $(RELDIR)/$(RELBIN)
+	( \
+	  source $(POKY_BASEDIR)/oe-init-build-env && \
+	  cd $(META_BKFW_BASEDIR)/build && \
+	  bitbake bkfw \
+	)
+	IPK=$(shell ls $(META_BKFW_BASEDIR)/build/tmp/deploy/ipk/arm*/bkfw_*.ipk | tail -n1); \
+	  cp $(IPK) $(RELDIR)/$(RELBIN)
 	cp README.md $(RELDIR)/README.md
 	cp CHANGES.md $(RELDIR)/CHANGES.md
 	mkdir -p $(RELDIR)/mibs
 	cp mibs/*.mib $(RELDIR)/mibs
 	cp /usr/share/mibs/ietf/SNMPv2-MIB $(RELDIR)/mibs
 	zip -r $(RELDIR).zip $(RELDIR)
-	-test -n "$(ORIG_UID)" && chown -R $(ORIG_UID).$(ORIG_GRP) .
 
 .PHONY: pdf dist docker-release docker-image release clean-release build-www rel-dev
