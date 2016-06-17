@@ -1,12 +1,16 @@
-FROM debian:wheezy
+FROM debian:jessie
 MAINTAINER Jean Parpaillon <jean.parpaillon@free.fr>
 
 ENV DEBIAN_FRONTEND noninteractive
 
-ADD sources.list /etc/apt/sources.list
-ADD esl-erlang_17.1-2~debian~wheezy_amd64.deb /root/esl-erlang_17.1-2~debian~wheezy_amd64.deb
+RUN apt update && \
+    apt -y --force-yes install gawk wget git-core diffstat unzip texinfo gcc-multilib \
+    build-essential chrpath socat autoconf automake libtool libglib2.0-dev \
+    libarchive-dev cpio sudo
+RUN groupadd -g 1000 jean && \
+    useradd -m -s /bin/bash -u 1000 -g 1000 jean
 
-RUN apt-get update && \
-	apt-get -y install wget apt-utils build-essential devscripts ca-certificates zip snmp-mibs-downloader
-RUN ( dpkg -i /root/esl-erlang_17.1-2~debian~wheezy_amd64.deb || true ) && \
-	apt-get -f -y install
+USER jean
+WORKDIR /home/jean
+
+ENTRYPOINT ["/bin/bash"]
