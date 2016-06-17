@@ -19,7 +19,10 @@
 -define(SLOTS, 128).
 %%-define(TID, ?MODULE).
 
--define(FUNS, [fun read_n/1, fun read_it/1, fun read_v/1, fun read_a/1]).
+-define(FUNS, [fun read_n/1
+			  ,fun read_it/1
+			   %%,fun read_v/1
+			  ,fun read_a/1]).
 
 -record(state, {
 		  slots                    :: tuple(),
