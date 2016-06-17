@@ -123,16 +123,16 @@ read_infos(S) ->
 	{ok, S}.
 
 
-read_v(S) ->
-	case bkfw_srv:command(0, rv, []) of
-		{ok, {0, v, [V, v]}} when is_float(V); is_integer(V) ->
-			ets:insert(?MODULE, {smmPowerSupply, V}),
-			{ok, S#state{powerSupply=V}};
-		{ok, Ret} ->
-			{error, {string, io_lib:format("RV invalid answer: ~p~n", [Ret])}, S};
-		{error, Err} ->
-			{error, Err, S}
-    end.
+%% read_v(S) ->
+%% 	case bkfw_srv:command(0, rv, []) of
+%% 		{ok, {0, v, [V, v]}} when is_float(V); is_integer(V) ->
+%% 			ets:insert(?MODULE, {smmPowerSupply, V}),
+%% 			{ok, S#state{powerSupply=V}};
+%% 		{ok, Ret} ->
+%% 			{error, {string, io_lib:format("RV invalid answer: ~p~n", [Ret])}, S};
+%% 		{error, Err} ->
+%% 			{error, Err, S}
+%%     end.
 
 read_it(S) ->
 	case bkfw_srv:command(0, rit, []) of
