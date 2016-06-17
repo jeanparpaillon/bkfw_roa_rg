@@ -19,29 +19,16 @@ Syntax is (don't forget brackets and final dot !):
 ].
 ```
 
-# SNMP Standard settings
-
-The included SNMP agent implements SNMP STANDARD MIB. Variables are set in the file
-`/opt/bkfw/snmp/agent/conf/standard.conf`. See mibs/SNMPv2-MIB for variables meaning.
-
-Example:
-```
-{sysName, "BKtel EDFA"}.
-{sysDescr, "BKtel EDFA"}.
-{sysContact, "support@bktel-photonics.com"}.
-{sysLocation, ""}.
-{sysObjectID, [3,6,1,4,1,44890,1]}.
-{sysServices, 1}.
-{snmpEnableAuthenTraps, enabled}.
-```
-
 # Parameters
+
+Parameters are described below.
 
 ## Basic parameters
 
 * `com` (string, default: "/dev/tty/AMA0"): path to com device
 * `logo` (string, default: bktel logo): full path to logo, eg: /root/mylogo.png. width: 250px
 * `netif` (string, default: "eth0"): network interface name
+* `usbtty` (string: no default, USB tty disabled): path to USB tty port, eg /dev/ttyUSB0
 
 ## Informations
 
@@ -93,6 +80,23 @@ Vendor infos are provided in the `i` tuple:
 * `upload_dir` (string, default: "/var/lib/bkfw/upload"): path for uploaded firmware
 * `system_cmd` (true | false): if false, does not really execute system commands (reboot, etc.): for debugging purpose
 * `password` ({md5, hash_value}, default pasword: 'admin'): default admin password. hash_value is base64 encoded value of the hash, using md5 algorithm. eg: {md5, "0DPiKuNIrrVmD8IUCuw1hQxNqZc="}
+
+
+# SNMP Standard settings
+
+The included SNMP agent implements SNMP STANDARD MIB. Variables are set in the file
+`/opt/bkfw/snmp/agent/conf/standard.conf`. See mibs/SNMPv2-MIB for variables meaning.
+
+Example:
+```
+{sysName, "BKtel EDFA"}.
+{sysDescr, "BKtel EDFA"}.
+{sysContact, "support@bktel-photonics.com"}.
+{sysLocation, ""}.
+{sysObjectID, [3,6,1,4,1,44890,1]}.
+{sysServices, 1}.
+{snmpEnableAuthenTraps, enabled}.
+```
 
 # Default values
 
