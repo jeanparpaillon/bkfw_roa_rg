@@ -23,23 +23,24 @@ SCRIPTNAME=/etc/init.d/$NAME
 [ -x "$DAEMON" ] || exit 0
 
 case "$1" in
-  start)
-	$DAEMON start
-	;;
-  stop)
-	$DAEMON stop
-	;;
-  status)
-	$DAEMON ping
-	;;
-  restart|force-reload)
-	$DAEMON reboot
-	;;
-  *)
-	#echo "Usage: $SCRIPTNAME {start|stop|restart|reload|force-reload}" >&2
-	echo "Usage: $SCRIPTNAME {start|stop|status|restart|force-reload}" >&2
-	exit 3
-	;;
+	start)
+		stty -F /dev/ttyAMA0 115200 cs8 -cstopb -onlcr -echo -echoe -echok -opost
+		$DAEMON start
+		;;
+	stop)
+		$DAEMON stop
+		;;
+	status)
+		$DAEMON ping
+		;;
+	restart|force-reload)
+		$DAEMON reboot
+		;;
+	*)
+		#echo "Usage: $SCRIPTNAME {start|stop|restart|reload|force-reload}" >&2
+		echo "Usage: $SCRIPTNAME {start|stop|status|restart|force-reload}" >&2
+		exit 3
+		;;
 esac
 
 :
