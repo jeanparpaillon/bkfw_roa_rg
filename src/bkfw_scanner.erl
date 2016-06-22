@@ -248,6 +248,8 @@ kw_to_atom(<<"I">>)         -> i;
 kw_to_atom(<<"LC">>)        -> lc;
 kw_to_atom(<<"LI">>)        -> li;
 kw_to_atom(<<"LO">>)        -> lo;
+kw_to_atom(<<"LI:">>)       -> li;
+kw_to_atom(<<"LO:">>)       -> lo;
 kw_to_atom(<<"LT">>)        -> lt;
 kw_to_atom(<<"MAX">>)       -> max;
 kw_to_atom(<<"MIN">>)       -> min;

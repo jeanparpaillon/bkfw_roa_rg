@@ -340,7 +340,7 @@ handle_msg(#mcu{index=Addr, powerSupply=V}=Mcu, rv, [], S) ->
     {S, Mcu#mcu{powerSupply=ran(V)}};
 
 handle_msg(#mcu{index=Addr}=Mcu, rli, [], S) ->
-    reply(S, Addr, io_lib:format("LI ~.2f dBm", [Mcu#mcu.inputLossThreshold])),
+    reply(S, Addr, io_lib:format("LI: ~.2f dBm", [Mcu#mcu.inputLossThreshold])),
     {S, Mcu};
 
 handle_msg(#mcu{index=Addr}=Mcu, sli, [Pow], S) when is_float(Pow) ->
@@ -348,7 +348,7 @@ handle_msg(#mcu{index=Addr}=Mcu, sli, [Pow], S) when is_float(Pow) ->
     {S, Mcu#mcu{inputLossThreshold=Pow}};
 
 handle_msg(#mcu{index=Addr}=Mcu, rlo, [], S) ->
-    reply(S, Addr, io_lib:format("LO ~.2f dBm", [Mcu#mcu.outputLossThreshold])),
+    reply(S, Addr, io_lib:format("LO: ~.2f dBm", [Mcu#mcu.outputLossThreshold])),
     {S, Mcu};
 
 handle_msg(#mcu{index=Addr}=Mcu, slo, [Loss], S) when is_float(Loss) ->
