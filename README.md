@@ -54,6 +54,7 @@ Vendor infos are provided in the `i` tuple:
 		       {'has_PC_mode', true},
 			   {'has_GC_mode', true},
 			   {'has_input_PD', true},
+			   {'number_of_laser', 1},
 			   {'has_output_PD', true}
 			 ]
 		 },
@@ -61,11 +62,28 @@ Vendor infos are provided in the `i` tuple:
 		       {'has_PC_mode', true},
 			   {'has_GC_mode', false},
 			   {'has_input_PD', false},
+			   {'number_of_laser', 2},
 			   {'has_output_PD', true}
 			 ]
 		 }
 ]}
 ```
+
+Some commands requires authentication.
+Password can be set globally (for all amps):
+```erlang
+{amp_password, 7536}
+```
+
+... or per amp:
+```erlang
+{amps, [
+	   { 1, [
+	   	   	 {password, 1234}
+		    ]}
+]}
+```
+
 
 ## Performance parameters
 

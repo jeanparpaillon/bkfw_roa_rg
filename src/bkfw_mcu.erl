@@ -29,7 +29,8 @@
 		 read_limits/1]).
 
 -define(PERIOD, 100).
--define(FUNS, [fun read_pm/1, 
+-define(FUNS, [fun set_pw/1,
+			   fun read_pm/1, 
 			   fun read_cc/1,
 			   fun read_gc/1,
 			   fun read_pc/1,
@@ -52,7 +53,9 @@ new(Idx) ->
 	  'has_input_PD'     => proplists:get_value('has_input_PD', Config, true),
 	  'has_output_PD'    => proplists:get_value('has_output_PD', Config, true),
 	  'has_settable_LD1' => proplists:get_value('has_settable_LD1', Config, true),
-	  'number_of_laser'  => proplists:get_value('number_of_laser', Config, 1)
+	  'number_of_laser'  => proplists:get_value('number_of_laser', Config, 1),
+	  password           => proplists:get_value(password, Config, application:get_env(bkfw, amp_password, 0000)),
+	  auth               => false
 	 },
 	#ampTable{ index=Idx, params=Params }.
 
@@ -225,6 +228,21 @@ table_func(Op, RowIndex, Cols, NameDb) ->
 %%%
 %%% Internals
 %%%
+set_pw(#ampTable{index=Idx, params=Params}=E) ->
+	Passwd = maps:get(password, Params, 0000),
+    case bkfw_srv:command(Idx, spw, [integer_to_binary(Passwd)]) of
+		{ok, {Idx, pwd, [ok]}} ->
+			{ok, E#ampTable{ params=Params#{ auth := true }}};
+		{ok, {Idx, pwd, [nok]}} ->
+			?error("Authentication failed on amp #~b", [Idx]),
+			{ok, E};
+		{ok, _Ret} ->
+			{error, {string, io_lib:format("SPW invalid answer: ~p~n", [_Ret])}};
+		{error, Err} ->
+			{error, Err}
+    end.
+	
+
 read_cc(#ampTable{index=Idx, params=Params}=E) ->
     F = fun(X, {ok, Acc}) ->
 				case bkfw_srv:command(Idx, rcc, [integer_to_binary(X)]) of
@@ -375,6 +393,10 @@ read_lo(#ampTable{index=Idx}=E) ->
 		{error, Err} ->
 			{error, Err}
     end.
+
+
+read_limits(#ampTable{ params=#{ auth := false }}=E) ->
+	{ok, E};
 
 read_limits(#ampTable{ index=Idx, params=Params }=E) ->
     F = fun(X, {ok, Acc}) ->

@@ -55,6 +55,7 @@
 			  {serialNum, "P1549GB03250"},
 			  {productDate, "04/05/2016"}
 			 ]},
+		 {amp_password, 7536},
 		 {amps, [
 				 {1, [
 					  {'has_PC_mode', true},
@@ -71,7 +72,8 @@
 					  {'has_input_PD', true},
 					  {'has_output_PD', true},
 					  {'number_of_laser', 2},
-					  {'has_settable_LD1', true}
+					  {'has_settable_LD1', true},
+					  {password, 4556}
 					 ]}
 				]}
 		]}

@@ -256,6 +256,14 @@ handle_msg(#edfa{}=Edfa, ra, [], S) ->
     end,
     {S, Edfa};
 
+handle_msg(#mcu{index=Addr}=Mcu, spw, [7536], S) ->
+	reply(S, Addr, "PWD OK"),
+    {S, Mcu};
+
+handle_msg(#mcu{index=Addr}=Mcu, spw, [_], S) ->
+	reply(S, Addr, "PWD NOK"),
+    {S, Mcu};
+
 handle_msg(#mcu{index=Addr}=Mcu, ra, [], S) ->
 	case random:uniform(4) of
 	 	1 ->
