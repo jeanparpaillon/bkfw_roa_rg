@@ -23,7 +23,7 @@
               <td>{{ mcu.detail.ampConsign }}</td>
               <td>mA</td>
             </tr>
-            <tr ng-if="mcu.detail.lasers.length > 1">
+            <tr ng-if="mcu.detail['number_of_laser'] > 1">
               <td>{{ mcu.label.ampConsign }} (laser #2)</td>
               <td>{{ mcu.detail.ampConsign2 }}</td>
               <td>mA</td>
@@ -62,7 +62,7 @@
               </td>
               <td>mA</td>
             </tr>
-            <tr>
+            <tr ng-if="mcu.detail['number_of_laser'] > 1">
               <td>{{ mcu.label.curAmp }} (laser #2)</td>
               <td>
                 {{ mcu.detail.curAmp2 | numeraljs:'0.00' }}

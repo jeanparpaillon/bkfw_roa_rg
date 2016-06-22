@@ -52,7 +52,7 @@ new(Idx) ->
 	  'has_input_PD'     => proplists:get_value('has_input_PD', Config, true),
 	  'has_output_PD'    => proplists:get_value('has_output_PD', Config, true),
 	  'has_settable_LD1' => proplists:get_value('has_settable_LD1', Config, true),
-	  lasers             => []
+	  'number_of_laser'  => proplists:get_value('number_of_laser', Config, 1)
 	 },
 	#ampTable{ index=Idx, params=Params }.
 
@@ -99,7 +99,7 @@ get_kv(#ampTable{ params=Params }=T, 1) ->
 	 {'has_input_PD',      maps:get('has_input_PD', Params, true)},
 	 {'has_output_PD',     maps:get('has_output_PD', Params, true)},
 	 {'has_settable_LD1',  maps:get('has_settable_LD1', Params, true)},
-	 {'lasers',            maps:get(lasers, Params, [])}
+	 {'number_of_laser',   maps:get('number_of_laser', Params, 1)}
 	];
 
 
@@ -113,7 +113,7 @@ get_kv(#ampTable{ params=Params }=T, 2) ->
 	 {max_pc,              T#ampTable.pcMax},
 	 {min_gc,              T#ampTable.gcMin},
 	 {max_gc,              T#ampTable.gcMax},
-	 {number_of_laser,     length(maps:get(lasers, T#ampTable.params, [1]))},
+	 {number_of_laser,     maps:get('number_of_laser', T#ampTable.params, 1)},
 	 {has_settable_LD1,    maps:get('has_settable_LD1', T#ampTable.params, true)},
 	 {alarms,              []},
 	 {'LD1_current',       T#ampTable.curAmp},
@@ -243,7 +243,7 @@ read_cc(#ampTable{index=Idx, params=Params}=E) ->
 		   (_, {error, Err}) ->
 				{error, Err}
 		end,
-    lists:foldl(F, {ok, E}, maps:get(lasers, Params, [])).
+    lists:foldl(F, {ok, E}, lists:seq(1, maps:get('number_of_laser', Params, 1))).
 
 read_gc(#ampTable{index=Idx}=E) ->
     case bkfw_srv:command(Idx, rgc, []) of
@@ -302,7 +302,7 @@ read_lt(#ampTable{ index=Idx, params=Params }=E) ->
 		   (_, {error, Err}) ->
 				{error, Err}
 		end,
-    lists:foldl(F, {ok, E}, maps:get(lasers, Params, [])).
+    lists:foldl(F, {ok, E}, lists:seq(1, maps:get('number_of_laser', Params, 1))).
 
 read_lc(#ampTable{ index=Idx, params=Params }=E) ->
     F = fun(X, {ok, Acc}) ->
@@ -320,7 +320,7 @@ read_lc(#ampTable{ index=Idx, params=Params }=E) ->
 						{error, Err}
 				end
 		end,
-    lists:foldl(F, {ok, E}, maps:get(lasers, Params, [])).
+    lists:foldl(F, {ok, E}, lists:seq(1, maps:get('number_of_laser', Params, 1))).
 
 read_it(#ampTable{index=Idx}=E) ->
     case bkfw_srv:command(Idx, rit, []) of
@@ -395,7 +395,7 @@ read_limits(#ampTable{ index=Idx, params=Params }=E) ->
 						{error, Err}
 				end
 		end,
-    case lists:foldl(F, {ok, E}, maps:get(lasers, Params, [])) of
+    case lists:foldl(F, {ok, E}, lists:seq(1, maps:get('number_of_laser', Params, 1))) of
 		{ok, E1} ->
 			read_limits_pc(E1);
 		{error, Err} ->
@@ -437,27 +437,16 @@ parse_mode(off, _) -> ?ampOperatingMode_off.
 parse_pd([], Acc) -> 
 	Acc;
 
-parse_pd([ [Idx, P, <<"dBm">>] | Tail], #ampTable{ params=Params }=E) -> 
-	Lasers0 = maps:get(lasers, Params, []),
-	Lasers = case lists:member(Idx, Lasers0) of
-				 true ->
-					 Lasers0;
-				 false ->
-					 lists:merge([Idx], Lasers0)
-			 end,
-	parse_pd2(Idx, P, Tail, E#ampTable{ params=Params#{ lasers := Lasers } }).
-
-
-parse_pd2(1, P, Tail, E) ->
+parse_pd([ [1, P, <<"dBm">>] | Tail], #ampTable{}=E) -> 
 	parse_pd(Tail, E#ampTable{ powerPd1=P });
 
-parse_pd2(2, P, Tail, E) ->
+parse_pd([ [2, P, <<"dBm">>] | Tail], #ampTable{}=E) -> 
 	parse_pd(Tail, E#ampTable{ powerPd2=P });
 
-parse_pd2(3, P, Tail, E) ->
+parse_pd([ [3, P, <<"dBm">>] | Tail], #ampTable{}=E) -> 
 	parse_pd(Tail, E#ampTable{ powerPd3=P });
 
-parse_pd2(_, _, Tail, E) ->
+parse_pd([ [_, _, <<"dBm">>] | Tail], E) -> 
 	parse_pd(Tail, E).
 
 

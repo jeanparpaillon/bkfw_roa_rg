@@ -38,10 +38,10 @@
                 class="glyphicon glyphicon-exclamation-sign text-danger pull-right"
                 aria-hidden="true">
               </span>
-							<span ng-if="mcu.lasers.length == 1">
+							<span ng-if="mcu['number_of_laser'] == 1">
 								{{ mcu.curAmp | numeraljs:'0.00' }} mA
 							</span>
-							<span ng-if="mcu.lasers.length > 1" >
+							<span ng-if="mcu['number_of_laser'] > 1" >
 								<div class="row" >
 									<span class="col-md-6">Laser #1: </span>
 									<span class="col-md-6">{{ mcu.curAmp | numeraljs:'0.00' }} mA</span>

@@ -61,6 +61,7 @@
 					  {'has_GC_mode', true},
 					  {'has_input_PD', true},
 					  {'has_output_PD', true},
+					  {'number_of_laser', 1},
 					  {'has_settable_LD1', true}
 					 ]
 				 },
@@ -69,6 +70,7 @@
 					  {'has_GC_mode', true},
 					  {'has_input_PD', true},
 					  {'has_output_PD', true},
+					  {'number_of_laser', 2},
 					  {'has_settable_LD1', true}
 					 ]}
 				]}
