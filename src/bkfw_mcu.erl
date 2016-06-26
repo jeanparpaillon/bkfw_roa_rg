@@ -156,27 +156,22 @@ set_kv(Idx, Kv, 1) ->
     end;
 
 set_kv(Idx, Kv, 2) ->
-	lists:foldl(fun (_, {error, _}=Err) ->
-						Err;
-					({mode, ?ampOperatingMode_off}, _Acc) ->
-						bkfw_srv:command(Idx, smode, [<<"OFF">>]);
-					({mode, ?ampOperatingMode_cc}, _Acc) ->
-						bkfw_srv:command(Idx, smode, [<<"CC">>]);
-					({mode, ?ampOperatingMode_gc}, _Acc) ->
-						bkfw_srv:command(Idx, smode, [<<"GC">>]);
-					({mode, ?ampOperatingMode_pc}, _Acc) ->
-						bkfw_srv:command(Idx, smode, [<<"PC">>]);
-					({'CC1_setpoint', V}, _Acc) ->
-						bkfw_srv:command(Idx, scc, [io_lib:format("~b ~.2f", [1, V])]);
-					({'CC2_setpoint', V}, _Acc) ->
-						bkfw_srv:command(Idx, scc, [io_lib:format("~b ~.2f", [2, V])]);
-					({'GC_setpoint', V}, _Acc) ->
-						bkfw_srv:command(Idx, sgc, [io_lib:format("~.2f", [V])]);
-					({'PC_setpoint', V}, _Acc) ->
-						bkfw_srv:command(Idx, spc, [io_lib:format("~.2f", [V])]);
-					(_, _Acc) ->
-						{error, invalid_key}
-				end, ok, Kv).
+	F = fun (_, {error, _}=Err) ->
+				Err;
+			({mode, Mode}, _Acc) ->
+				set_operating_mode2(Idx, Mode);
+			({'CC1_setpoint', V}, _Acc) ->
+				bkfw_srv:command(Idx, scc, [io_lib:format("~b ~.2f", [1, to_float(V)])]);
+			({'CC2_setpoint', V}, _Acc) ->
+				bkfw_srv:command(Idx, scc, [io_lib:format("~b ~.2f", [2, to_float(V)])]);
+			({'GC_setpoint', V}, _Acc) ->
+				bkfw_srv:command(Idx, sgc, [io_lib:format("~.2f", [to_float(V)])]);
+			({'PC_setpoint', V}, _Acc) ->
+				bkfw_srv:command(Idx, spc, [io_lib:format("~.2f", [to_float(V)])]);
+			(_, _Acc) ->
+				{error, invalid_key}
+		end,
+	lists:foldl(F, ok, Kv).
 
 
 %%% SNMP functions
@@ -587,6 +582,32 @@ set_operating_mode(_, {_, undefined}, _Amp) ->
 
 set_operating_mode(_, _, _Amp) ->
     {error, internal}.
+
+
+set_operating_mode2(Idx, Mode) when is_float(Mode) ->
+	set_operating_mode2(Idx, trunc(Mode));
+
+set_operating_mode2(Idx, ?ampOperatingMode_off) ->
+	bkfw_srv:command(Idx, smode, [<<"OFF">>]);
+
+set_operating_mode2(Idx, ?ampOperatingMode_cc) ->
+	bkfw_srv:command(Idx, smode, [<<"CC">>]);
+
+set_operating_mode2(Idx, ?ampOperatingMode_gc) ->
+	bkfw_srv:command(Idx, smode, [<<"GC">>]);
+
+set_operating_mode2(Idx, ?ampOperatingMode_pc) ->
+	bkfw_srv:command(Idx, smode, [<<"PC">>]).
+
+
+to_float(I) when is_float(I) ->
+	I;
+
+to_float(I) when is_integer(I) ->
+	float(I);
+
+to_float(I) when is_binary(I) ->
+	binary_to_float(I).
 
 
 set_thresholds(Idx, Kv) ->
