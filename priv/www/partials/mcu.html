@@ -163,7 +163,10 @@
           </div>
 
           <div class="form-group" ng-if="mcu.controlMode == mcu.mode.CC">
-            <label class="col-md-4 control-label" >Value in {{ mcu.modeID[mcu.controlMode].valueType }} (laser #1)</label>
+            <label class="col-md-4 control-label" >
+							Value in {{ mcu.modeID[mcu.controlMode].valueType }}
+							<span ng-if="mcu.detail['number_of_laser'] > 1" >(laser #1)</span>
+						</label>
             <div class="col-md-4">
               <input type="text" ng-model="mcu.controlValues[0]"
                      class="form-control"
@@ -174,7 +177,7 @@
 						</div>
           </div>
 
-          <div class="form-group" ng-if="mcu.controlMode == mcu.mode.CC">
+          <div class="form-group" ng-if="mcu.detail['number_of_laser'] > 1 && mcu.controlMode == mcu.mode.CC">
             <label class="col-md-4 control-label" >Value in {{ mcu.modeID[mcu.controlMode].valueType }} (laser #2)</label>
             <div class="col-md-4">
               <input type="text" ng-model="mcu.controlValues[1]"
