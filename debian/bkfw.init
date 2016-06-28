@@ -24,7 +24,8 @@ SCRIPTNAME=/etc/init.d/$NAME
 
 case "$1" in
 	start)
-		stty -F /dev/ttyAMA0 115200 cs8 -cstopb -onlcr -echo -echoe -echok -opost
+		stty -F /dev/ttyAMA0 115200 cs8 -cstopb -onlcr -echo -echoe -echok -opost || true
+		stty -F /dev/ttyUSB* 115200 cs8 -cstopb -onlcr -echo -echoe -echok -opost || true
 		$DAEMON start
 		;;
 	stop)
