@@ -68,7 +68,7 @@ handle_info({Usb, {data, {noeol, Bin}}}, #state{usb=Usb, data=Acc}=S) ->
 handle_info({Usb, {data, {eol, Bin}}}, #state{usb=Usb, data=Acc}=S) ->
 	%%?debug("USB: ~p", [{eol, Bin}]),
 	bkfw_srv:call(fun (init, Com, _) ->
-						  bkfw_com:raw(Com, << Acc/binary, Bin/binary, $\r, $\n >>),
+						  bkfw_com:raw(Com, << Acc/binary, Bin/binary >>),
 						  ok
 				  end, undefined),
 	{noreply, S#state{ data= <<>> }}.

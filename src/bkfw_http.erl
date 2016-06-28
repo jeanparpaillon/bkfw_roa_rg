@@ -71,6 +71,7 @@ init(_, _Req, _) ->
     {upgrade, protocol, cowboy_rest}.
 
 rest_init(Req, {Version, mcu}) ->
+	%%?debug("REQ MCU (~p): ~p ", [Version, Req]),
     case cowboy_req:binding(index, Req) of
 		{undefined, Req2} ->
 			{ok, Req2, #state{section=mcu, index=undefined, version=Version}};
@@ -259,11 +260,11 @@ from_json(Req, #state{section=mcu, index=I, version=V}=S) ->
 			?error("Internal error: ~p~n", [Err]),
 			{halt, ?set_error(internal, Req2), S};
 		{ok, Json, Req2} ->
-			?debug("POST /api/mcu/~p\n"
-				   "       ~p\n", [I, Json]),
+			%%?debug("POST /api/mcu/~p\n"
+			%%	   "       ~p\n", [I, Json]),
 			case bkfw_mcu:set_kv(I, Json, V) of
 				ok ->
-					?debug("Set MCU kv=ok\n"),
+					%%?debug("Set MCU kv=ok\n"),
 					{true, Req2, S};
 				{error, Err} ->
 					?error("Request error: ~p~n", [Err]),

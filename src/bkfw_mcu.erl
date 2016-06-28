@@ -156,6 +156,7 @@ set_kv(Idx, Kv, 1) ->
     end;
 
 set_kv(Idx, Kv, 2) ->
+	%%?debug("Set MCU #~p: ~p", [Idx, Kv]),
 	F = fun (_, {error, _}=Err) ->
 				Err;
 			({mode, Mode}, _Acc) ->
@@ -171,7 +172,11 @@ set_kv(Idx, Kv, 2) ->
 			(_, _Acc) ->
 				{error, invalid_key}
 		end,
-	lists:foldl(F, ok, Kv).
+	case lists:foldl(F, ok, Kv) of
+		ok -> ok;
+		{ok, _} -> ok;
+		{error, _}=Err -> Err
+	end.
 
 
 %%% SNMP functions
@@ -584,8 +589,8 @@ set_operating_mode(_, _, _Amp) ->
     {error, internal}.
 
 
-set_operating_mode2(Idx, Mode) when is_float(Mode) ->
-	set_operating_mode2(Idx, trunc(Mode));
+set_operating_mode2(Idx, Mode) when is_binary(Mode) ->
+	set_operating_mode2(Idx, binary_to_integer(Mode));
 
 set_operating_mode2(Idx, ?ampOperatingMode_off) ->
 	bkfw_srv:command(Idx, smode, [<<"OFF">>]);
