@@ -336,18 +336,19 @@ angular.module('bkfwApp.controllers', ['uiSwitch'])
       else {
         message += "disable USB mode ?";
       }
-
+			
       dialogs.confirm(message, body)
-      .then(function() {
-        if (newVal === true)
-          usbMode.enable();
-        else if (newVal === false)
-          usbMode.disable();
-        },
-        angular.bind(this, function() {
-          this.usbmode = oldVal;
-        })
-      );
+				.then(
+					function() {
+						if (newVal === true)
+							usbMode.enable();
+						else if (newVal === false)
+							usbMode.disable();
+					},
+					angular.bind(this, function() {
+						this.usbmode = oldVal;
+					})
+				);
     }),
     true
   );

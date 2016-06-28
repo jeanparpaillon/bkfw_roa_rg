@@ -198,7 +198,9 @@ handle_call({get_kv, targets}, _From, State) ->
     end;
 
 handle_call({get_kv, usb}, _From, State) ->
-    Kv = [{enable, bkfw_sup:get_usbmode()}],
+	Mode = bkfw_sup:get_usbmode(),
+	?debug("USB status: ~p", [Mode]),
+    Kv = [{enable, Mode}],
     {reply, Kv, State};
 
 handle_call({get_kv, firmware}, _From, #state{firmware=FW}=S) ->

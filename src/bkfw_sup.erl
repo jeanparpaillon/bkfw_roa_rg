@@ -52,8 +52,8 @@ set_upgrade(true) ->
 -spec get_usbmode() -> boolean().
 get_usbmode() ->
     F = fun F0([]) -> false;
-			F0([{bkfw_usb, undefined, _, _} | _]) -> false;
-			F0([{bkfw_usb, Pid, _, _ } | _]) when is_pid(Pid) -> true;
+			F0([{bkfw_edfa, undefined, _, _} | _]) -> true;
+			F0([{bkfw_edfa, Pid, _, _ } | _]) when is_pid(Pid) -> false;
 			F0([_ | Tail]) -> F0(Tail)
 		end,
     F(supervisor:which_children(?SRV)).
