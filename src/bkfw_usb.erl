@@ -12,6 +12,7 @@
 		 terminate/2, code_change/3]).
 
 -record(state, {
+		  data,
 		  usb_fd,
 		  usb
 		 }).
@@ -37,7 +38,8 @@ init(_) ->
 		UsbDev ->
 			case open_com_port(UsbDev) of
 				{ok, UsbFd, UsbPort} ->
-					{ok, #state{usb_fd=UsbFd, usb=UsbPort}};
+					?info("Opened USB serial port: ~s", [UsbDev]),
+					{ok, #state{usb_fd=UsbFd, usb=UsbPort, data= <<>>}};
 				{error, enoent} ->
 					?info("No such USB port, ignoring: ~p", [UsbDev]),
 					{ok, #state{}};
@@ -59,13 +61,17 @@ handle_cast(_Cast, S) ->
     {noreply, S}.
 
 
-handle_info({Usb, {data, Bin}}, #state{usb=Usb}=S) ->
-	?debug("Receive data from USB: ~p", [Bin]),
+handle_info({Usb, {data, {noeol, Bin}}}, #state{usb=Usb, data=Acc}=S) ->
+	%%?debug("USB: ~p", [{noeol, Bin}]),
+	{noreply, S#state{ data= << Acc/binary, Bin/binary >>}};
+
+handle_info({Usb, {data, {eol, Bin}}}, #state{usb=Usb, data=Acc}=S) ->
+	%%?debug("USB: ~p", [{eol, Bin}]),
 	bkfw_srv:call(fun (init, Com, _) ->
-						  bkfw_com:raw(Com, Bin),
+						  bkfw_com:raw(Com, << Acc/binary, Bin/binary, $\r, $\n >>),
 						  ok
 				  end, undefined),
-	{noreply, S}.
+	{noreply, S#state{ data= <<>> }}.
 
 
 terminate(_Reason, #state{usb_fd=UsbFd, usb=UsbPort}) ->

@@ -128,10 +128,15 @@ handle_cast(_Cast, S) ->
 	{noreply, S}.
 
 
+handle_info({data, Data}, #state{ current=undefined }=S) ->
+	bkfw_usb:send(Data),
+	{noreply, S};
+
 handle_info({data, Data}, #state{ com=Com, sofar=SoFar, current={{Pid, Tag}=From, Handler, State0} }=S) ->
 	case bkfw_parser:is_raw(Data, SoFar) of
 		true ->
-			bkfw_usb:send(Data);
+			bkfw_usb:send(Data),
+			{noreply, S};
 		false ->
 			case bkfw_parser:parse(Data, SoFar) of
 				{ok, Msg, _} ->

@@ -120,13 +120,21 @@ loop(#state{port=Port, tid=Tid, fwtid=FwTid}=S, Acc) ->
 		{Port, {data, {noeol, Bin}}} ->
 			loop(S, << Acc/binary, Bin/binary >>);
 		{Port, {data, {eol, Bin}}} ->
-			Msg = << Acc/binary, Bin/binary, $\r, $\n >>,
+			Msg = << Acc/binary, Bin/binary, $\r, $\n, $\r, $\n >>,
 			?debug("received: ~p~n", [Msg]),
 			case bkfw_parser:parse(Msg) of
 				{error, Err, _} ->
-					?error("parse error: ~s~n", [Err]);
+					?error("parse error: ~s~n", [Err]),
+					loop(S, <<>>);
 				{eof, _} ->
 					ok;
+				{more, undefined, _} ->
+					loop(S, <<>>);
+				{ok, {255, Cmd, Args}, _} ->
+					Ans = iolist_to_binary([<<"MCU CMD: ">>, atom_to_binary(Cmd, utf8), $\r, $\n, $\r, $\n]),
+					?debug("### ~s", [Ans]),
+					Port ! {self(), {command, Ans}},
+					loop(S, <<>>);
 				{ok, {Idx, FwCmd, Args}, _} when FwCmd == ucan; FwCmd == flash ->
 					Obj = case ets:lookup(FwTid, Idx) of
 							  [] ->

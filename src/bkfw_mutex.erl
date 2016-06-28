@@ -12,7 +12,8 @@
 
 -export([start_link/0,
 		 wait/0,
-		 signal/1]).
+		 signal/1,
+		 reset/0]).
 
 -export([init/0]).
 
@@ -44,6 +45,12 @@ signal(Mutex) ->
     ok.
 
 
+-spec reset() -> ok.
+reset() ->
+	?SRV ! reset,
+	ok.
+
+
 init() ->
     free().
 
@@ -53,7 +60,9 @@ free() ->
         {wait, Pid, Ref} ->
             link(Pid),
             Pid ! ok,
-            busy(Pid, Ref)
+            busy(Pid, Ref);
+		reset ->
+			free()
     end.
 
 
@@ -62,6 +71,9 @@ busy(Pid, Ref) ->
         {signal, Ref} ->
             unlink(Pid),
             free();
+		reset ->
+			unlink(Pid),
+			free();
 		{'EXIT', Pid, _} ->
 			unlink(Pid),
 			free()

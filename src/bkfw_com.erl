@@ -134,10 +134,6 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-%%handle_info({Port, {data, {_, Bin}}}, #state{port=Port, owner=undefined}=S) ->
-%%    ?debug("Garbage data: ~p~n", [Bin]),
-%%    {noreply, S#state{data= <<>>}};
-
 handle_info({Port, {data, {noeol, Bin}}}, #state{port=Port, data=Acc, trace=Trace}=S) ->
     debug_com(Trace, ["[RPI <- CPU] ", Bin]),
     {noreply, S#state{data= << Acc/binary, Bin/binary >>}};

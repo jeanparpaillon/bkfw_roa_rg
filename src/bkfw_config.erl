@@ -282,7 +282,7 @@ handle_call({set_kv, reset, Props}, _From, State) ->
 					bkfw:restart(),
 					{reply, ok, State};
 				{error, eacces} ->
-												% For debugging purpose...
+					%% For debugging purpose...
 					bkfw:restart(),
 					{reply, ok, State};
 				{error, Err} ->

@@ -58,25 +58,20 @@ get_usbmode() ->
 		end,
     F(supervisor:which_children(?SRV)).
 
--define(NON_USB_CHILDREN, [bkfw_mutex, bkfw_alarms, bkfw_srv, bkfw_edfa]).
+-define(NON_USB_CHILDREN, [bkfw_edfa]).
 
 -spec set_usbmode(boolean()) -> ok.
 set_usbmode(false) ->
-    case supervisor:terminate_child(?SRV, bkfw_usb) of
-		ok -> 
-			lists:foreach(fun (Id) -> 
-								  supervisor:restart_child(?SRV, Id)  end, 
-						  ?NON_USB_CHILDREN);
-		{error, not_found} -> ok;
-		{error, Err} -> throw(Err)
-    end;
+	lists:foreach(fun (Id) -> 
+						  supervisor:restart_child(?SRV, Id)  end, 
+				  ?NON_USB_CHILDREN);
 
 set_usbmode(true) ->
     lists:foreach(fun (Id) -> 
 						  spawn(fun () -> supervisor:terminate_child(?SRV, Id) end) 
 				  end,
 				  ?NON_USB_CHILDREN),
-	start_or_restart(?CHILD(bkfw_usb, worker)).
+	bkfw_mutex:reset().
 
 
 post_mutex() ->
@@ -84,6 +79,7 @@ post_mutex() ->
 				{bkfw_alarms, {gen_event, start_link, [{local, bkfw_alarms}]}, permanent, 5000, worker, [gen_event]},
 				?CHILD(bkfw_srv, worker),
 				?CHILD(bkfw_edfa, worker),
+				?CHILD(bkfw_usb, worker),
 				bkfw_http:get_config()
 			   ],
 	start_children(Children).
@@ -130,17 +126,17 @@ start_children([ Spec | Children ]) ->
 	end.
 	
 
-start_or_restart(Spec = {Id, _, _, _, _, _}) ->
-    case supervisor:restart_child(?SRV, Id) of
-		ok ->
-			ok;
-		{error, not_found} -> 
-			case supervisor:start_child(?SRV, Spec) of
-				{ok, _Pid} ->
-					ok;
-				{error, Err2} ->
-					{error, Err2}
-			end;
-		{error, Err} -> 
-			{error, Err}
-    end.
+%% start_or_restart(Spec = {Id, _, _, _, _, _}) ->
+%%     case supervisor:restart_child(?SRV, Id) of
+%% 		ok ->
+%% 			ok;
+%% 		{error, not_found} -> 
+%% 			case supervisor:start_child(?SRV, Spec) of
+%% 				{ok, _Pid} ->
+%% 					ok;
+%% 				{error, Err2} ->
+%% 					{error, Err2}
+%% 			end;
+%% 		{error, Err} -> 
+%% 			{error, Err}
+%%     end.
