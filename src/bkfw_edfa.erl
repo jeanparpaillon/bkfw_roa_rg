@@ -74,7 +74,8 @@ get_kv(2) ->
 						   _ -> <<"vendor not\nconfigured">>
 					   end},
 	 {hard,            get_ets_value(smmHWVer, <<>>)},
-	 {soft,            get_ets_value(smmSWVer, <<>>)}
+	 {soft,            get_ets_value(smmSWVer, <<>>)},
+	 {alarms,          bkfw_alarms_srv:get(0)}
 	].
 
 
@@ -212,6 +213,7 @@ handle_alarms([], S) ->
 
 handle_alarms([Name  | Tail], #state{curInternalTemp=IT, powerSupply=PS}=S) -> 
     gen_event:notify(bkfw_alarms, #smmAlarm{index=0, name=Name, obj={IT, PS}}),
+	bkfw_alarms_srv:set(0, Name),
     handle_alarms(Tail, S).
 
 

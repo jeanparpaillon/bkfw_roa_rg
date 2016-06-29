@@ -118,7 +118,7 @@ get_kv(#ampTable{ params=Params }=T, 2) ->
 	 {max_gc,              T#ampTable.gcMax},
 	 {number_of_laser,     maps:get('number_of_laser', T#ampTable.params, 1)},
 	 {has_settable_LD1,    maps:get('has_settable_LD1', T#ampTable.params, true)},
-	 {alarms,              []},
+	 {alarms,              bkfw_alarms_srv:get(T#ampTable.index)},
 	 {'LD1_current',       T#ampTable.curAmp},
 	 {'LD2_current',       T#ampTable.curAmp2},
 	 {input_power,         T#ampTable.powerPd1},
@@ -477,6 +477,7 @@ handle_alarms([Name  | Tail], E) ->
     gen_event:notify(bkfw_alarms, #smmAlarm{index=E#ampTable.index,
 											name=Name,
 											obj=E}),
+	bkfw_alarms_srv:set(E#ampTable.index, Name),
     handle_alarms(Tail, E).
 
 get_consign(Name, Kv) ->

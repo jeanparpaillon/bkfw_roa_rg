@@ -80,6 +80,7 @@ post_mutex() ->
 				?CHILD(bkfw_srv, worker),
 				?CHILD(bkfw_edfa, worker),
 				?CHILD(bkfw_usb, worker),
+				?CHILD(bkfw_alarms_srv, worker),
 				bkfw_http:get_config()
 			   ],
 	start_children(Children).
