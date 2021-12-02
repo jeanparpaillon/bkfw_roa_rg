@@ -76,7 +76,7 @@ docker-image:
 	fi
 
 POKY_BASEDIR=$(HOME)/BA_Projets/git/poky
-META_BKFW_BASEDIR=$(HOME)/BA_Projets/git/bkfw-yocto
+META_BKFW_BASEDIR=$(HOME)/BA_Projets/git/bkore_yocto
 release: $(RELBIN)
 	cp README.md $(RELDIR)/README.md
 	cp CHANGES.md $(RELDIR)/CHANGES.md
