@@ -227,7 +227,7 @@ to_json(Req, #state{section=sys, sys=_}=S) ->
     {<<"{}">>, Req, S}.
 
 
-from_json(Req, #state{section=mcu, index=undefined}=S) ->
+from_json(Req, #state{section=mcu, index=undefined, version=V}=S) ->
     case parse_body(Req) of
 		{error, invalid_body, Req2} ->
 			{false, ?set_error(invalid_body, Req2), S};
@@ -239,7 +239,7 @@ from_json(Req, #state{section=mcu, index=undefined}=S) ->
 				   "       ~p\n", [Json]),
 			Indices = mnesia:dirty_all_keys(ampTable),
 			Err = lists:foldl(fun (I, Acc) ->
-									  case bkfw_mcu:set_kv(I, Json) of
+									  case bkfw_mcu:set_kv(I, Json, V) of
 										  ok -> Acc;
 										  {error, Err} ->
 											  ?error("Request error: ~p~n", [Err]),
