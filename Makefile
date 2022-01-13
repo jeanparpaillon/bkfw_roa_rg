@@ -15,7 +15,7 @@
 # under the License.
 #
 PROJECT = bkfw
-PROJECT_VERSION = 1.3.1
+PROJECT_VERSION = 1.5.0
 
 DEPS = \
 	getopt \
@@ -30,7 +30,7 @@ dep_lcd_app = git https://github.com/jeanparpaillon/erlang_pi_lcd.git next
 
 include erlang.mk
 
-OTP_SRC=esl-erlang_17.1-2~debian~wheezy_amd64.deb
+OTP_SRC=esl-erlang_17.5.3-1~debian~jessie_amd64.deb
 OTP_BASE_URL=https://packages.erlang-solutions.com/debian/pool
 OTP_ARCHIVE=docker/$(OTP_SRC)
 
@@ -39,7 +39,8 @@ RELX_CONFIG = $(CURDIR)/rel/prod/relx.config
 ERLC_MIB_OPTS = +'{group_check, false}' +no_defs
 
 rel-dev:
-	$(MAKE) RELX_CONFIG=$(CURDIR)/rel/dev/relx.config
+	-rm -rf _rel/bkfw
+	$(MAKE) RELX_CONFIG=$(CURDIR)/rel/dev/relx.config RELX_OPTS=-d
 
 $(PROJECT).d:: priv/.stamp-www
 
@@ -57,17 +58,21 @@ pdf:
 
 RELDIR=$(PROJECT)-$(PROJECT_VERSION)
 RELBIN=$(PROJECT)_$(PROJECT_VERSION).bin
-dist:
+RELSRC=$(RELDIR).source.tar.gz
+
+dist: $(RELSRC)
+
+$(RELSRC):
 	git archive --prefix=$(RELDIR)/ HEAD . | gzip -c - > $(RELDIR).source.tar.gz
 
 IMAGE_ID=bkfw-build
 
 docker-release: docker-image
 	docker run -v $(HOME):$(HOME) -v /etc/resolv.conf:/etc/resolv.conf \
-	  --user=$(USER) --entrypoint="/bin/bash -c" \
+	  --user=$(USER) \
 	  $(IMAGE_ID) make -C $(PWD) release
 
-docker-image:
+docker-image: # $(OTP_ARCHIVE)
 	@if ! $$(docker images | grep -q ^$(IMAGE_ID)); then \
 	  echo "Building $(IMAGE_ID) docker image"; \
 	  docker build --tag=$(IMAGE_ID) docker; \
@@ -75,15 +80,27 @@ docker-image:
 	  echo "$(IMAGE_ID) docker image up-to-date"; \
 	fi
 
-POKY_BASEDIR=$(HOME)/BA_Projets/git/poky
-META_BKFW_BASEDIR=$(HOME)/BA_Projets/git/bkore_yocto
-release: $(RELBIN)
-	cp README.md $(RELDIR)/README.md
-	cp CHANGES.md $(RELDIR)/CHANGES.md
-	mkdir -p $(RELDIR)/mibs
-	cp mibs/*.mib $(RELDIR)/mibs
-	cp /usr/share/mibs/ietf/SNMPv2-MIB $(RELDIR)/mibs
-	zip -r $(RELDIR).zip $(RELDIR)
+$(OTP_ARCHIVE):
+	wget -O $@ $(OTP_BASE_URL)/$(OTP_SRC)
+
+POKY_BASEDIR = yocto
+RECIPEDIR = yocto/meta-bkfw/recipes-bkfw/bkfw
+RECIPEFILE = $(RECIPEDIR)/files/bkfw.sources.tar.gz
+
+release: recipefile
+	cd yocto && $(MAKE)
+
+recipefile:
+	mkdir -p $(RECIPEDIR)
+	git archive --prefix=bkfw/ HEAD . | gzip -c - > $(RECIPEFILE)
+
+#release: $(RELBIN)
+#	cp README.md $(RELDIR)/README.md
+#	cp CHANGES.md $(RELDIR)/CHANGES.md
+#	mkdir -p $(RELDIR)/mibs
+#	cp mibs/*.mib $(RELDIR)/mibs
+#	cp /usr/share/mibs/ietf/SNMPv2-MIB $(RELDIR)/mibs
+#	zip -r $(RELDIR).zip $(RELDIR)
 
 $(RELBIN):
 	rm -rf $(RELDIR)
