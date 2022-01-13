@@ -42,7 +42,7 @@ rel-dev:
 	-rm -rf _rel/bkfw
 	$(MAKE) RELX_CONFIG=$(CURDIR)/rel/dev/relx.config RELX_OPTS=-d
 
-$(PROJECT).d:: priv/.stamp-www
+$(PROJECT).d:: 
 
 priv/.stamp-www: priv/www/bower.json
 	cd priv/www && bower update
