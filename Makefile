@@ -44,7 +44,9 @@ rel-dev:
 
 $(PROJECT).d:: 
 
-priv/.stamp-www: priv/www/bower.json
+assets: priv/.stamp-www
+
+priv/.stamp-www: # priv/www/bower.json
 	cd priv/www && bower update
 	touch $@
 
