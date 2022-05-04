@@ -55,7 +55,7 @@ init_db() ->
 load_mibs(App, Mibs) ->
     Paths = lists:map(fun (Path) ->
 							  ?info("Loading MIB: ~p", [Path]),
-							  Dir = code:priv_dir(App) ++ "/mibs/",
+							  Dir = priv_dir(App) ++ "/mibs/",
 							  Dir ++ Path
 					  end, Mibs),
     ok = snmpa:load_mibs(snmp_master_agent, Paths).
@@ -73,3 +73,15 @@ reboot() ->
 				  timer:sleep(1000),
 				  bkfw_config:script("restart.sh", [])
 		  end).
+
+priv_dir(bkfw) ->
+	case code:lib_dir(bkfw, priv) of
+		{error, bad_name} ->
+			filename:absname("priv");
+
+		Path ->
+			Path
+	end;
+
+priv_dir(App) ->
+	code:lib_dir(App, priv).

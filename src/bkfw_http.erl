@@ -43,8 +43,8 @@
 %%%
 get_config() ->
     Opts = application:get_env(bkfw, http, []),
-    Dir = filename:join(code:priv_dir(bkfw), "www"),
-    DftLogo = filename:join(code:priv_dir(bkfw), "logo.png"),
+    Dir = filename:join(priv_dir(), "www"),
+    DftLogo = filename:join(priv_dir(), "logo.png"),
     Logo = application:get_env(bkfw, logo, DftLogo),
     Handlers = [
 				{"/api/mcu/[:index]",       bkfw_http, {1, mcu}},
@@ -525,3 +525,11 @@ set_errors(Errors, Req) ->
     Req2 = cowboy_req:set_resp_body(json_error(Errors), Req),
     cowboy_req:set_resp_header(<<"content-type">>, <<"application/json">>, Req2).
 
+priv_dir() ->
+	case code:priv_dir(bkfw) of
+		{error, bad_name} ->
+			filename:absname("priv");
+
+		Path ->
+			Path
+	end.

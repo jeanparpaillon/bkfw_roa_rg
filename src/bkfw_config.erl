@@ -365,7 +365,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 load_resources() ->
-    case file:consult(filename:join(code:lib_dir(bkfw, ebin), "bkfw.app")) of
+    case file:consult(filename:join(lib_dir(bkfw, ebin), "bkfw.app")) of
 		{ok, [{application, bkfw, Props}]} -> Props;
 		_ -> []
     end.
@@ -742,3 +742,16 @@ get_iface_file() ->
 		Path when is_list(Path) ->
 			Path
 	end.
+
+
+lib_dir(bkfw, Dir) ->
+	case code:lib_dir(bkfw, Dir) of
+		{error, bad_name} ->
+			filename:absname(Dir);
+
+		Path ->
+			Path
+	end;
+
+lib_dir(App, Dir) ->
+	code:lib_dir(App, Dir).
