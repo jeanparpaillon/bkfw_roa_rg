@@ -47,6 +47,10 @@ if [ ! -e /var/lib/bkfw/user.config ]; then
     echo "[]." > /var/lib/bkfw/user.config
 fi
 
+echo "###"
+echo "# Listening on http://localhost:$port"
+echo "###"
+
 erl -sname agent \
     -pa ${ebindir} \
     -pa ${depsdir} \
