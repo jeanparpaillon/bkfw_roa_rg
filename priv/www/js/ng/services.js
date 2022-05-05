@@ -71,7 +71,7 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
             } else if (rejection.statusText) {
                 errors = rejection.statusText;
             } else {
-                errors = "Connection lost with the API. Please ensure your IP address has not changed.";
+                errors = "Connection lost with the API.";
             }
 
             // don't handle 401
