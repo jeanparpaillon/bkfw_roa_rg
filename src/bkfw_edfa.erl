@@ -90,16 +90,31 @@ variable_func(delete, _) ->
 
 variable_func(get, Key) ->
 	case ets:lookup(?MODULE, Key) of
-		[{Key, V}] when is_float(V) -> {value, round(V)};
-		[{Key, V}] when is_binary(V) -> {value, binary_to_list(V)};
-		[{Key, V}] -> {value, V};
+		[{Key, V}] -> snmp_value(Key, V);
 		[] -> {value, noSuchName}
 	end.
-
 
 %%%
 %%% Priv
 %%% 
+snmp_value(smmPowerSupply, V) -> {value, round(V * 10)};
+snmp_value(smmCurInternalTemp, V) -> {value, round(V * 10)};
+snmp_value(ampGainConsign, V) -> {value, round(V * 10)};
+snmp_value(ampOutputPowerConsign, V) -> {value, round(V * 10)};
+snmp_value(ampCurLaserTemp, V) -> {value, round(V * 10)};
+snmp_value(ampPowerPd1, V) -> {value, round(V * 10)};
+snmp_value(ampPowerPd2, V) -> {value, round(V * 10)};
+snmp_value(ampPowerPd3, V) -> {value, round(V * 10)};
+snmp_value(ampPowerSupply, V) -> {value, round(V * 10)};
+snmp_value(ampInputLossTh, V) -> {value, round(V * 10)};
+snmp_value(ampOutputLossTh, V) -> {value, round(V * 10)};
+snmp_value(ampPCMin, V) -> {value, round(V * 10)};
+snmp_value(ampPCMax, V) -> {value, round(V * 10)};
+snmp_value(ampGCMin, V) -> {value, round(V * 10)};
+snmp_value(ampGCMax, V) -> {value, round(V * 10)};
+snmp_value(_, V) when is_binary(V) -> {value, binary_to_list(V)};
+snmp_value(_, V) -> {value, V}.
+
 get_ets_value(Key, Default) ->
 	try ets:lookup(?MODULE, Key) of
 		[{Key, V}] -> V;

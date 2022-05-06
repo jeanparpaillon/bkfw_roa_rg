@@ -48,6 +48,30 @@ smmModule MODULE-IDENTITY
     DESCRIPTION
 	"Add laser #2 current and current consigns.
 	Remove amp identity."
+    REVISION    "202205060000Z"
+    DESCRIPTION
+    "Change precision of following variables to 0.1:
+    * smmPowerSupply
+    * smmOutputPowerConsign
+    * ampGainConsign
+    * ampOutputPowerConsign
+    * ampCurInternalTemp
+    * ampPowerPd1
+    * ampPowerPd2
+    * ampPowerPd3
+    * ampPowerSupply
+    * ampInputLossTh
+    * ampOutputLossTh
+    * ampPCMin
+    * ampPCMax
+    * ampGCMin
+    * ampGCMax
+
+    Change following variables syntax:
+    * ampPCMin: Integer32
+    * ampPCMax: Integer32
+    * ampOutputPowerConsign: Integer32
+    "
     ::= { bktelPhotonics 1 }
 
 smmMIB	OBJECT IDENTIFIER ::= { smmModule 1 }
@@ -138,7 +162,7 @@ smmPowerSupply	OBJECT-TYPE
     MAX-ACCESS	read-only
     STATUS	current
     DESCRIPTION
-	"The SMM power supply voltage."
+	"The SMM power supply voltage, in tenth (0.1) of V."
     ::= { smm 10 }
 
 smmCurInternalTemp	OBJECT-TYPE
@@ -146,7 +170,7 @@ smmCurInternalTemp	OBJECT-TYPE
     MAX-ACCESS	read-only
     STATUS	current
     DESCRIPTION
-	"The SMM internal temperature."
+	"The SMM internal temperature, in tenth (0.1) of °C."
     ::= { smm 11 }
 
 smmNumber OBJECT-TYPE
@@ -183,7 +207,7 @@ AmpEntry ::=
 		ampAmpConsign	 	Gauge32,
 		ampAmpConsign2	 	Gauge32,
 		ampGainConsign		Integer32,
-		ampOutputPowerConsign	Gauge32,
+		ampOutputPowerConsign	Integer32,
 		ampOperatingMode		INTEGER,
 		ampCurLaserTemp		Integer32,
 		ampCurAmp			Gauge32,
@@ -197,8 +221,8 @@ AmpEntry ::=
 		ampOutputLossTh        	Integer32,
 		ampCCMax1			Gauge32,
 		ampCCMax2			Gauge32,
-		ampPCMin            Gauge32,
-		ampPCMax			Gauge32,
+		ampPCMin            Integer32,
+		ampPCMax			Integer32,
 		ampGCMin			Gauge32,
 		ampGCMax			Gauge32
 	}
@@ -232,15 +256,15 @@ ampGainConsign OBJECT-TYPE
     MAX-ACCESS	read-write
     STATUS	current
     DESCRIPTION
-	"The value of the lasers gain consign used in gain control mode, in dBm."
+	"The value of the lasers gain consign used in gain control mode, in 0.1 dBm."
     ::= { ampEntry 4 }
 
 ampOutputPowerConsign OBJECT-TYPE
-    SYNTAX	Gauge32
+    SYNTAX	Integer32
     MAX-ACCESS	read-write
     STATUS	current
     DESCRIPTION
-	"The value of the lasers output power consign used in output power control mode, in dBm."
+	"The value of the lasers output power consign used in output power control mode, in 0.1 dBm."
     ::= { ampEntry 5 }
 
 ampOperatingMode OBJECT-TYPE
@@ -285,7 +309,7 @@ ampCurInternalTemp	OBJECT-TYPE
     MAX-ACCESS	read-only
     STATUS	current
     DESCRIPTION
-	"The current internal temperature."
+	"The current internal temperature, in tenth (0.1) of °C."
     ::= { ampEntry 10 }
 
 ampPowerPd1	OBJECT-TYPE
@@ -317,7 +341,7 @@ ampPowerSupply	OBJECT-TYPE
     MAX-ACCESS	read-only
     STATUS	current
     DESCRIPTION
-	"The power supply voltage."
+	"The power supply voltage, in 0.1 V."
     ::= { ampEntry 14 }
 
 ampInputLossTh	OBJECT-TYPE
@@ -353,7 +377,7 @@ ampCCMax2 OBJECT-TYPE
     ::= { ampEntry 18 }
 
 ampPCMin OBJECT-TYPE
-    SYNTAX	Gauge32
+    SYNTAX	Integer32
     MAX-ACCESS	read-only
     STATUS	current
     DESCRIPTION
@@ -361,7 +385,7 @@ ampPCMin OBJECT-TYPE
     ::= { ampEntry 19 }
 
 ampPCMax OBJECT-TYPE
-    SYNTAX	Gauge32
+    SYNTAX	Integer32
     MAX-ACCESS	read-only
     STATUS	current
     DESCRIPTION
