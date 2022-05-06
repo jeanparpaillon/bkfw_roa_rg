@@ -21,7 +21,7 @@
 
 -define(FUNS, [fun read_n/1
 			  ,fun read_it/1
-			   %%,fun read_v/1
+			  ,fun read_v/1
 			  ,fun read_a/1]).
 
 -record(state, {
@@ -43,6 +43,8 @@ init() ->
 	gen_event:add_handler(bkfw_alarms, bkfw_alarms_snmp, []),
 	_Tid = ets:new(?MODULE, [public, named_table]),
 	true = ets:insert(?MODULE, {smmNumber, 0}),
+	true = ets:insert(?MODULE, {smmPowerSupply, 0.0}),
+	true = ets:insert(?MODULE, {smmCurInternalTemp, 0.0}),
 	loop([ fun read_infos/1 | ?FUNS ], #state{ slots=list_to_tuple(lists:duplicate(?SLOTS, false))}).
 
 
@@ -124,16 +126,16 @@ read_infos(S) ->
 	{ok, S}.
 
 
-%% read_v(S) ->
-%% 	case bkfw_srv:command(0, rv, []) of
-%% 		{ok, {0, v, [V, v]}} when is_float(V); is_integer(V) ->
-%% 			ets:insert(?MODULE, {smmPowerSupply, V}),
-%% 			{ok, S#state{powerSupply=V}};
-%% 		{ok, Ret} ->
-%% 			{error, {string, io_lib:format("RV invalid answer: ~p~n", [Ret])}, S};
-%% 		{error, Err} ->
-%% 			{error, Err, S}
-%%     end.
+read_v(S) ->
+	case bkfw_srv:command(0, rv, []) of
+		{ok, {0, v, [V, v]}} when is_float(V); is_integer(V) ->
+			ets:insert(?MODULE, {smmPowerSupply, V}),
+			{ok, S#state{powerSupply=V}};
+		{ok, Ret} ->
+			{error, {string, io_lib:format("RV invalid answer: ~p~n", [Ret])}, S};
+		{error, Err} ->
+			{error, Err, S}
+    end.
 
 read_it(S) ->
 	case bkfw_srv:command(0, rit, []) of
