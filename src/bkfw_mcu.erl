@@ -2,6 +2,7 @@
 -author('jean.parpaillon@free.fr').
 
 -include("bkfw.hrl").
+-include("SMM-MIB.hrl").
 
 -export([new/1,
 		 loop/1,
@@ -199,24 +200,18 @@ table_func(set, [RowIndex], Cols, NameDb) ->
 
 table_func(get, RowIndex, Cols, NameDb) ->
     Vars = snmp_generic:table_func(get, RowIndex, Cols, NameDb),
-    lists:map(fun ({value, V}) when is_float(V) ->
-					  {value, round(V)};
-				  ({value, V}) when is_binary(V) ->
-					  {value, binary_to_list(V)};
-				  ({value, V}) ->
-					  {value, V}
-			  end, Vars);
+    lists:map(fun ({value, V}) -> snmp_value(Cols, V) end, Vars);
 
 table_func(get_next, RowIndex, Cols, NameDb) ->
-    case snmp_generic:table_func(get_next, RowIndex, Cols, NameDb) of
+	case snmp_generic:table_func(get_next, RowIndex, Cols, NameDb) of
 		[] -> [];
 		Next when is_list(Next) ->
-			lists:map(fun ({NextOID, NextValue}) when is_float(NextValue) ->
-							  {NextOID, round(NextValue)};
-						  ({NextOID, NextValue}) when is_binary(NextValue) ->
-							  {NextOID, binary_to_list(NextValue)};
-						  (Else) ->
-							  Else
+			lists:map(fun (endOfTable) ->
+							endOfTable;
+
+						({[Col, _] = NextOID, Value}) ->
+							{value, CastedValue} = snmp_value([Col], Value),
+							{NextOID, CastedValue}
 					  end, Next);
 		{genErr, Cols} -> 
 			{genErr, Cols}
@@ -228,6 +223,23 @@ table_func(Op, RowIndex, Cols, NameDb) ->
 %%%
 %%% Internals
 %%%
+snmp_value([?ampGainConsign], V) -> {value, round(V * 10)};
+snmp_value([?ampOutputPowerConsign], V) -> {value, round(V * 10)};
+snmp_value([?ampCurLaserTemp], V) -> {value, round(V * 10)};
+snmp_value([?ampPowerPd1], V) -> {value, round(V * 10)};
+snmp_value([?ampPowerPd2], V) -> {value, round(V * 10)};
+snmp_value([?ampPowerPd3], V) -> {value, round(V * 10)};
+snmp_value([?ampPowerSupply], V) -> {value, round(V * 10)};
+snmp_value([?ampInputLossTh], V) -> {value, round(V * 10)};
+snmp_value([?ampOutputLossTh], V) -> {value, round(V * 10)};
+snmp_value([?ampPCMin], V) -> {value, round(V * 10)};
+snmp_value([?ampPCMax], V) -> {value, round(V * 10)};
+snmp_value([?ampGCMin], V) -> {value, round(V * 10)};
+snmp_value([?ampGCMax], V) -> {value, round(V * 10)};
+snmp_value(_, V) when is_float(V) -> {value, round(V)};
+snmp_value(_, V) when is_binary(V) -> {value, binary_to_list(V)};
+snmp_value(_, V) -> {value, V}.
+
 set_pw(#ampTable{index=Idx, params=Params}=E) ->
 	Passwd = maps:get(password, Params, 0000),
     case bkfw_srv:command(Idx, spw, [integer_to_binary(Passwd)]) of
