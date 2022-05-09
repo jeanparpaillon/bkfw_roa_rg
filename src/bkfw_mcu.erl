@@ -524,6 +524,13 @@ set_from_snmp(Idx, [{?ampGainConsign, Val} | Tail]) when is_integer(Val) ->
 set_from_snmp(Idx, [{?ampOutputPowerConsign, Val} | Tail]) when is_integer(Val) ->
     bkfw_srv:command(Idx, spc, [io_lib:format("~.1f", [Val / 10])]),
     set_from_snmp(Idx, Tail);
+set_from_snmp(Idx, [{?ampInputLossTh, Val} | Tail]) when is_integer(Val) ->
+    bkfw_srv:command(Idx, sli, [io_lib:format("~.1f", [Val / 10])]),
+    set_from_snmp(Idx, Tail);
+set_from_snmp(Idx, [{?ampOutputLossTh, Val} | Tail]) when is_integer(Val) ->
+    bkfw_srv:command(Idx, slo, [io_lib:format("~.1f", [Val / 10])]),
+    set_from_snmp(Idx, Tail);
+
 set_from_snmp(Idx, [{?ampOperatingMode, Val} | Tail]) ->
     case Val of
 		?ampOperatingMode_off -> 

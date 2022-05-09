@@ -346,18 +346,18 @@ ampPowerSupply	OBJECT-TYPE
 
 ampInputLossTh	OBJECT-TYPE
     SYNTAX	Integer32
-    MAX-ACCESS	read-only
+    MAX-ACCESS	read-write
     STATUS	current
     DESCRIPTION
-	"The loss of input power threshold."
+	"The loss of input power threshold, in 0.1 dBm."
     ::= { ampEntry 15 }
 
 ampOutputLossTh OBJECT-TYPE
     SYNTAX	Integer32
-    MAX-ACCESS	read-only
+    MAX-ACCESS	read-write
     STATUS	current
     DESCRIPTION
-	"The loss of output power threshold."
+	"The loss of output power threshold, in 0.1 dBm."
     ::= { ampEntry 16 }
 
 ampCCMax1 OBJECT-TYPE
