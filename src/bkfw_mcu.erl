@@ -190,10 +190,10 @@ table_func(delete, NameDb) ->
 table_func(is_set_ok, RowIndex, Cols, NameDb) ->
     snmp_generic:table_func(is_set_ok, RowIndex, Cols, NameDb);
 
-table_func(set, [RowIndex], Cols, NameDb) ->
+table_func(set, [RowIndex], Cols, _NameDb) ->
     case set_from_snmp(RowIndex, Cols) of
 		ok ->
-			snmp_generic:table_func(set, [RowIndex], Cols, NameDb);
+			{noError, 0};
 		{error, Col} ->
 			{error, Col}
     end;
@@ -519,10 +519,10 @@ set_from_snmp(Idx, [{?ampAmpConsign, Val} | Tail]) when is_integer(Val) ->
     bkfw_srv:command(Idx, scc, [<<"1 ">>, io_lib:format("~b.0", [Val])]),
     set_from_snmp(Idx, Tail);
 set_from_snmp(Idx, [{?ampGainConsign, Val} | Tail]) when is_integer(Val) ->
-    bkfw_srv:command(Idx, sgc, [io_lib:format("~b.0", [Val])]),
+    bkfw_srv:command(Idx, sgc, [io_lib:format("~.1f", [Val / 10])]),
     set_from_snmp(Idx, Tail);
 set_from_snmp(Idx, [{?ampOutputPowerConsign, Val} | Tail]) when is_integer(Val) ->
-    bkfw_srv:command(Idx, spc, [io_lib:format("~b.0", [Val])]),
+    bkfw_srv:command(Idx, spc, [io_lib:format("~.1f", [Val / 10])]),
     set_from_snmp(Idx, Tail);
 set_from_snmp(Idx, [{?ampOperatingMode, Val} | Tail]) ->
     case Val of
