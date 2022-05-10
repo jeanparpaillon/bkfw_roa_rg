@@ -21,7 +21,9 @@
 upgrade_fw(Filename) ->
     case bkfw_config:script("check_pkg.sh", Filename) of
 		ok ->
+			io:format("### PKG OK"),
 			bkfw_config:script("upgrade.sh", Filename),
+			io:format("### PKG UPGRADED, REBOOTING"),
 			bkfw:reboot(),
 			ok;
 		{error, Err} -> {error, Err}
