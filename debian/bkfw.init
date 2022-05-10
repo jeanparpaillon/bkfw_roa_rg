@@ -26,6 +26,8 @@ case "$1" in
 	start)
 		stty -F /dev/ttyAMA0 115200 cs8 -cstopb -onlcr -echo -echoe -echok -opost || true
 		stty -F /dev/ttyUSB* 115200 cs8 -cstopb -onlcr -echo -echoe -echok -opost || true
+		# Cleanup SNMP local dbs
+		rm -f /srv/bkfw/snmp/agent/db/snmpa_*
 		$DAEMON start
 		;;
 	stop)
