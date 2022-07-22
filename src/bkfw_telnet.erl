@@ -8,7 +8,7 @@
 -include("bkfw.hrl").
 
 %% API
--export([start_link/0]).
+-export([start_link/0, stop/0]).
 
 %% supervisor callback
 -export([init/1]).
@@ -20,6 +20,10 @@
 %%%
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+
+stop() ->
+    {ok, #{start := {_, _, [ListenSock]}}} = supervisor:get_childspec(?MODULE, ?SERVER),
+    gen_tcp:close(ListenSock).
 
 %%%
 %%% gen_server callbacks

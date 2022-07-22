@@ -29,6 +29,8 @@ start(_StartType, _StartArgs) ->
 
 
 stop(_State) ->
+	% Stop telnet listening socket
+	bkfw_telnet:stop(),
     ok.
 
 
