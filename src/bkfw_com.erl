@@ -8,6 +8,7 @@
 -export([
     start_link/0,
     subscribe/0,
+    unsubscribe/0,
     send/1
 ]).
 
@@ -42,6 +43,9 @@ start_link() ->
 
 subscribe() ->
     gen_server:cast(?MODULE, {subscribe, self()}).
+
+unsubscribe() ->
+    gen_server:cast(?MODULE, {unsubscribe, self()}).
 
 -spec send(Raw :: iolist()) -> ok | {error, Err :: term()}.
 send(Raw) ->
@@ -85,6 +89,8 @@ handle_call(_, _, S) ->
 
 handle_cast({subscribe, Pid}, S) ->
     {noreply, S#state{subscribers = sets:add_element(Pid, S#state.subscribers)}};
+handle_cast({unsubscribe, Pid}, S) ->
+    {noreply, S#state{subscribers = sets:del_element(Pid, S#state.subscribers)}};
 handle_cast({raw, Data}, #state{port = Port, trace = Trace} = S) ->
     debug_com(Trace, ["[COM] Send raw command: ", Data, "\n"]),
     Port ! {self(), {command, iolist_to_binary(Data)}},

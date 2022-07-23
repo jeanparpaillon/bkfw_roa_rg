@@ -4,14 +4,15 @@
 -include("bkfw.hrl").
 
 %% API
--export([start_link/0,
-		 send/1]).
+-export([start_link/0, enable/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 		 terminate/2, code_change/3]).
 
 -record(state, {
+		  enable,
+		  dev,
 		  data,
 		  usb_fd,
 		  usb
@@ -23,56 +24,72 @@
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-
-send(Bin) ->
-	gen_server:cast(?MODULE, {send, Bin}).
+enable(Mode) ->
+	gen_server:cast(?MODULE, {enable, Mode}).
 
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
 init(_) ->
-    ?info("Starting USB monitor", []),
 	case application:get_env(bkfw, usbtty, undefined) of
 		undefined ->
 			{ok, #state{}};
 		UsbDev ->
-			case open_com_port(UsbDev) of
-				{ok, UsbFd, UsbPort} ->
-					?info("Opened USB serial port: ~s", [UsbDev]),
-					{ok, #state{usb_fd=UsbFd, usb=UsbPort, data= <<>>}};
-				{error, enoent} ->
-					?info("No such USB port, ignoring: ~p", [UsbDev]),
-					{ok, #state{}};
-				{error, UsbErr} ->
-					?error("Error opening port ~p: ~p", [UsbDev, UsbErr]),
-					{stop, UsbErr}
-			end
+			{ok, #state{dev=UsbDev}}
 	end.
 
 handle_call(_Call, _From, S) ->
     {reply, ok, S}.
 
 
-handle_cast({send, Bin}, #state{ usb=Port }=S) ->
-	Port ! {self(), {command, iolist_to_binary(Bin)}},
-	{noreply, S};
+handle_cast({enable, true}, #state{dev=Dev} = S) ->
+    ?info("Starting USB monitor", []),
+	case open_com_port(Dev) of
+		{ok, UsbFd, UsbPort} ->
+			?info("Opened USB serial port: ~s", [Dev]),
+			bkfw_com:subscribe(),
+			{noreply, S#state{usb_fd=UsbFd, usb=UsbPort, data= <<>>}};
+		{error, enoent} ->
+			?info("No such USB port, ignoring: ~p", [Dev]),
+			{noreply, #state{}};
+		{error, UsbErr} ->
+			?error("Error opening port ~p: ~p", [Dev, UsbErr]),
+			{noreply, #state{}}
+	end;
+
+handle_cast({enable, false}, #state{usb=undefined} = S) ->
+	bkfw_com:unsubscribe(),
+	{noreply, S#state{usb_fd=undefined, usb=undefined}};
+
+handle_cast({enable, false}, #state{usb_fd=UsbFd, usb=UsbPort} = S) ->
+	bkfw_com:unsubscribe(),
+	UsbPort ! {self(), close},
+	receive	_ -> cereal:close_tty(UsbFd)
+	after 500 -> ok
+	end,
+	{noreply, S#state{usb_fd=undefined, usb=undefined}};
 
 handle_cast(_Cast, S) ->
     {noreply, S}.
 
 
+% COM -> USB
+handle_info({data, Data}, #state{ usb=Port }=S) ->
+	Port ! {self(), {command, Data}},
+	{noreply, S};
+
 handle_info({Usb, {data, {noeol, Bin}}}, #state{usb=Usb, data=Acc}=S) ->
-	%%?debug("USB: ~p", [{noeol, Bin}]),
+	% Accumulate until eol
 	{noreply, S#state{ data= << Acc/binary, Bin/binary >>}};
 
+% USB -> COM
 handle_info({Usb, {data, {eol, Bin}}}, #state{usb=Usb, data=Acc}=S) ->
-	%%?debug("USB: ~p", [{eol, Bin}]),
-	bkfw_srv:call(fun (init, Com, _) ->
-						  bkfw_com:raw(Com, << Acc/binary, Bin/binary, $\r, $\n >>),
-						  ok
-				  end, undefined),
+	bkfw_com:send(<< Acc/binary, Bin/binary, $\r, $\n >>),
 	{noreply, S#state{ data= <<>> }}.
 
+
+terminate(_Reason, #state{usb=undefined}) ->
+	ok;
 
 terminate(_Reason, #state{usb_fd=UsbFd, usb=UsbPort}) ->
 	UsbPort ! {self(), close},

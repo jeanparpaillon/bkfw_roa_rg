@@ -8,7 +8,6 @@
 -include("bkfw.hrl").
 
 %% Constants
--define(PROMPT, "edfa> ").
 -define(QUIT, "quit").
 -define(CRLF, "\r\n").
 -define(CR, "\r").
@@ -43,10 +42,14 @@ handle_cast(accept, S = #state{lsock=LSock}) ->
     {ok, Sock} = gen_tcp:accept(LSock),
     {ok, {ClientAddr, _}} = inet:peername(Sock),
     ?info("Telnet client from ~p", [inet:ntoa(ClientAddr)]),
-    Mode = bkfw_sup:get_usbmode(),
-    bkfw_sup:set_usbmode(true),
-    send(Sock, ?PROMPT, []),
+    Mode = bkfw_edfa:enabled(),
+    bkfw_edfa:enable(false),
+    bkfw_com:subscribe(),
     {noreply, S#state{socket=Sock, mode=Mode}}.
+
+handle_info({data, Data}, S) ->
+    send(S#state.socket, Data, []),
+    {noreply, S};
 
 handle_info({tcp, Sock, ?QUIT ++ _}, S) ->
     quit(Sock, S),
@@ -60,13 +63,11 @@ handle_info({tcp, Sock, Str}, S)
 
 handle_info({tcp, Sock, Str}, S) 
   when Str =:= ?CRLF ; Str =:= ?CR ; Str =:= ?LF ->
-    send(Sock, ?PROMPT, []),
     refresh_socket(Sock),
     {noreply, S};
 
 handle_info({tcp, Sock, Str}, S) ->
-    process(Str, S),
-    send(Sock, ?PROMPT, []),
+    bkfw_com:send(Str),
     refresh_socket(Sock),
     {noreply, S};
 
@@ -81,6 +82,7 @@ handle_info(E, S) ->
     {noreply, S}.
 
 terminate(_Reason, S) ->
+    bkfw_edfa:enable(S#state.mode),
     gen_tcp:close(S#state.socket),
     ok.
 
@@ -90,10 +92,8 @@ code_change(_OldVsn, State, _Extra) ->
 %%%
 %%% Internals
 %%% 
-quit(_Sock, S) ->
-    ?info("Telnet client left", []),
-    bkfw_sup:set_usbmode(S#state.mode),
-    gen_tcp:close(S#state.socket).
+quit(_Sock, _S) ->
+    ?info("Telnet client left", []).
 
 send(Sock, Str, Args) ->
     ok = gen_tcp:send(Sock, io_lib:format(Str, Args)),
@@ -102,9 +102,3 @@ send(Sock, Str, Args) ->
 
 refresh_socket(Sock) ->
     ok = inet:setopts(Sock, [{active, once}]).
-
-process(Str, _S) ->
-    bkfw_srv:call(fun (init, Com, _) ->
-        bkfw_com:raw(Com, << Str/binary, $\r, $\n >>),
-        ok
-    end, undefined).

@@ -31,7 +31,8 @@ get_usbmode() ->
 
 -spec set_usbmode(boolean()) -> ok.
 set_usbmode(Mode) ->
-	bkfw_edfa:enable(not Mode).
+	bkfw_edfa:enable(not Mode),
+	bkfw_usb:enable(Mode).
 
 post_http() ->
 	case bkfw_lcd:enabled() of
@@ -78,19 +79,3 @@ start_children([ Spec | Children ]) ->
 		{error, _}=Err ->
 			Err
 	end.
-	
-
-%% start_or_restart(Spec = {Id, _, _, _, _, _}) ->
-%%     case supervisor:restart_child(?SRV, Id) of
-%% 		ok ->
-%% 			ok;
-%% 		{error, not_found} -> 
-%% 			case supervisor:start_child(?SRV, Spec) of
-%% 				{ok, _Pid} ->
-%% 					ok;
-%% 				{error, Err2} ->
-%% 					{error, Err2}
-%% 			end;
-%% 		{error, Err} -> 
-%% 			{error, Err}
-%%     end.
