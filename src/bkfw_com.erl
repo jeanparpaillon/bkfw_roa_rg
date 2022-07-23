@@ -59,6 +59,7 @@ more(Com, Rest) ->
 init({undefined, _}) ->
     ?error("COM port undefined"),
     {stop, {undefined_com}};
+
 init({Com, Owner}) when is_list(Com) ->
     ?info("Opening com port: ~p", [Com]),
     Trace = case application:get_env(bkfw, debug, true) of

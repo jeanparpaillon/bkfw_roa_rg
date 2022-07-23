@@ -5,6 +5,7 @@
 -include("SMM-MIB.hrl").
 
 -export([new/1,
+		 proto/0,
 		 loop/1,
 		 get_kv/2,
 		 set_kv/3]).
@@ -60,6 +61,8 @@ new(Idx) ->
 	 },
 	#ampTable{ index=Idx, params=Params }.
 
+proto() ->
+	?FUNS.
 
 loop(#ampTable{}=Amp) ->
     loop(Amp, ?FUNS).
