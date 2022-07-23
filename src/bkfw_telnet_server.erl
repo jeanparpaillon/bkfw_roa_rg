@@ -43,7 +43,6 @@ handle_cast(accept, S = #state{lsock=LSock}) ->
     {ok, Sock} = gen_tcp:accept(LSock),
     {ok, {ClientAddr, _}} = inet:peername(Sock),
     ?info("Telnet client from ~p", [inet:ntoa(ClientAddr)]),
-    % Disable monitoring mode (so-called 'USB mode')
     Mode = bkfw_sup:get_usbmode(),
     bkfw_sup:set_usbmode(true),
     send(Sock, ?PROMPT, []),
@@ -66,6 +65,7 @@ handle_info({tcp, Sock, Str}, S)
     {noreply, S};
 
 handle_info({tcp, Sock, _Str}, S) ->
+    process(Str, S),
     send(Sock, ?PROMPT, []),
     refresh_socket(Sock),
     {noreply, S};
@@ -102,3 +102,9 @@ send(Sock, Str, Args) ->
 
 refresh_socket(Sock) ->
     ok = inet:setopts(Sock, [{active, once}]).
+
+process(Str, S) ->
+    bkfw_srv:call(fun (init, Com, _) ->
+        bkfw_com:raw(Com, << Str/binary, $\r, $\n >>),
+        ok
+    end, undefined).
