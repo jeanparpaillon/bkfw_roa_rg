@@ -71,7 +71,7 @@ upgrade_amp([ #ampTable{index=Idx} | Tail ], Data) ->
 
 upgrade_micro(Idx, Fw) ->
 	?debug("Upgrading firmware on unit: ~p~n", [Idx]),
-	ok = bkfw_sup:set_upgrade(true),
+	ok = bkfw_edfa:enable(false),
 	Fun = fun (init, Com, S) ->
 				  IdxStr = ["0x", io_lib:format("~2.16.0b", [Idx])],
 				  Bin = [IdxStr, " UCAN", $\r, $\n],

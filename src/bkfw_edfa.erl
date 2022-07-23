@@ -272,7 +272,7 @@ read_infos(S) ->
     {ok, S}.
 
 read_v(S) ->
-    case bkfw_srv:command(0, rv, []) of
+    case bkfw_cmd:call(0, rv, []) of
         {ok, {0, v, [V, v]}} when is_float(V); is_integer(V) ->
             ets:insert(?MODULE, {smmPowerSupply, V}),
             {ok, S#state{powerSupply = V}};
@@ -283,7 +283,7 @@ read_v(S) ->
     end.
 
 read_it(S) ->
-    case bkfw_srv:command(0, rit, []) of
+    case bkfw_cmd:call(0, rit, []) of
         {ok, {0, it, [T, <<"C">>]}} when is_float(T); is_integer(T) ->
             ets:insert(?MODULE, {smmCurInternalTemp, T}),
             {ok, S#state{curInternalTemp = T}};
@@ -297,7 +297,7 @@ read_it(S) ->
 
 read_n(S) ->
     ets:insert(?MODULE, {smmNumber, 0}),
-    case bkfw_srv:command(0, rn, []) of
+    case bkfw_cmd:call(0, rn, []) of
         {ok, {0, n, [Mask]}} when is_integer(Mask) ->
             handle_slots(Mask, 0, S);
         {ok, Ret} ->
@@ -309,7 +309,7 @@ read_n(S) ->
     end.
 
 read_a(S) ->
-    case bkfw_srv:command(0, ra, []) of
+    case bkfw_cmd:call(0, ra, []) of
         {ok, {0, alarms, Alarms}} ->
             handle_alarms(Alarms, S);
         {ok, Ret} ->

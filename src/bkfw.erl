@@ -34,9 +34,6 @@ stop(_State) ->
     ok.
 
 
-start_phase(mutex, normal, _Args) ->
-	bkfw_sup:post_mutex();
-
 start_phase(http, normal, _Args) ->
 	%% Wait for HTTP API to be ready
 	timer:sleep(1000),

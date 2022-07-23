@@ -7,11 +7,8 @@
 %% API
 -export([start_link/0,
 		 post_http/0,
-		 post_mutex/0,
-		 set_upgrade/1,
 		 get_usbmode/0,
-		 set_usbmode/1,
-		 restart/0]).
+		 set_usbmode/1]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -27,65 +24,14 @@
 start_link() ->
     supervisor:start_link({local, ?SRV}, ?MODULE, []).
 
-restart() ->
-    lists:foreach(fun ({_Id, restarting, _, _}) ->
-						  true;
-					  ({_Id, undefined, _, _}) ->
-						  true;
-					  ({_Id, Child, _, _}) ->
-						  try supervisor:restart_child(Child) catch _:_ -> exit(Child, kill) end
-				  end, supervisor:which_children(?SRV)).
-
--spec set_upgrade(boolean()) -> ok | {error, term()}.
-set_upgrade(false) ->
-	?info("(re)starting monitoring loop", []),
-	case supervisor:restart_child(?SRV, bkfw_edfa) of
-		{ok, _} -> ok;
-		{ok, _, _} -> ok;
-		{error, _} = Err -> Err
-	end;
-set_upgrade(true) ->
-	?info("Stopping monitoring loop", []),
-	supervisor:terminate_child(?SRV, bkfw_edfa).		
-
 
 -spec get_usbmode() -> boolean().
 get_usbmode() ->
-    F = fun F0([]) -> false;
-			F0([{bkfw_edfa, undefined, _, _} | _]) -> true;
-			F0([{bkfw_edfa, Pid, _, _ } | _]) when is_pid(Pid) -> false;
-			F0([_ | Tail]) -> F0(Tail)
-		end,
-    F(supervisor:which_children(?SRV)).
-
--define(NON_USB_CHILDREN, [bkfw_edfa]).
+	bkfw_edfa:enabled().
 
 -spec set_usbmode(boolean()) -> ok.
-set_usbmode(false) ->
-	lists:foreach(fun (Id) -> 
-						  supervisor:restart_child(?SRV, Id)  end, 
-				  ?NON_USB_CHILDREN);
-
-set_usbmode(true) ->
-    lists:foreach(fun (Id) -> 
-						  spawn(fun () -> supervisor:terminate_child(?SRV, Id) end) 
-				  end,
-				  ?NON_USB_CHILDREN),
-	bkfw_mutex:reset().
-
-
-post_mutex() ->
-	Children = [
-				{bkfw_alarms, {gen_event, start_link, [{local, bkfw_alarms}]}, permanent, 5000, worker, [gen_event]},
-				?CHILD(bkfw_srv, worker),
-				?CHILD(bkfw_edfa, worker),
-				?CHILD(bkfw_usb, worker),
-				?CHILD(bkfw_telnet, supervisor),
-				?CHILD(bkfw_alarms_srv, worker),
-				bkfw_http:get_config()
-			   ],
-	start_children(Children).
-
+set_usbmode(Mode) ->
+	bkfw_edfa:enable(not Mode).
 
 post_http() ->
 	case bkfw_lcd:enabled() of
@@ -109,9 +55,15 @@ init([]) ->
 				   start => {bkfw_config, start_link, []},
 				   type => worker
 				 },
-				#{ id => bkfw_mutex, 
-				   start => {bkfw_mutex, start_link, []},
-				   type => worker }
+				#{ id => bkfw_com,
+				   start => {bkfw_com, start_link, []},
+				   type => worker },
+				   				{bkfw_alarms, {gen_event, start_link, [{local, bkfw_alarms}]}, permanent, 5000, worker, [gen_event]},
+				?CHILD(bkfw_edfa, worker),
+				?CHILD(bkfw_usb, worker),
+				?CHILD(bkfw_telnet, supervisor),
+				?CHILD(bkfw_alarms_srv, worker),
+				bkfw_http:get_config()
 			   ],
 	{ok, { {one_for_one, 5, 10}, Children} }.
 

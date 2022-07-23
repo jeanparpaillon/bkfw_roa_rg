@@ -64,7 +64,7 @@ handle_info({tcp, Sock, Str}, S)
     refresh_socket(Sock),
     {noreply, S};
 
-handle_info({tcp, Sock, _Str}, S) ->
+handle_info({tcp, Sock, Str}, S) ->
     process(Str, S),
     send(Sock, ?PROMPT, []),
     refresh_socket(Sock),
@@ -103,7 +103,7 @@ send(Sock, Str, Args) ->
 refresh_socket(Sock) ->
     ok = inet:setopts(Sock, [{active, once}]).
 
-process(Str, S) ->
+process(Str, _S) ->
     bkfw_srv:call(fun (init, Com, _) ->
         bkfw_com:raw(Com, << Str/binary, $\r, $\n >>),
         ok

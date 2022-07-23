@@ -6,7 +6,6 @@
 
 -export([new/1,
 		 proto/0,
-		 loop/1,
 		 get_kv/2,
 		 set_kv/3]).
 
@@ -63,20 +62,6 @@ new(Idx) ->
 
 proto() ->
 	?FUNS.
-
-loop(#ampTable{}=Amp) ->
-    loop(Amp, ?FUNS).
-
-loop(Amp, []) ->
-    {ok, Amp};
-
-loop(Amp, [ Fun | Tail ]) ->
-    case Fun(Amp) of
-		{ok, Amp2} ->
-			loop(Amp2, Tail);
-		{error, timeout} -> {error, timeout};
-		{error, Err} -> {error, Err, Amp}
-    end.
 
 get_kv(#ampTable{ params=Params }=T, 1) ->
     [
@@ -166,13 +151,13 @@ set_kv(Idx, Kv, 2) ->
 			({mode, Mode}, _Acc) ->
 				set_operating_mode2(Idx, Mode);
 			({'CC1_setpoint', V}, _Acc) ->
-				bkfw_srv:command(Idx, scc, [io_lib:format("~b ~.2f", [1, to_float(V)])]);
+				bkfw_cmd:call(Idx, scc, [io_lib:format("~b ~.2f", [1, to_float(V)])]);
 			({'CC2_setpoint', V}, _Acc) ->
-				bkfw_srv:command(Idx, scc, [io_lib:format("~b ~.2f", [2, to_float(V)])]);
+				bkfw_cmd:call(Idx, scc, [io_lib:format("~b ~.2f", [2, to_float(V)])]);
 			({'GC_setpoint', V}, _Acc) ->
-				bkfw_srv:command(Idx, sgc, [io_lib:format("~.2f", [to_float(V)])]);
+				bkfw_cmd:call(Idx, sgc, [io_lib:format("~.2f", [to_float(V)])]);
 			({'PC_setpoint', V}, _Acc) ->
-				bkfw_srv:command(Idx, spc, [io_lib:format("~.2f", [to_float(V)])]);
+				bkfw_cmd:call(Idx, spc, [io_lib:format("~.2f", [to_float(V)])]);
 			(_, _Acc) ->
 				{error, invalid_key}
 		end,
@@ -245,7 +230,7 @@ snmp_value(_, V) -> {value, V}.
 
 set_pw(#ampTable{index=Idx, params=Params}=E) ->
 	Passwd = maps:get(password, Params, 0000),
-    case bkfw_srv:command(Idx, spw, [integer_to_binary(Passwd)]) of
+    case bkfw_cmd:call(Idx, spw, [integer_to_binary(Passwd)]) of
 		{ok, {Idx, pwd, [ok]}} ->
 			{ok, E#ampTable{ params=Params#{ auth := true }}};
 		{ok, {Idx, pwd, [nok]}} ->
@@ -260,7 +245,7 @@ set_pw(#ampTable{index=Idx, params=Params}=E) ->
 
 read_cc(#ampTable{index=Idx, params=Params}=E) ->
     F = fun(X, {ok, Acc}) ->
-				case bkfw_srv:command(Idx, rcc, [integer_to_binary(X)]) of
+				case bkfw_cmd:call(Idx, rcc, [integer_to_binary(X)]) of
 					{ok, {Idx, cc, [1, A, <<"mA">>]}} when is_float(A); is_integer(A) ->
 						{ok, Acc#ampTable{ ampConsign=A }};
 					{ok, {Idx, cc, [2, A, <<"mA">>]}} when is_float(A); is_integer(A) ->
@@ -279,7 +264,7 @@ read_cc(#ampTable{index=Idx, params=Params}=E) ->
     lists:foldl(F, {ok, E}, lists:seq(1, maps:get('number_of_laser', Params, 1))).
 
 read_gc(#ampTable{index=Idx}=E) ->
-    case bkfw_srv:command(Idx, rgc, []) of
+    case bkfw_cmd:call(Idx, rgc, []) of
 		{ok, {Idx, gc, [Y, <<"dB">>]}} when is_float(Y); is_integer(Y) ->
 			{ok, E#ampTable{gainConsign=Y}};
 		{ok, _Ret} ->
@@ -289,7 +274,7 @@ read_gc(#ampTable{index=Idx}=E) ->
     end.
 
 read_pc(#ampTable{index=Idx}=E) ->
-    case bkfw_srv:command(Idx, rpc, []) of
+    case bkfw_cmd:call(Idx, rpc, []) of
 		{ok, {Idx, pc, [Y, <<"dBm">>]}} when is_float(Y); is_integer(Y) ->
 			{ok, E#ampTable{outputPowerConsign=Y}};
 		{ok, _Ret} ->
@@ -299,7 +284,7 @@ read_pc(#ampTable{index=Idx}=E) ->
     end.
 
 read_mode(#ampTable{index=Idx}=E) ->
-    case bkfw_srv:command(Idx, rmode, []) of
+    case bkfw_cmd:call(Idx, rmode, []) of
 		{ok, {Idx, mode, [Mode]}} ->
 			M = parse_mode(Mode, E#ampTable.operatingMode),
 			{ok, E#ampTable{operatingMode=M}};
@@ -310,7 +295,7 @@ read_mode(#ampTable{index=Idx}=E) ->
     end.
 
 read_a(#ampTable{index=Idx}=E) ->
-    case bkfw_srv:command(Idx, ra, []) of
+    case bkfw_cmd:call(Idx, ra, []) of
 		{ok, {Idx, alarms, Alarms}} ->
 			handle_alarms(Alarms, E);
 		{ok, _Ret} ->
@@ -321,7 +306,7 @@ read_a(#ampTable{index=Idx}=E) ->
 
 read_lt(#ampTable{ index=Idx, params=Params }=E) ->
     F = fun(X, {ok, Acc}) ->
-				case bkfw_srv:command(Idx, rlt, [integer_to_binary(X)]) of
+				case bkfw_cmd:call(Idx, rlt, [integer_to_binary(X)]) of
 					{ok, {Idx, lt, [1, T, <<"C">>]}} when is_float(T); is_integer(T) ->
 						{ok, Acc#ampTable{ curLaserTemp=T }};
 					{ok, {Idx, lt, [X, T, <<"C">>]}} when is_float(T); is_integer(T) ->
@@ -339,7 +324,7 @@ read_lt(#ampTable{ index=Idx, params=Params }=E) ->
 
 read_lc(#ampTable{ index=Idx, params=Params }=E) ->
     F = fun(X, {ok, Acc}) ->
-				case bkfw_srv:command(Idx, rlc, [integer_to_binary(X)]) of
+				case bkfw_cmd:call(Idx, rlc, [integer_to_binary(X)]) of
 					{ok, {Idx, lc, [1, A, <<"mA">>]}} when is_float(A); is_integer(A) ->
 						{ok, Acc#ampTable{ curAmp=A }};
 					{ok, {Idx, lc, [2, A, <<"mA">>]}} when is_float(A); is_integer(A) ->
@@ -356,7 +341,7 @@ read_lc(#ampTable{ index=Idx, params=Params }=E) ->
     lists:foldl(F, {ok, E}, lists:seq(1, maps:get('number_of_laser', Params, 1))).
 
 read_it(#ampTable{index=Idx}=E) ->
-    case bkfw_srv:command(Idx, rit, []) of
+    case bkfw_cmd:call(Idx, rit, []) of
 		{ok, {Idx, it, [T, <<"C">>]}} when is_float(T); is_integer(T) ->
 			{ok, E#ampTable{curInternalTemp=T}};
 		{ok, _Ret} ->
@@ -369,7 +354,7 @@ read_i(#ampTable{}=E) ->
 	{ok, E}.
 
 read_pm(#ampTable{index=Idx}=E) ->
-    case bkfw_srv:command(Idx, rpm, []) of
+    case bkfw_cmd:call(Idx, rpm, []) of
 		{ok, {Idx, pd, Lines}} ->
 			E1 = parse_pd(Lines, E),
 			{ok, E1};
@@ -380,7 +365,7 @@ read_pm(#ampTable{index=Idx}=E) ->
     end.
 
 read_v(#ampTable{index=Idx}=E) ->
-    case bkfw_srv:command(Idx, rv, []) of
+    case bkfw_cmd:call(Idx, rv, []) of
 		{ok, {Idx, v, [V, v]}} when is_float(V); is_integer(V) ->
 			{ok, E#ampTable{powerSupply=V}};
 		{ok, _Ret} ->
@@ -390,7 +375,7 @@ read_v(#ampTable{index=Idx}=E) ->
     end.
 
 read_li(#ampTable{index=Idx}=E) ->
-    case bkfw_srv:command(Idx, rli, []) of
+    case bkfw_cmd:call(Idx, rli, []) of
 		{ok, {Idx, li, [Y, <<"dBm">>]}} ->
 			{ok, E#ampTable{inputLossThreshold=Y}};
 		{ok, _Ret} ->
@@ -400,7 +385,7 @@ read_li(#ampTable{index=Idx}=E) ->
     end.
 
 read_lo(#ampTable{index=Idx}=E) ->
-    case bkfw_srv:command(Idx, rlo, []) of
+    case bkfw_cmd:call(Idx, rlo, []) of
 		{ok, {Idx, lo, [Y, <<"dBm">>]}} ->
 			{ok, E#ampTable{outputLossThreshold=Y}};
 		{ok, _Ret} ->
@@ -415,7 +400,7 @@ read_limits(#ampTable{ params=#{ auth := false }}=E) ->
 
 read_limits(#ampTable{ index=Idx, params=Params }=E) ->
     F = fun(X, {ok, Acc}) ->
-				case bkfw_srv:command(Idx, rlcc, [integer_to_binary(X)]) of
+				case bkfw_cmd:call(Idx, rlcc, [integer_to_binary(X)]) of
 					{ok, {Idx, max, [_, _, A, <<"mA">>]}} when is_float(A); is_integer(A) ->
 						case X of
 							1 ->
@@ -440,7 +425,7 @@ read_limits(#ampTable{ index=Idx, params=Params }=E) ->
 	end.
 
 read_limits_pc(#ampTable{ index=Idx }=E) ->
-    case bkfw_srv:command(Idx, rlpc, []) of
+    case bkfw_cmd:call(Idx, rlpc, []) of
 		{ok, {Idx, pc, [ [min, Min, _], [max, Max, _] ]}} ->
 			E1 = E#ampTable{ pcMin=Min, pcMax=Max },
 			read_limits_gc(E1);
@@ -452,7 +437,7 @@ read_limits_pc(#ampTable{ index=Idx }=E) ->
 
 
 read_limits_gc(#ampTable{ index=Idx }=E) ->
-    case bkfw_srv:command(Idx, rlgc, []) of
+    case bkfw_cmd:call(Idx, rlgc, []) of
 		{ok, {Idx, gc, [ [min, Min, _], [max, Max, _] ]}} ->
 			E1 = E#ampTable{ gcMin=Min, gcMax=Max },
 			{ok, E1};
@@ -519,34 +504,34 @@ get_consign(Name, Kv) ->
 set_from_snmp(_, []) ->
     ok;
 set_from_snmp(Idx, [{?ampAmpConsign, Val} | Tail]) when is_integer(Val) ->
-    bkfw_srv:command(Idx, scc, [<<"1 ">>, io_lib:format("~b.0", [Val])]),
+    bkfw_cmd:call(Idx, scc, [<<"1 ">>, io_lib:format("~b.0", [Val])]),
     set_from_snmp(Idx, Tail);
 set_from_snmp(Idx, [{?ampGainConsign, Val} | Tail]) when is_integer(Val) ->
-    bkfw_srv:command(Idx, sgc, [io_lib:format("~.1f", [Val / 10])]),
+    bkfw_cmd:call(Idx, sgc, [io_lib:format("~.1f", [Val / 10])]),
     set_from_snmp(Idx, Tail);
 set_from_snmp(Idx, [{?ampOutputPowerConsign, Val} | Tail]) when is_integer(Val) ->
-    bkfw_srv:command(Idx, spc, [io_lib:format("~.1f", [Val / 10])]),
+    bkfw_cmd:call(Idx, spc, [io_lib:format("~.1f", [Val / 10])]),
     set_from_snmp(Idx, Tail);
 set_from_snmp(Idx, [{?ampInputLossTh, Val} | Tail]) when is_integer(Val) ->
-    bkfw_srv:command(Idx, sli, [io_lib:format("~.1f", [Val / 10])]),
+    bkfw_cmd:call(Idx, sli, [io_lib:format("~.1f", [Val / 10])]),
     set_from_snmp(Idx, Tail);
 set_from_snmp(Idx, [{?ampOutputLossTh, Val} | Tail]) when is_integer(Val) ->
-    bkfw_srv:command(Idx, slo, [io_lib:format("~.1f", [Val / 10])]),
+    bkfw_cmd:call(Idx, slo, [io_lib:format("~.1f", [Val / 10])]),
     set_from_snmp(Idx, Tail);
 
 set_from_snmp(Idx, [{?ampOperatingMode, Val} | Tail]) ->
     case Val of
 		?ampOperatingMode_off -> 
-			bkfw_srv:command(Idx, smode, [<<"OFF">>]),
+			bkfw_cmd:call(Idx, smode, [<<"OFF">>]),
 			set_from_snmp(Idx, Tail);
 		?ampOperatingMode_cc -> 
-			bkfw_srv:command(Idx, smode, [<<"CC">>]),
+			bkfw_cmd:call(Idx, smode, [<<"CC">>]),
 			set_from_snmp(Idx, Tail);
 		?ampOperatingMode_gc -> 
-			bkfw_srv:command(Idx, smode, [<<"GC">>]),
+			bkfw_cmd:call(Idx, smode, [<<"GC">>]),
 			set_from_snmp(Idx, Tail);
 		?ampOperatingMode_pc -> 
-			bkfw_srv:command(Idx, smode, [<<"PC">>]),
+			bkfw_cmd:call(Idx, smode, [<<"PC">>]),
 			set_from_snmp(Idx, Tail);
 		_ -> 
 			{error, ?ampOperatingMode}
@@ -556,7 +541,7 @@ set_from_snmp(_, [{Col, _} | _]) ->
 
 
 set_operating_mode(Idx, ?ampOperatingMode_off, _Amp) ->
-    bkfw_srv:command(Idx, smode, [<<"OFF">>]),
+    bkfw_cmd:call(Idx, smode, [<<"OFF">>]),
     ok;
 
 set_operating_mode(_Idx, {?ampOperatingMode_cc, 1, _V}, #ampTable{ params=#{ 'has_settable_LD1' := false } }) ->
@@ -571,11 +556,11 @@ set_operating_mode(_Idx, {?ampOperatingMode_cc, 2, V}, #ampTable{ ccMax2=Max })
 	{error, ofr};
 
 set_operating_mode(Idx, {?ampOperatingMode_cc, Laser, V}, _Amp) ->
-	case bkfw_srv:command(Idx, scc, [io_lib:format("~b ~.2f", [Laser, V])]) of
+	case bkfw_cmd:call(Idx, scc, [io_lib:format("~b ~.2f", [Laser, V])]) of
 		{ok, {Idx, scc, [Laser, ofr]}} ->
 			{error, ofr};
 		_ ->
-			bkfw_srv:command(Idx, smode, [<<"CC">>]),
+			bkfw_cmd:call(Idx, smode, [<<"CC">>]),
 			ok
 	end;
 
@@ -584,11 +569,11 @@ set_operating_mode(_Idx, {?ampOperatingMode_gc, V}, #ampTable{ gcMin=Min, gcMax=
 	{error, ofr};
 
 set_operating_mode(Idx, {?ampOperatingMode_gc, V}, _Amp) ->
-	case bkfw_srv:command(Idx, sgc, [io_lib:format("~.2f", [V])]) of
+	case bkfw_cmd:call(Idx, sgc, [io_lib:format("~.2f", [V])]) of
 		{ok, {Idx, sgc, [ofr]}} ->
 			{error, ofr};
 		_ ->
-			bkfw_srv:command(Idx, smode, [<<"GC">>]),
+			bkfw_cmd:call(Idx, smode, [<<"GC">>]),
 			ok
 	end;
 
@@ -597,11 +582,11 @@ set_operating_mode(_Idx, {?ampOperatingMode_pc, V}, #ampTable{ pcMin=Min, pcMax=
 	{error, ofr};
 
 set_operating_mode(Idx, {?ampOperatingMode_pc, V}, _Amp) ->
-	case bkfw_srv:command(Idx, spc, [io_lib:format("~.2f", [V])]) of
+	case bkfw_cmd:call(Idx, spc, [io_lib:format("~.2f", [V])]) of
 		{ok, {Idx, spc, [ofr]}} ->
 			{error, ofr};
 		_ ->
-			bkfw_srv:command(Idx, smode, [<<"PC">>]),
+			bkfw_cmd:call(Idx, smode, [<<"PC">>]),
 			ok
 	end;
 
@@ -616,16 +601,16 @@ set_operating_mode2(Idx, Mode) when is_binary(Mode) ->
 	set_operating_mode2(Idx, binary_to_integer(Mode));
 
 set_operating_mode2(Idx, ?ampOperatingMode_off) ->
-	bkfw_srv:command(Idx, smode, [<<"OFF">>]);
+	bkfw_cmd:call(Idx, smode, [<<"OFF">>]);
 
 set_operating_mode2(Idx, ?ampOperatingMode_cc) ->
-	bkfw_srv:command(Idx, smode, [<<"CC">>]);
+	bkfw_cmd:call(Idx, smode, [<<"CC">>]);
 
 set_operating_mode2(Idx, ?ampOperatingMode_gc) ->
-	bkfw_srv:command(Idx, smode, [<<"GC">>]);
+	bkfw_cmd:call(Idx, smode, [<<"GC">>]);
 
 set_operating_mode2(Idx, ?ampOperatingMode_pc) ->
-	bkfw_srv:command(Idx, smode, [<<"PC">>]).
+	bkfw_cmd:call(Idx, smode, [<<"PC">>]).
 
 
 to_float(I) when is_float(I) ->
@@ -643,13 +628,13 @@ set_thresholds(Idx, Kv) ->
 		undefined ->
 			{error, invalid_thresholds};
 		IT ->
-			case bkfw_srv:command(Idx, sli, [io_lib:format("~.2f", [IT])]) of
+			case bkfw_cmd:call(Idx, sli, [io_lib:format("~.2f", [IT])]) of
 				{ok, {Idx, sli, _}} ->
 					case get_kv_float(outputLossThreshold, Kv) of
 						undefined ->
 							{error, invalid_thresholds};
 						OT ->
-							case bkfw_srv:command(Idx, slo, [io_lib:format("~.2f", [OT])]) of
+							case bkfw_cmd:call(Idx, slo, [io_lib:format("~.2f", [OT])]) of
 								{ok, {Idx, slo, _}} ->
 									ok;
 								_ ->
