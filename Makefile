@@ -23,6 +23,7 @@ DEPS = \
 	cowboy \
 	jsx
 
+dep_getopt = git https://github.com/jcomellas/getopt.git 838e67f
 dep_cereal = git https://github.com/joewilliams/cereal.git 5933f1c
 dep_jsx_commit = v2.8.0
 dep_erlang_ale = git https://github.com/esl/erlang_ale.git v0.1.0
