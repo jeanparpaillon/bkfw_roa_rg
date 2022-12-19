@@ -91,7 +91,10 @@ get_kv(#ampTable{ params=Params }=T, 1) ->
 	 {'has_input_PD',      maps:get('has_input_PD', Params, true)},
 	 {'has_output_PD',     maps:get('has_output_PD', Params, true)},
 	 {'has_settable_LD1',  maps:get('has_settable_LD1', Params, true)},
-	 {'number_of_laser',   maps:get('number_of_laser', Params, 1)}
+	 {'number_of_laser',   maps:get('number_of_laser', Params, 1)},
+	 {overallGain,         1.1},
+	 {gainBeforeVoa,       2.2},
+	 {voaAttenuation,      3.3}
 	];
 
 
@@ -120,7 +123,10 @@ get_kv(#ampTable{ params=Params }=T, 2) ->
 	 {'has_PC_mode',       maps:get('has_PC_mode', Params, true)},
 	 {'has_GC_mode',       maps:get('has_GC_mode', Params, true)},
 	 {'has_input_PD',      maps:get('has_input_PD', Params, true)},
-	 {'has_output_PD',     maps:get('has_output_PD', Params, true)}
+	 {'has_output_PD',     maps:get('has_output_PD', Params, true)},
+	 {overallGain,         1.1},
+	 {gainBeforeVoa,       2.2},
+	 {voaAttenuation,      3.3}
     ].
 
 

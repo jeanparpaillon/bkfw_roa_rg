@@ -379,7 +379,10 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
             fwVer: "Firmware version",
             partNum: "Part. Num",
             serialNum: "Serial Number",
-            productDate: "Product Date"
+            productDate: "Product Date",
+            overallGain: "Overall Gain",
+            gainBeforeVoa: "Gain Before VOA",
+            voaAttenuation: "VOA Attenuation"
         }
 
     };
@@ -460,7 +463,10 @@ angular.module('bkfwApp.services', ['base64', 'angular-md5', 'ngStorage'])
             fwVer: "Firmware version",
             partNum: "Part. number",
             serialNum: "Serial number",
-            productDate: "Product date"
+            productDate: "Product date",
+            overallGain: "Overall Gain",
+            gainBeforeVoa: "Gain Before VOA",
+            voaAttenuation: "VOA Attenuation"
         },
 
         modeID: {
