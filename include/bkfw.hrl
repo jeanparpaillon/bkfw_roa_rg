@@ -58,6 +58,9 @@
 				   pcMax              = 0.0                      :: float(),
 				   gcMin              = 0.0                      :: float(),
 				   gcMax              = 0.0                      :: float(),
+				   overallGain		  = 0.0                      :: float(),
+				   gainBeforeVoa      = 0.0                      :: float(),
+				   voaAttenuation     = 0.0                      :: float(),
 				   params             = []                       :: []
 				  }).
 -type ampTable() :: #ampTable{}.

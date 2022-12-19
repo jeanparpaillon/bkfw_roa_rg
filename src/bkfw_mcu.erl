@@ -27,6 +27,9 @@
 		 read_li/1, 
 		 read_lo/1, 
 		 read_a/1,
+		 read_rg1/1,
+		 read_rg2/1,
+		 read_rg3/1,
 		 read_limits/1]).
 
 -define(PERIOD, 100).
@@ -44,6 +47,9 @@
 			   fun read_li/1,
 			   fun read_lo/1,
 			   fun read_a/1,
+			   fun read_rg1/1,
+			   fun read_rg2/1,
+			   fun read_rg3/1,
 			   fun read_limits/1]).
 
 new(Idx) ->
@@ -92,9 +98,9 @@ get_kv(#ampTable{ params=Params }=T, 1) ->
 	 {'has_output_PD',     maps:get('has_output_PD', Params, true)},
 	 {'has_settable_LD1',  maps:get('has_settable_LD1', Params, true)},
 	 {'number_of_laser',   maps:get('number_of_laser', Params, 1)},
-	 {overallGain,         1.1},
-	 {gainBeforeVoa,       2.2},
-	 {voaAttenuation,      3.3}
+	 {overallGain,         T#ampTable.overallGain},
+	 {gainBeforeVoa,       T#ampTable.gainBeforeVoa},
+	 {voaAttenuation,      T#ampTable.voaAttenuation}
 	];
 
 
@@ -124,9 +130,9 @@ get_kv(#ampTable{ params=Params }=T, 2) ->
 	 {'has_GC_mode',       maps:get('has_GC_mode', Params, true)},
 	 {'has_input_PD',      maps:get('has_input_PD', Params, true)},
 	 {'has_output_PD',     maps:get('has_output_PD', Params, true)},
-	 {overallGain,         1.1},
-	 {gainBeforeVoa,       2.2},
-	 {voaAttenuation,      3.3}
+	 {overallGain,         T#ampTable.overallGain},
+	 {gainBeforeVoa,       T#ampTable.gainBeforeVoa},
+	 {voaAttenuation,      T#ampTable.voaAttenuation}
     ].
 
 
@@ -306,6 +312,36 @@ read_a(#ampTable{index=Idx}=E) ->
 			handle_alarms(Alarms, E);
 		{ok, _Ret} ->
 			{error, {string, io_lib:format("RA invalid answer: ~p~n", [_Ret])}};
+		{error, Err} ->
+			{error, Err}
+    end.
+
+read_rg1(#ampTable{index=Idx}=E) ->
+    case bkfw_cmd:call(Idx, rg, [<<"1">>]) of
+		{ok, {Idx, gain, [1, G, _]}} ->
+			{ok, E#ampTable{overallGain=G}};
+		{ok, _Ret} ->
+			{error, {string, io_lib:format("RG 1 invalid answer: ~p~n", [_Ret])}};
+		{error, Err} ->
+			{error, Err}
+    end.
+
+read_rg2(#ampTable{index=Idx}=E) ->
+    case bkfw_cmd:call(Idx, rg, [<<"2">>]) of
+		{ok, {Idx, gain, [2, G, _]}} ->
+			{ok, E#ampTable{gainBeforeVoa=G}};
+		{ok, _Ret} ->
+			{error, {string, io_lib:format("RG 2 invalid answer: ~p~n", [_Ret])}};
+		{error, Err} ->
+			{error, Err}
+    end.
+
+read_rg3(#ampTable{index=Idx}=E) ->
+    case bkfw_cmd:call(Idx, rg, [<<"3">>]) of
+		{ok, {Idx, gain, [3, G, _]}} ->
+			{ok, E#ampTable{voaAttenuation=G}};
+		{ok, _Ret} ->
+			{error, {string, io_lib:format("RG 1 invalid answer: ~p~n", [_Ret])}};
 		{error, Err} ->
 			{error, Err}
     end.

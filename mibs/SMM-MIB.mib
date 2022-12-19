@@ -72,6 +72,13 @@ smmModule MODULE-IDENTITY
     * ampPCMax: Integer32
     * ampOutputPowerConsign: Integer32
     "
+    REVISION   "202212190000Z"
+    DESCRIPTION
+    "Add new fields fields to amp table:
+    * overallGain
+    * gainBeforeVoa
+    * voaAttenuation
+    "
     ::= { bktelPhotonics 1 }
 
 smmMIB	OBJECT IDENTIFIER ::= { smmModule 1 }
@@ -224,7 +231,10 @@ AmpEntry ::=
 		ampPCMin            Integer32,
 		ampPCMax			Integer32,
 		ampGCMin			Gauge32,
-		ampGCMax			Gauge32
+		ampGCMax			Gauge32,
+        ampOverallGain         Integer32,
+        ampGainBeforeVoa       Integer32,
+        ampVoaAttenuation      Integer32
 	}
 
 ampIndex OBJECT-TYPE
@@ -407,6 +417,30 @@ ampGCMax OBJECT-TYPE
     DESCRIPTION
 	"Maximal consign for laser #2 in GC mode."
     ::= { ampEntry 22 }
+
+ampOverallGain OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+    "Overall Gain."
+    ::= { ampEntry 23 }
+
+ampGainBeforeVoa OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+    "Gain Before VOA."
+    ::= { ampEntry 24 }
+
+ampVoaAttenuation OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+    "VOA Attenuation."
+    ::= { ampEntry 25 }
 
 ampInputPowerTrap NOTIFICATION-TYPE
     OBJECTS {

@@ -40,6 +40,9 @@
 			  powerSupply        ,
 			  inputLossThreshold ,
 			  outputLossThreshold,
+			  overallGain,
+			  gainBeforeVoa,
+			  voaAttenuation,
 			  vendor             = "BKTel Photonics"        :: string(),
 			  moduleType         = "MCU"                    :: string(),
 			  hwVer              = ""                       :: string(),
@@ -177,7 +180,10 @@ loop(#state{port=Port, tid=Tid, fwtid=FwTid}=S, Acc) ->
 									 swVer=element(random:uniform(3), {"0.1", "0.2", "0.3"}),
 									 fwVer=element(random:uniform(3), {"0.1a", "0.1b", "0.2.0"}),
 									 partNum=element(random:uniform(2), {"123", "456"}),
-									 serialNum=io_lib:format("~b", [random:uniform(1000)])
+									 serialNum=io_lib:format("~b", [random:uniform(1000)]),
+									 overallGain=random:uniform()*100,
+									 gainBeforeVoa=random:uniform()*100,
+									 voaAttenuation=random:uniform()*100
 									};
 							  [Edfa] -> Edfa
 						  end,
@@ -315,6 +321,18 @@ handle_msg(#edfa{internalTemp=IT}=Edfa, rit, [], S) ->
 handle_msg(#mcu{index=Addr, curInternalTemp=IT}=Mcu, rit, [], S) ->
     reply(S, Addr, io_lib:format("IT ~.2f C", [IT])),
     {S, Mcu#mcu{curInternalTemp=ran(IT)}};
+
+handle_msg(#mcu{index=Addr, overallGain=G}=Mcu, rg, [1], S) ->
+    reply(S, Addr, io_lib:format("Gain 1 ~.2f dBm", [G])),
+    {S, Mcu#mcu{overallGain=ran(G)}};
+
+handle_msg(#mcu{index=Addr, gainBeforeVoa=G}=Mcu, rg, [2], S) ->
+    reply(S, Addr, io_lib:format("Gain 2 ~.2f dBm", [G])),
+    {S, Mcu#mcu{gainBeforeVoa=ran(G)}};
+
+handle_msg(#mcu{index=Addr, voaAttenuation=G}=Mcu, rg, [3], S) ->
+    reply(S, Addr, io_lib:format("Gain 3 ~.2f dBm", [G])),
+    {S, Mcu#mcu{voaAttenuation=ran(G)}};
 
 handle_msg(#edfa{}=Edfa, ri, [], S) ->
     reply(S, 0, ["I", $\r, $\n, $\r, $\n, 

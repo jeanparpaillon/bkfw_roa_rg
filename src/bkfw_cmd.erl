@@ -115,4 +115,5 @@ cmd_to_ans(sli) -> sli;
 cmd_to_ans(rlo) -> lo;
 cmd_to_ans(slo) -> slo;
 cmd_to_ans(rn) -> n;
+cmd_to_ans(rg) -> gain;
 cmd_to_ans(_) -> '_'.

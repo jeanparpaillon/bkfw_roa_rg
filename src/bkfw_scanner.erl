@@ -305,6 +305,8 @@ kw_to_atom(<<"VALIDATE">>)  -> validate;
 kw_to_atom(<<"VENDOR=">>)   -> vendor;
 kw_to_atom(<<"V">>)         -> v;
 kw_to_atom(<<"WRITE">>)     -> write;
+kw_to_atom(<<"RG">>)        -> rg;
+kw_to_atom(<<"Gain">>)      -> gain;
 kw_to_atom(S)               -> S.
 
 -ifdef(TEST).
