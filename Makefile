@@ -15,7 +15,7 @@
 # under the License.
 #
 PROJECT = bkfw
-PROJECT_VERSION = 1.5.1
+PROJECT_VERSION = 1.6.0
 
 DEPS = \
 	getopt \
@@ -63,13 +63,6 @@ RELDIR=$(PROJECT)-$(PROJECT_VERSION)
 RELBIN=$(PROJECT)_$(PROJECT_VERSION).bin
 RELSRC=$(RELDIR).source.tar.gz
 
-dist: $(RELSRC)
-
-$(RELSRC):
-	git archive --prefix=$(RELDIR)/ HEAD . | gzip -c - > $(RELDIR).source.tar.gz
-
-IMAGE_ID=bkfw-build
-
 docker-release: docker-image
 	docker run -v $(HOME):$(HOME) -v /etc/resolv.conf:/etc/resolv.conf \
 	  --user=$(USER) \
@@ -85,38 +78,5 @@ docker-image: # $(OTP_ARCHIVE)
 
 $(OTP_ARCHIVE):
 	wget -O $@ $(OTP_BASE_URL)/$(OTP_SRC)
-
-POKY_BASEDIR = yocto
-RECIPEDIR = yocto/meta-bkfw/recipes-bkfw/bkfw
-RECIPEFILE = $(RECIPEDIR)/files/bkfw.sources.tar.gz
-
-release: recipefile
-	cd yocto && $(MAKE)
-
-recipefile:
-	mkdir -p $(RECIPEDIR)
-	git archive --prefix=bkfw/ HEAD . | gzip -c - > $(RECIPEFILE)
-
-#release: $(RELBIN)
-#	cp README.md $(RELDIR)/README.md
-#	cp CHANGES.md $(RELDIR)/CHANGES.md
-#	mkdir -p $(RELDIR)/mibs
-#	cp mibs/*.mib $(RELDIR)/mibs
-#	cp /usr/share/mibs/ietf/SNMPv2-MIB $(RELDIR)/mibs
-#	zip -r $(RELDIR).zip $(RELDIR)
-
-$(RELBIN):
-	rm -rf $(RELDIR)
-	rm -f $(RELDIR).zip
-	mkdir -p $(RELDIR)
-	( \
-	  cd $(META_BKFW_BASEDIR) && \
-	  . $(POKY_BASEDIR)/oe-init-build-env && \
-	  cd $(META_BKFW_BASEDIR)/build && \
-	  bitbake bkfw \
-	)
-	IPK=$(shell ls $(META_BKFW_BASEDIR)/build/tmp/deploy/ipk/arm*/bkfw_*.ipk | tail -n1); \
-	  cp $(IPK) $(RELDIR)/$(RELBIN)
-
 
 .PHONY: pdf dist docker-release docker-image release clean-release build-www rel-dev
