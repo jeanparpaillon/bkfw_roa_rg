@@ -45,8 +45,4 @@ test/*.beam
 /_rel
 #/relx
 #/priv/.stamp-www
-yocto/build/conf/sanity_info
-yocto/meta-bkfw/recipes-bkfw/bkfw/files/bkfw.sources.tar.gz
-yocto/build/bitbake-cookerdaemon.log
-yocto/build/cache/
-yocto/build/tmp/
+/.erlang.mk
