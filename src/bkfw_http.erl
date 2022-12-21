@@ -202,7 +202,8 @@ allow_missing_post(Req, State) ->
 
 to_json(Req, #state{section=mcu, index=undefined, version=Version}=S) ->
     Mcus = mnesia:dirty_match_object(#ampTable{_='_'}),
-    Ejson = lists:map(fun (Mcu) -> bkfw_mcu:get_kv(Mcu, Version) end, Mcus),
+	SortedMcus = lists:sort(fun (A, B) -> A#ampTable.index < B#ampTable.index end, Mcus),
+    Ejson = lists:map(fun (Mcu) -> bkfw_mcu:get_kv(Mcu, Version) end, SortedMcus),
     {jsx:encode(Ejson, ?JSX_OPTS), Req, S};
 
 to_json(Req, #state{section=mcu, mcu=Mcu, version=Version}=S) ->
