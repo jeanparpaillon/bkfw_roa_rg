@@ -15,7 +15,7 @@
 # under the License.
 #
 PROJECT = bkfw
-PROJECT_VERSION = 1.6.0
+PROJECT_VERSION = 1.6.1
 
 DEPS = \
 	getopt \
